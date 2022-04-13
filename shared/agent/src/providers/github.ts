@@ -5156,7 +5156,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 					  }
 					}
-					timelineItems(first:150 ${cursor ? `,after:$cursor` : ""}) {
+					timelineItems(first:100 ${cursor ? `,after:$cursor` : ""}) {
 					  totalCount
 					  pageInfo {
 						startCursor
