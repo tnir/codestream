@@ -309,9 +309,22 @@
 			{
 				"command": "codestream.viewMethodLevelTelemetry",
 				"title": "View Method Level Telemetry"
+			},
+			{
+				"command": "codestream.providerDataUpdate",
+				"title": "Update CodeStream data"
 			}
 		],
 		"keybindings": [
+			{
+				"command": "codestream.providerDataUpdate",
+				"args": {
+					"source": "Shortcut"
+				},
+				"key": "ctrl+shift+/ u",
+				"mac": "ctrl+/ u",
+				"when": "codestream:status == signedIn"
+			},
 			{
 				"command": "codestream.toggle",
 				"args": {
