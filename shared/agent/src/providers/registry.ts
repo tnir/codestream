@@ -606,7 +606,7 @@ export class ThirdPartyProviderRegistry {
 		return response;
 	}
 
-	async getRepoInfo(request: ProviderGetRepoInfoRequest) {
+	async getRepoMetadata(request: ProviderGetRepoInfoRequest) {
 		// this is used in the create pr flow hence the check for create
 		const provider = getProvider(request.providerId);
 		if (provider === undefined) {
@@ -622,7 +622,7 @@ export class ThirdPartyProviderRegistry {
 			throw new Error(`Provider(${provider.name}) doesn't support pull requests`);
 		}
 
-		const response = await pullRequestProvider.getRepoInfo(request);
+		const response = await pullRequestProvider.getRepoMetadata(request);
 		return response;
 	}
 

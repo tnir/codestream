@@ -94,7 +94,7 @@ export interface ThirdPartyProviderSupportsStatus {
 }
 
 export interface ThirdPartyProviderSupportsPullRequests {
-	getRepoInfo(request: ProviderGetRepoInfoRequest): Promise<ProviderGetRepoInfoResponse>;
+	getRepoMetadata(request: ProviderGetRepoInfoRequest): Promise<ProviderGetRepoInfoResponse>;
 	getIsMatchingRemotePredicate(): (remoteLike: GitRemoteLike) => boolean;
 	getRemotePaths(repo: GitRepository, _projectsByRemotePath: any): any;
 }

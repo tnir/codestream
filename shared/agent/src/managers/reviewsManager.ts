@@ -687,7 +687,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 					remoteUrl = weightedRemotes[i].webUrl;
 
 					// get repo info, delegating to the actual provider's api
-					const providerRepoInfo = await providerRegistry.getRepoInfo({
+					const providerRepoInfo = await providerRegistry.getRepoMetadata({
 						providerId: providerRepo.providerId,
 						remote: remoteUrl!
 					});

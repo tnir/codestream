@@ -925,7 +925,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	@log()
-	async getRepoInfo(request: { remote: string }): Promise<ProviderGetRepoInfoResponse> {
+	async getRepoMetadata(request: { remote: string }): Promise<ProviderGetRepoInfoResponse> {
 		try {
 			const { owner, name } = this.getOwnerFromRemote(request.remote);
 
