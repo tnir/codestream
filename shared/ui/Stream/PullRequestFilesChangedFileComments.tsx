@@ -47,7 +47,7 @@ export const PendingCircle = styled.div`
 	border-radius: 50%;
 	border: 1px solid #bf8700;
 	width: 17px;
-	height: 16px;
+	height: 17px;
 	text-align: center;
 	margin-right: 13px;
 	font-size: 10px;
@@ -213,7 +213,12 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const lineNumber = commentObject => {
 		// With git, the "line number" is actually 2 numbers, left and right
 		// For now, we are going to base it off of the right number, subject to change.
-		// let leftLine = 0;
+		// The basic formula is:
+		// 		Right line number taken from top of diff hunk
+		//    + Length of the diff hunk (in new lines)
+		//    - Number of negative or removed lines from diff hunk
+		//    -----------------------------------------------------
+		//      Line Number
 		let rightLine = 0;
 
 		if (!commentObject?.comment || !commentObject?.review) {
@@ -226,17 +231,21 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			commentObject?.comment?.position?.patch ||
 			"";
 		let diffHunkNewLineLength = diffHunk.split("\n").length - 1;
+		let negativeLineCount = 1;
 
 		diffHunk.split("\n").map(d => {
-			const matches = d.match(/@@ \-(\d+).*? \+(\d+)/);
-			if (matches) {
-				// leftLine = parseInt(matches[1], 10) - 1;
-				rightLine = parseInt(matches[2]);
+			const topLineMatch = d.match(/@@ \-(\d+).*? \+(\d+)/);
+			const negativeLineMatch = d.match(/^\-.*/);
+			if (topLineMatch) {
+				rightLine = parseInt(topLineMatch[2]);
+			}
+			if (negativeLineMatch) {
+				negativeLineCount++;
 			}
 		});
 
 		if (rightLine) {
-			return rightLine + diffHunkNewLineLength;
+			return rightLine + diffHunkNewLineLength - negativeLineCount;
 		} else {
 			return "";
 		}
@@ -266,7 +275,14 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const handlePendingClick = event => {
 		event.preventDefault();
 		event.stopPropagation();
-		dispatch(openModal(WebviewModals.FinishReview));
+		if (
+			pullRequest?.providerId === "gitlab*com" ||
+			pullRequest?.providerId === "gitlab/enterprise"
+		) {
+			return;
+		} else {
+			dispatch(openModal(WebviewModals.FinishReview));
+		}
 	};
 
 	const handleMouseEnter = event => {
