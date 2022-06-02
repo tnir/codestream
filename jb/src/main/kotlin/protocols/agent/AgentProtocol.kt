@@ -18,7 +18,7 @@ class ProxySettings(val url: String, val strictSSL: Boolean)
 
 class InitializationOptions(
     val extension: Extension,
-    val ide: Ide,
+    val ide: IdeClass,
     val isDebugging: Boolean,
     val proxy: ProxySettings?,
     val proxySupport: String?,
@@ -174,7 +174,11 @@ class Extension(val versionFormatted: String) {
     }
 }
 
-object Ide {
+val Ide = IdeClass()
+
+// it needs to be a class rather than an object otherwise the values are
+// not properly serialized
+class IdeClass {
     val name = "JetBrains"
     val version = ApplicationInfo.getInstance().fullVersion
     val detail = ApplicationNamesInfo.getInstance().fullProductNameWithEdition
