@@ -2,8 +2,7 @@
 import { parsePatch } from "diff";
 import { print } from "graphql";
 import { GraphQLClient } from "graphql-request";
-import { merge } from "lodash";
-import { groupBy } from "lodash-es";
+import { groupBy, merge } from "lodash";
 import { Response } from "node-fetch";
 import * as qs from "querystring";
 import semver from "semver";
@@ -18,8 +17,6 @@ import {
 	CreateThirdPartyCardRequest,
 	DidChangePullRequestCommentsNotificationType,
 	DiscussionNode,
-	FetchAssignableUsersAutocompleteRequest,
-	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,
@@ -61,11 +58,11 @@ import {
 	ProviderCreatePullRequestRequest,
 	ProviderCreatePullRequestResponse,
 	ProviderGetRepoInfoResponse,
-	ProviderVersion,
 	PullRequestComment,
-	ThirdPartyIssueProviderBase,
 	ThirdPartyProviderSupportsIssues
 } from "./provider";
+import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
+import { ProviderVersion } from "./types";
 
 interface GitLabProject {
 	path_with_namespace: any;

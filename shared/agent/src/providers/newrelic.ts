@@ -1,9 +1,15 @@
 "use strict";
 import fs from "fs";
 import { GraphQLClient } from "graphql-request";
-import { Dictionary } from "lodash";
-import { flatten as _flatten, groupBy as _groupBy, memoize, uniq as _uniq } from "lodash-es";
+import {
+	Dictionary,
+	flatten as _flatten,
+	groupBy as _groupBy,
+	memoize,
+	uniq as _uniq
+} from "lodash";
 import { join, relative, sep } from "path";
+import Cache from "timed-cache";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
 import { URI } from "vscode-uri";
 
@@ -90,9 +96,7 @@ import {
 	SpanRequest
 } from "./newrelic/newrelic.types";
 import { generateClmSpanDataExistsQuery, generateSpanQuery } from "./newrelic/spanQuery";
-import { ThirdPartyIssueProviderBase } from "./provider";
-
-const Cache = require("timed-cache");
+import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
 
 const supportedLanguages = ["python", "ruby", "csharp"] as const;
 export type LanguageId = typeof supportedLanguages[number];
@@ -109,7 +113,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	private _accountIds: number[] | undefined = undefined;
 	private _memoizedBuildRepoRemoteVariants: any;
 	private _codeStreamUser: CSMe | undefined = undefined;
-	private _mltTimedCache: any;
+	private _mltTimedCache: Cache;
 	private _applicationEntitiesCache: { [key: string]: GetObservabilityEntitiesResponse } = {};
 
 	constructor(session: CodeStreamSession, config: ThirdPartyProviderConfig) {
@@ -833,7 +837,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						uniqueEntities?.map(_ => _.guid)
 					);
 					hasCodeLevelMetricSpanData =
-						respositoryEntitySpanDataExistsResponse?.find(_ => _ && _["entity.guid"] != null) != null;
+						respositoryEntitySpanDataExistsResponse?.find(_ => _ && _["entity.guid"] != null) !=
+						null;
 				}
 				response.repos.push({
 					repoId: repo.id!,
@@ -1986,7 +1991,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return undefined;
 		}
 
-		const remotes = await repoForFile.getWeightedRemotesByStrategy(undefined, "prioritizeUpstream");
+		const remotes = await repoForFile.getWeightedRemotesByStrategy("prioritizeUpstream", undefined);
 		const remote = remotes.map(_ => _.rawUrl)[0];
 
 		let relativeFilePath = relative(repoForFile.path, request.filePath);
