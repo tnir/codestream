@@ -122,7 +122,6 @@ const EntityHealth = styled.div<{ backgroundColor: string }>`
 	background-color: ${props => (props.backgroundColor ? props.backgroundColor : "white")};
 	width: 10px;
 	height: 10px;
-	border-radius: 2px;
 	margin-right: 4px;
 `;
 
@@ -496,8 +495,6 @@ export const Observability = React.memo((props: Props) => {
 			setLoadingGoldenMetrics(true);
 			const response = await HostApi.instance.send(GetMethodLevelTelemetryRequestType, {
 				newRelicEntityGuid: entityGuid,
-				metricTimesliceNameMapping: derivedState.currentMethodLevelTelemetry
-					.metricTimesliceNameMapping!,
 				repoId: currentRepoId
 			});
 			if (response?.goldenMetrics) {
@@ -794,7 +791,10 @@ export const Observability = React.memo((props: Props) => {
 																					<EntityHealth backgroundColor={alertSeverityColor} />
 																					<div>
 																						<span>{ea.entityName}</span>
-																						<span className="subtle" style={{ fontSize: "11px" }}>
+																						<span
+																							className="subtle"
+																							style={{ fontSize: "11px", verticalAlign: "bottom" }}
+																						>
 																							{ea.accountName && ea.accountName.length > 25
 																								? ea.accountName.substr(0, 25) + "..."
 																								: ea.accountName}
