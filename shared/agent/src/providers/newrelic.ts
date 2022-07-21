@@ -102,7 +102,7 @@ import {
 } from "./newrelic/spanQuery";
 import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
 
-const supportedLanguages = ["python", "ruby", "csharp"] as const;
+const supportedLanguages = ["python", "ruby", "csharp", "java"] as const;
 export type LanguageId = typeof supportedLanguages[number];
 
 // Use type guard so that list of languages can be defined once and shared with union type LanguageId
@@ -1882,6 +1882,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						additionalMetadata["code.function"]!
 					);
 					break;
+				case "java":
+					functionInfo = {
+						functionName: additionalMetadata["code.function"],
+						className: additionalMetadata["code.namespace"]
+					};
+					break;
 			}
 
 			let { className, functionName, namespace } = functionInfo;
@@ -1908,6 +1914,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	getResolutionMethod(languageId: LanguageId): ResolutionMethod {
 		switch (languageId) {
 			case "csharp":
+			case "java":
 				return "locator";
 			default:
 				return "filePath";
