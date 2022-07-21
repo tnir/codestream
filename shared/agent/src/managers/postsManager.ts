@@ -1432,6 +1432,9 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				}
 				skippedCommitsCount++;
 			}
+			if ((repoChanges.scm.commits || []).length === skippedCommitsCount) {
+				skippedCommitsCount = 0;
+			}
 		}
 
 		trackReviewPostCreation(
