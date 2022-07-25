@@ -9,6 +9,7 @@
 ### Changed
 
 - Universally apply proxy configuration setting to integration connections
+- Stop prompting users to instrument their projects after connecting to New Relic
 
 ### Fixed
 
