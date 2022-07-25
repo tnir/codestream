@@ -390,6 +390,15 @@ export const Observability = React.memo((props: Props) => {
 	}, [derivedState.newRelicIsConnected]);
 
 	useEffect(() => {
+		if (
+			_isEmpty(derivedState.observabilityRepoEntities) &&
+			derivedState.currentMethodLevelTelemetry?.newRelicEntityGuid
+		) {
+			handleClickCLMBroadcast(derivedState.currentMethodLevelTelemetry?.newRelicEntityGuid);
+		}
+	}, [derivedState.observabilityRepoEntities]);
+
+	useEffect(() => {
 		if (!derivedState.newRelicIsConnected) return;
 
 		if (previousHiddenPaneNodes) {
@@ -486,7 +495,7 @@ export const Observability = React.memo((props: Props) => {
 			})
 			.then(response => {
 				if (response?.repos) {
-					const existingObservabilityErrors = observabilityErrors.filter(_ => _.repoId !== repoId);
+					const existingObservabilityErrors = observabilityErrors.filter(_ => _?.repoId !== repoId);
 					existingObservabilityErrors.push(response.repos[0]);
 					setObservabilityErrors(existingObservabilityErrors!);
 				}
@@ -572,8 +581,6 @@ export const Observability = React.memo((props: Props) => {
 	];
 
 	const handleClickCLMBroadcast = (entityGuid, e?) => {
-		fetchObservabilityErrors(entityGuid, currentRepoId);
-
 		if (e) {
 			e.preventDefault();
 			e.stopPropagation();
@@ -708,7 +715,7 @@ export const Observability = React.memo((props: Props) => {
 				setShowCodeLevelMetricsBroadcastIcon(false);
 			}
 		}
-	}, [currentRepoId, observabilityRepos]);
+	}, [currentRepoId, observabilityRepos, loadingEntities]);
 
 	const handleSetUpMonitoring = (event: React.SyntheticEvent) => {
 		event.preventDefault();
