@@ -1008,7 +1008,7 @@ export const Observability = React.memo((props: Props) => {
 															label={
 																<span>
 																	Associate this repo with an entity on New Relic in order to see
-																	errors. Or,{" "}
+																	telemetry. Or,{" "}
 																	<Link
 																		onClick={() => {
 																			dispatch(openPanel(WebviewPanels.OnboardNewRelic));
