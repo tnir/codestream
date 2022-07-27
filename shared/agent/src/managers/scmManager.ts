@@ -1450,16 +1450,27 @@ export class ScmManager {
 
 		const commitInfos = new Map<string, GetBlameCommitInfo>();
 		for (const revisionEntry of revisionEntries) {
-			const prs =
-				ownersAndNames &&
-				(await providerRepo?.provider?.getPullRequestsContainigSha(
-					ownersAndNames,
-					revisionEntry.sha
-				));
+			let prs = [];
+			if (ownersAndNames && !isUncommitted(revisionEntry.sha)) {
+				try {
+					prs = await providerRepo?.provider?.getPullRequestsContainigSha(
+						ownersAndNames,
+						revisionEntry.sha
+					);
+				} catch (e) {
+					Logger.warn(e);
+				}
+			}
+
+			const dateFormatter = toFormatter(revisionEntry.date);
 			commitInfos.set(revisionEntry.sha, {
 				sha: revisionEntry.sha,
+				isUncommitted: isUncommitted(revisionEntry.sha),
 				formattedBlame: this._formatRevisionEntry(revisionEntry),
+				authorName: revisionEntry.authorName,
 				authorEmail: revisionEntry.authorEmail,
+				dateFromNow: dateFormatter.fromNow(),
+				dateFormatted: revisionEntry.date.toLocaleString("default"),
 				gravatarUrl: toGravatar(revisionEntry.authorEmail, 16),
 				summary: revisionEntry.summary,
 				reviews: repo?.id ? await reviews.getReviewsContainingSha(repo.id, revisionEntry.sha) : [],
@@ -1469,9 +1480,13 @@ export class ScmManager {
 
 		const uncommittedInfo: GetBlameCommitInfo = {
 			sha: "",
+			isUncommitted: true,
 			formattedBlame: "You · Uncommitted changes",
+			authorName: "",
 			authorEmail: "",
 			gravatarUrl: "",
+			dateFromNow: "",
+			dateFormatted: "",
 			reviews: [],
 			prs: [],
 			summary: "Uncommitted changes"

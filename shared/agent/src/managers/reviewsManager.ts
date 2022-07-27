@@ -1199,7 +1199,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		return allReviews.filter(
 			r =>
 				!r.deactivated &&
-				r.reviewChangesets.some(rc => rc.repoId === repoId && rc.commits.some(c => c.sha === sha))
+				r.reviewChangesets?.some(rc => rc.repoId === repoId && rc.commits.some(c => c.sha === sha))
 		);
 	}
 

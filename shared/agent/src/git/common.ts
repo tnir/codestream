@@ -4,9 +4,8 @@ export function isUncommitted(sha: string) {
 	return uncommittedRegex.test(sha);
 }
 
-const angleBracketsEmailRegex = /<(.+)>/g;
-
 export function removeAngleBracketsFromEmail(email: string) {
+	const angleBracketsEmailRegex = /<(.+)>/g;
 	const result = angleBracketsEmailRegex.exec(email);
 	return (result && result[1]) || email;
 }

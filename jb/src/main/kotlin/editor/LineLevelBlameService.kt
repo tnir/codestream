@@ -20,15 +20,23 @@ import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import java.awt.Image
 import java.util.concurrent.CompletableFuture
+import javax.swing.Icon
+import javax.swing.ImageIcon
+import javax.swing.event.HyperlinkEvent.EventType
+import javax.swing.event.HyperlinkListener
 
 class LineLevelBlameService(val project: Project) : SelectionListener {
 
     private val logger = Logger.getInstance(LineLevelBlameService::class.java)
     private val gitToolboxInstalled = PluginManager.isPluginInstalled(PluginId.getId("zielu.gittoolbox"))
+    private val iconsCache = mutableMapOf<String, CompletableFuture<Icon?>>()
 
     fun add(editor: Editor) {
         if (gitToolboxInstalled) return
@@ -36,6 +44,7 @@ class LineLevelBlameService(val project: Project) : SelectionListener {
         val uri = editor.document.uri ?: return
         val agent = project.agentService ?: return
         val presentationFactory = PresentationFactory(editor)
+        val csPresentationFactory = CodeStreamPresentationFactory(editor)
         val textMetricsStorage = InlayTextMetricsStorage(editor)
         val lineBlames = mutableMapOf<Int, GetBlameResultLineInfo>()
         var isLoadingBlame: CompletableFuture<Unit>? = null
@@ -76,6 +85,22 @@ class LineLevelBlameService(val project: Project) : SelectionListener {
                     ))
                     blameResult.blame.forEachIndexed { index, lineBlame ->
                         lineBlames[index + lineStart] = lineBlame
+                        iconsCache.getOrPut(lineBlame.gravatarUrl) {
+                            val iconFuture = CompletableFuture<Icon?>()
+                            GlobalScope.launch {
+                                try {
+                                    val bytes: ByteArray = HttpRequests.request(lineBlame.gravatarUrl).readBytes(null)
+                                    val tempIcon = ImageIcon(bytes)
+                                    val image: Image = tempIcon.image
+                                    val resizedImage: Image = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH)
+                                    iconFuture.complete(ImageIcon(resizedImage))
+                                } catch (e: Exception) {
+                                    logger.warn(e)
+                                    iconFuture.complete(null)
+                                }
+                            }
+                            iconFuture
+                        }
                     }
                 } catch (ex: Exception) {
                     logger.warn(ex)
@@ -87,28 +112,42 @@ class LineLevelBlameService(val project: Project) : SelectionListener {
             return lineBlames[line]
         }
 
+        val hyperlinkListener = HyperlinkListener {
+            if (it.eventType == EventType.ACTIVATED) {
+                println(it.description)
+            }
+        }
+
+
+
         editor.caretModel.addCaretListener(object : CaretListener {
             override fun caretPositionChanged(e: CaretEvent) {
                 if (e.newPosition.line != lastLine) {
                     lastLine = e.newPosition.line
                     GlobalScope.launch {
-                        val blame = getBlame(lastLine) ?: return@launch
-                        val textPresentation = presentationFactory.smallText(blame.formattedBlame)
-                        val insetPresentation = presentationFactory.inset(textPresentation, 0, 0, textMetricsStorage.getFontMetrics(true).offsetFromTop(), 0)
-
-                       val html = "<img src='${blame.gravatarUrl}'/><span>${blame.summary}</span>\n" +
-                           "<div>Reviews</div>\n" +
-                           blame.reviews.map { "<div>${it.title}</div>" }.joinToString("\n") +
-                           "<div>PRs</div>\n" +
-                           blame.prs.map { "<div>${it.url}</div>" }.joinToString("\n")
-
-                        val withTooltipPresentation = presentationFactory.withTooltip(html, insetPresentation)
-                        val renderer = PresentationRenderer(withTooltipPresentation)
-                        setInlay(e.newPosition.line, renderer)
+                        try {
+                            val blame = getBlame(lastLine) ?: return@launch
+                            val textPresentation = presentationFactory.smallText(blame.formattedBlame)
+                            val insetPresentation = presentationFactory.inset(textPresentation, 0, 0, textMetricsStorage.getFontMetrics(true).offsetFromTop(), 0)
+                            val presentation = if (!blame.isUncommitted) {
+                                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+                                val blameHover = BlameHover().also {
+                                    it.configure(project, editor, psiFile, blame, iconsCache)
+                                }
+                                csPresentationFactory.withTooltip(blameHover.rootPanel, insetPresentation)
+                            } else {
+                                insetPresentation
+                            }
+                            val renderer = PresentationRenderer(presentation)
+                            setInlay(e.newPosition.line, renderer)
+                        } catch (ex: Exception) {
+                            logger.error(ex)
+                        }
                     }
                 }
             }
         })
+
 
         editor.document.addDocumentListener(object : DocumentListener {
             override fun documentChanged(event: DocumentEvent) {

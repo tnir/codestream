@@ -602,8 +602,12 @@ export interface GetBlameResponse {
 
 export interface GetBlameCommitInfo {
 	sha: string;
+	isUncommitted: boolean;
 	formattedBlame: string;
+	authorName: string;
 	authorEmail: string;
+	dateFromNow: string;
+	dateFormatted: string;
 	gravatarUrl: string;
 	summary: string;
 	prs: any[];

@@ -724,8 +724,12 @@ class GetBlameResult(
 
 class GetBlameResultLineInfo(
     val sha: String,
+    val isUncommitted: Boolean,
     val formattedBlame: String,
+    val authorName: String,
     val authorEmail: String,
+    val dateFromNow: String,
+    val dateFormatted: String,
     val gravatarUrl: String,
     val prs: List<GetBlameResultPR>,
     val reviews: List<Review>,
