@@ -156,11 +156,15 @@ export class BlameDecorationProvider implements Disposable {
 			mdString.appendText("\n\n");
 			mdString.appendText(commitInfo.summary);
 		}
-		commitInfo.prs.forEach((pr: { url: string; title: string }) => {
+		commitInfo.prs.forEach((pr: { id: string; providerId: string; title: string; url: string }) => {
 			mdString.appendText("\n\n");
 			mdString.appendMarkdown(
-				`[$(pull-request) ${pr.title}](command:codestream.openPullRequest?${encodeURIComponent(
+				`[$(git-pull-request) ${
+					pr.title
+				} $(link-external)](command:codestream.openPullRequest?${encodeURIComponent(
 					JSON.stringify({
+						providerId: pr.providerId,
+						pullRequestId: pr.id,
 						externalUrl: pr.url
 					})
 				)})`
