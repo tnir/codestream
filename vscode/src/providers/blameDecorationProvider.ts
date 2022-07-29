@@ -38,10 +38,9 @@ export class BlameDecorationProvider implements Disposable {
 	}
 
 	private onConfigurationChanged(e: ConfigurationChangeEvent) {
-		// if (configuration.changed(e, configuration.name("showLineBlames").value)) {
-		// 	this.ensure(true);
-		// }
-		this.ensure(true); // remove me
+		if (configuration.changed(e, configuration.name("showLineBlames").value)) {
+			this.ensure(true);
+		}
 	}
 
 	private onSessionStatusChanged(e: SessionStatusChangedEvent) {
@@ -58,7 +57,7 @@ export class BlameDecorationProvider implements Disposable {
 	}
 
 	private ensure(reset: boolean = false) {
-		if (!Container.session.signedIn) {
+		if (!Container.config.showLineBlames || !Container.session.signedIn) {
 			this.disable();
 			return;
 		}

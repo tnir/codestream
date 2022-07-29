@@ -150,6 +150,12 @@
 					"description": "Specifies whether to show CodeStream in the status bar",
 					"scope": "window"
 				},
+				"codestream.showLineBlames": {
+					"type": "boolean",
+					"default": true,
+					"description": "Specifies whether to show git blame information at the end of lines",
+					"scope": "window"
+				},
 				"codestream.showMarkerCodeLens": {
 					"type": "boolean",
 					"default": false,
