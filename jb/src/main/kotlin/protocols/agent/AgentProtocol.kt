@@ -298,7 +298,7 @@ class TextDocumentFromKeyResult(
 
 class TelemetryParams(
     val eventName: String,
-    val properties: Map<String, Any>? = null,
+    val properties: Map<String, Any?>? = null,
     val options: TelemetryParamsOptions? = null
 )
 

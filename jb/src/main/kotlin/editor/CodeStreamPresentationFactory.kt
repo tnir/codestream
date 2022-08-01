@@ -1,10 +1,13 @@
 package com.codestream.editor
 
+import com.codestream.agentService
+import com.codestream.protocols.agent.TelemetryParams
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hints.InlayPresentationFactory
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.OnHoverPresentation
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.LightweightHint
@@ -16,6 +19,8 @@ import java.awt.event.MouseEvent
 import javax.swing.JPanel
 
 class CodeStreamPresentationFactory(val editor: EditorImpl) {
+
+    private val logger = Logger.getInstance(CodeStreamPresentationFactory::class.java)
 
     @Contract(pure = true)
     fun withTooltip(blameHover: BlameHover, base: InlayPresentation): InlayPresentation {
@@ -29,6 +34,13 @@ class CodeStreamPresentationFactory(val editor: EditorImpl) {
                         hint = null
                     }
                     hint = showTooltip(editor, event, blameHover.rootPanel)
+                    try {
+                        editor.project?.agentService?.agent?.telemetry(TelemetryParams("Blame Hover Viewed", mapOf(
+                            "extension" to editor.virtualFile.extension
+                        )))
+                    } catch(ex: Exception) {
+                        logger.warn(ex)
+                    }
                 }
             }
 

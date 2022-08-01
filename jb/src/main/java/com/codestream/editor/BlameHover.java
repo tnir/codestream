@@ -4,6 +4,7 @@ import com.codestream.DirectoryKt;
 import com.codestream.actions.AddComment;
 import com.codestream.actions.CreateIssue;
 import com.codestream.actions.GetPermalink;
+import com.codestream.actions.NewCodemark;
 import com.codestream.protocols.agent.GetBlameResultLineInfo;
 import com.codestream.protocols.webview.ReviewNotifications;
 import com.codestream.protocols.webview.WebViewNotification;
@@ -101,15 +102,21 @@ public class BlameHover {
 
     private void createUIComponents() {
         addComment = new ActionLink("Add Comment", actionEvent -> {
-            (new AddComment()).invoke(_project, _editor, _psiFile);
+            NewCodemark action = (new AddComment());
+            action.setTelemetrySource("Blame Hover");
+            action.invoke(_project, _editor, _psiFile);
             notifyActionInvokedListeners();
         });
         createIssue = new ActionLink("Create issue", actionEvent -> {
-            (new CreateIssue()).invoke(_project, _editor, _psiFile);
+            NewCodemark action = (new CreateIssue());
+            action.setTelemetrySource("Blame Hover");
+            action.invoke(_project, _editor, _psiFile);
             notifyActionInvokedListeners();
         });
         sharePermalink = new ActionLink("Share permalink", actionEvent -> {
-            (new GetPermalink()).invoke(_project, _editor, _psiFile);
+            NewCodemark action = (new GetPermalink());
+            action.setTelemetrySource("Blame Hover");
+            action.invoke(_project, _editor, _psiFile);
             notifyActionInvokedListeners();
         });
     }
