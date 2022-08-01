@@ -115,14 +115,6 @@ class LineLevelBlameService(val project: Project) : SelectionListener {
             return lineBlames[line]
         }
 
-        val hyperlinkListener = HyperlinkListener {
-            if (it.eventType == EventType.ACTIVATED) {
-                println(it.description)
-            }
-        }
-
-
-
         editor.caretModel.addCaretListener(object : CaretListener {
             override fun caretPositionChanged(e: CaretEvent) {
                 if (!settingsService.showGitBlame) {
