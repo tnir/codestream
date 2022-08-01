@@ -4,12 +4,14 @@ import com.codestream.agentService
 import com.codestream.extensions.uri
 import com.codestream.protocols.agent.GetBlameParams
 import com.codestream.protocols.agent.GetBlameResultLineInfo
+import com.codestream.settings.ApplicationSettingsService
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
@@ -37,6 +39,7 @@ class LineLevelBlameService(val project: Project) : SelectionListener {
     private val logger = Logger.getInstance(LineLevelBlameService::class.java)
     private val gitToolboxInstalled = PluginManager.isPluginInstalled(PluginId.getId("zielu.gittoolbox"))
     private val iconsCache = mutableMapOf<String, CompletableFuture<Icon?>>()
+    private val settingsService = ServiceManager.getService(ApplicationSettingsService::class.java)
 
     fun add(editor: Editor) {
         if (gitToolboxInstalled) return
@@ -122,15 +125,19 @@ class LineLevelBlameService(val project: Project) : SelectionListener {
 
         editor.caretModel.addCaretListener(object : CaretListener {
             override fun caretPositionChanged(e: CaretEvent) {
+                if (!settingsService.showGitBlame) {
+                    inlay?.dispose()
+                    return
+                }
                 if (e.newPosition.line != lastLine) {
                     lastLine = e.newPosition.line
+                    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
                     GlobalScope.launch {
                         try {
                             val blame = getBlame(lastLine) ?: return@launch
                             val textPresentation = presentationFactory.smallText(blame.formattedBlame)
                             val insetPresentation = presentationFactory.inset(textPresentation, 0, 0, textMetricsStorage.getFontMetrics(true).offsetFromTop(), 0)
                             val presentation = if (!blame.isUncommitted) {
-                                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
                                 val blameHover = BlameHover().also {
                                     it.configure(project, editor, psiFile, blame, iconsCache)
                                 }
