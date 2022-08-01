@@ -29,7 +29,7 @@ public class BlameHover {
     private Editor _editor;
     private PsiFile _psiFile;
 
-    public void configure(Project project, Editor editor, PsiFile psiFile, GetBlameResultLineInfo blame, Map<String, CompletableFuture<Icon>> iconsCache) {
+    public void configure(Project project, Editor editor, PsiFile psiFile, GetBlameResultLineInfo blame, IconsCache iconsCache) {
         _project = project;
         _editor = editor;
         _psiFile = psiFile;

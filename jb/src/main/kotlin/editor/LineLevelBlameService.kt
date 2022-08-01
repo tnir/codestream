@@ -31,132 +31,154 @@ import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 import javax.swing.ImageIcon
-import javax.swing.event.HyperlinkEvent.EventType
-import javax.swing.event.HyperlinkListener
+
+private val logger = Logger.getInstance(LineLevelBlameService::class.java)
 
 class LineLevelBlameService(val project: Project) : SelectionListener {
-
-    private val logger = Logger.getInstance(LineLevelBlameService::class.java)
     private val gitToolboxInstalled = PluginManager.isPluginInstalled(PluginId.getId("zielu.gittoolbox"))
-    private val iconsCache = mutableMapOf<String, CompletableFuture<Icon?>>()
-    private val settingsService = ServiceManager.getService(ApplicationSettingsService::class.java)
+    private val iconsCache = IconsCache()
+    private val blameManagers = mutableMapOf<Editor, BlameManager>()
 
     fun add(editor: Editor) {
         if (gitToolboxInstalled) return
         if (editor !is EditorImpl) return
-        val uri = editor.document.uri ?: return
-        val agent = project.agentService ?: return
-        val presentationFactory = PresentationFactory(editor)
-        val csPresentationFactory = CodeStreamPresentationFactory(editor)
-        val textMetricsStorage = InlayTextMetricsStorage(editor)
-        val lineBlames = mutableMapOf<Int, GetBlameResultLineInfo>()
-        var isLoadingBlame: CompletableFuture<Unit>? = null
-        var inlay: Disposable? = null
-        var lastLine: Int = -1
-
-        fun setInlay(line: Int, renderer: PresentationRenderer) {
-            ApplicationManager.getApplication().invokeLater {
-                synchronized(this) {
-                        inlay?.dispose()
-                        inlay = editor.inlayModel.addAfterLineEndElement(editor.visualLineStartOffset(line), false, renderer)
-                }
-            }
-        }
-
-        suspend fun getBlame(line: Int): GetBlameResultLineInfo? {
-            isLoadingBlame?.await()
-            if (!lineBlames.containsKey(line)) {
-                isLoadingBlame = CompletableFuture<Unit>()
-                try {
-                    var lineStart = line
-                    var lineEnd = line
-                    if (lineBlames.containsKey(line - 1)) {
-                        lineEnd = line + 10
-                    } else if (lineBlames.contains(line + 1)) {
-                        lineStart = line - 10
-                    } else {
-                        lineStart = line - 5
-                        lineEnd = line + 5
-                    }
-                    lineStart = lineStart.coerceAtLeast(0)
-                    lineEnd = lineEnd.coerceAtMost(editor.document.lineCount - 1)
-
-                    val blameResult = agent.getBlame(GetBlameParams(
-                        uri,
-                        lineStart,
-                        lineEnd
-                    ))
-                    blameResult.blame.forEachIndexed { index, lineBlame ->
-                        lineBlames[index + lineStart] = lineBlame
-                        iconsCache.getOrPut(lineBlame.gravatarUrl) {
-                            val iconFuture = CompletableFuture<Icon?>()
-                            GlobalScope.launch {
-                                try {
-                                    val bytes: ByteArray = HttpRequests.request(lineBlame.gravatarUrl).readBytes(null)
-                                    val tempIcon = ImageIcon(bytes)
-                                    val image: Image = tempIcon.image
-                                    val resizedImage: Image = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH)
-                                    iconFuture.complete(ImageIcon(resizedImage))
-                                } catch (e: Exception) {
-                                    logger.warn(e)
-                                    iconFuture.complete(null)
-                                }
-                            }
-                            iconFuture
-                        }
-                    }
-                } catch (ex: Exception) {
-                    logger.warn(ex)
-                } finally {
-                    isLoadingBlame?.complete(Unit)
-                }
-            }
-
-            return lineBlames[line]
-        }
-
-        editor.caretModel.addCaretListener(object : CaretListener {
-            override fun caretPositionChanged(e: CaretEvent) {
-                if (!settingsService.showGitBlame) {
-                    inlay?.dispose()
-                    return
-                }
-                if (e.newPosition.line != lastLine) {
-                    lastLine = e.newPosition.line
-                    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-                    GlobalScope.launch {
-                        try {
-                            val blame = getBlame(lastLine) ?: return@launch
-                            val textPresentation = presentationFactory.smallText(blame.formattedBlame)
-                            val insetPresentation = presentationFactory.inset(textPresentation, 0, 0, textMetricsStorage.getFontMetrics(true).offsetFromTop(), 0)
-                            val presentation = if (!blame.isUncommitted) {
-                                val blameHover = BlameHover().also {
-                                    it.configure(project, editor, psiFile, blame, iconsCache)
-                                }
-                                csPresentationFactory.withTooltip(blameHover, insetPresentation)
-                            } else {
-                                insetPresentation
-                            }
-                            val renderer = PresentationRenderer(presentation)
-                            setInlay(e.newPosition.line, renderer)
-                        } catch (ex: Exception) {
-                            logger.error(ex)
-                        }
-                    }
-                }
-            }
-        })
-
-
-        editor.document.addDocumentListener(object : DocumentListener {
-            override fun documentChanged(event: DocumentEvent) {
-                lineBlames.clear()
-            }
-        })
+        blameManagers[editor] = BlameManager(editor, iconsCache)
     }
 
     fun remove(editor: Editor) {
-
+        blameManagers.remove(editor)
     }
 
+    fun resetCache() {
+        blameManagers.values.forEach { it.clearCache() }
+    }
+}
+
+private class BlameManager(private val editor: EditorImpl, private val iconsCache: IconsCache) : CaretListener, DocumentListener {
+    private val uri = editor.document.uri
+    private val agent = editor.project?.agentService
+    private val settingsService = ServiceManager.getService(ApplicationSettingsService::class.java)
+    private val presentationFactory = PresentationFactory(editor)
+    private val csPresentationFactory = CodeStreamPresentationFactory(editor)
+    private val textMetricsStorage = InlayTextMetricsStorage(editor)
+    private val lineBlames = mutableMapOf<Int, GetBlameResultLineInfo>()
+    private var isLoadingBlame: CompletableFuture<Unit>? = null
+    private var inlay: Disposable? = null
+    private var lastLine: Int = -1
+    init {
+        editor.caretModel.addCaretListener(this)
+        editor.document.addDocumentListener(this)
+    }
+
+    private fun setInlay(line: Int, renderer: PresentationRenderer) {
+        ApplicationManager.getApplication().invokeLater {
+            synchronized(this) {
+                inlay?.dispose()
+                inlay = editor.inlayModel.addAfterLineEndElement(editor.visualLineStartOffset(line), false, renderer)
+            }
+        }
+    }
+
+    private suspend fun getBlame(line: Int): GetBlameResultLineInfo? {
+        if (uri == null || agent == null) return null
+        isLoadingBlame?.await()
+        if (!lineBlames.containsKey(line)) {
+            isLoadingBlame = CompletableFuture<Unit>()
+            try {
+                var lineStart = line
+                var lineEnd = line
+                if (lineBlames.containsKey(line - 1)) {
+                    lineEnd = line + 10
+                } else if (lineBlames.contains(line + 1)) {
+                    lineStart = line - 10
+                } else {
+                    lineStart = line - 5
+                    lineEnd = line + 5
+                }
+                lineStart = lineStart.coerceAtLeast(0)
+                lineEnd = lineEnd.coerceAtMost(editor.document.lineCount - 1)
+
+                val blameResult = agent.getBlame(GetBlameParams(
+                    uri,
+                    lineStart,
+                    lineEnd
+                ))
+                blameResult.blame.forEachIndexed { index, lineBlame ->
+                    lineBlames[index + lineStart] = lineBlame
+                    iconsCache.load(lineBlame.gravatarUrl)
+                }
+            } catch (ex: Exception) {
+                logger.warn(ex)
+            } finally {
+                isLoadingBlame?.complete(Unit)
+            }
+        }
+
+        return lineBlames[line]
+    }
+
+    override fun caretPositionChanged(e: CaretEvent) {
+        if (!settingsService.showGitBlame) {
+            inlay?.dispose()
+            return
+        }
+        if (e.newPosition.line != lastLine) {
+            lastLine = e.newPosition.line
+            val project = editor.project ?: return
+            val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
+            GlobalScope.launch {
+                try {
+                    val blame = getBlame(lastLine) ?: return@launch
+                    val textPresentation = presentationFactory.smallText(blame.formattedBlame)
+                    val insetPresentation = presentationFactory.inset(textPresentation, 0, 0, textMetricsStorage.getFontMetrics(true).offsetFromTop(), 0)
+                    val presentation = if (!blame.isUncommitted) {
+                        val blameHover = BlameHover().also {
+                            it.configure(project, editor, psiFile, blame, iconsCache)
+                        }
+                        csPresentationFactory.withTooltip(blameHover, insetPresentation)
+                    } else {
+                        insetPresentation
+                    }
+                    val renderer = PresentationRenderer(presentation)
+                    setInlay(e.newPosition.line, renderer)
+                } catch (ex: Exception) {
+                    logger.error(ex)
+                }
+            }
+        }
+    }
+
+    override fun documentChanged(event: DocumentEvent) {
+        lineBlames.clear()
+    }
+
+    fun clearCache() {
+        lineBlames.clear()
+    }
+}
+
+class IconsCache {
+    private val cache = mutableMapOf<String, CompletableFuture<Icon?>>()
+    fun load(url: String) {
+        cache.getOrPut(url) {
+            val iconFuture = CompletableFuture<Icon?>()
+            GlobalScope.launch {
+                try {
+                    val bytes: ByteArray = HttpRequests.request(url).readBytes(null)
+                    val tempIcon = ImageIcon(bytes)
+                    val image: Image = tempIcon.image
+                    val resizedImage: Image = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH)
+                    iconFuture.complete(ImageIcon(resizedImage))
+                } catch (e: Exception) {
+                    logger.warn(e)
+                    iconFuture.complete(null)
+                }
+            }
+            iconFuture
+        }
+    }
+
+    fun get(url: String): CompletableFuture<Icon?>? {
+        return cache[url]
+    }
 }
