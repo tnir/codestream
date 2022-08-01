@@ -5,9 +5,9 @@ import com.codestream.actions.AddComment;
 import com.codestream.actions.CreateIssue;
 import com.codestream.actions.GetPermalink;
 import com.codestream.protocols.agent.GetBlameResultLineInfo;
-import com.codestream.protocols.webview.PullRequestNotifications;
 import com.codestream.protocols.webview.ReviewNotifications;
 import com.codestream.protocols.webview.WebViewNotification;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -48,12 +48,8 @@ public class BlameHover {
 
         blame.getPrs().forEach(pr -> {
             ActionLink actionLink = new ActionLink(pr.getTitle(),  actionEvent -> {
-                WebViewNotification notification = new PullRequestNotifications.Show(pr.getProviderId(), pr.getId(), pr.getUrl(), null);
-                DirectoryKt.getCodeStream(project).show(() -> {
-                    DirectoryKt.getWebViewService(project).postNotification(notification, false);
-                    notifyActionInvokedListeners();
-                    return null;
-                });
+                BrowserUtil.browse(pr.getUrl());
+                notifyActionInvokedListeners();
             });
             actionLink.setIcon(IconLoader.getIcon("/images/pull-request.svg"));
             actionLink.setMargin(JBUI.insets(3, 0));
