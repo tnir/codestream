@@ -25,6 +25,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import java.awt.Image
@@ -64,7 +66,9 @@ private class BlameManager(private val editor: EditorImpl, private val iconsCach
     private val lineBlames = mutableMapOf<Int, GetBlameResultLineInfo>()
     private var isLoadingBlame: CompletableFuture<Unit>? = null
     private var inlay: Disposable? = null
-    private var lastLine: Int = -1
+    private var currentLine: Int = -1
+    private val project = editor.project
+    private val psiFile = if (project != null) PsiDocumentManager.getInstance(project).getPsiFile(editor.document) else null
     init {
         editor.caretModel.addCaretListener(this)
         editor.document.addDocumentListener(this)
@@ -84,76 +88,90 @@ private class BlameManager(private val editor: EditorImpl, private val iconsCach
         isLoadingBlame?.await()
         if (!lineBlames.containsKey(line)) {
             isLoadingBlame = CompletableFuture<Unit>()
-            try {
-                var lineStart = line
-                var lineEnd = line
-                if (lineBlames.containsKey(line - 1)) {
-                    lineEnd = line + 10
-                } else if (lineBlames.contains(line + 1)) {
-                    lineStart = line - 10
-                } else {
-                    lineStart = line - 5
-                    lineEnd = line + 5
-                }
-                lineStart = lineStart.coerceAtLeast(0)
-                lineEnd = lineEnd.coerceAtMost(editor.document.lineCount - 1)
+            project?.agentService?.onDidStart {
+                GlobalScope.launch {
+                    try {
+                        var lineStart = line
+                        var lineEnd = line
+                        if (lineBlames.containsKey(line - 1)) {
+                            lineEnd = line + 10
+                        } else if (lineBlames.contains(line + 1)) {
+                            lineStart = line - 10
+                        } else {
+                            lineStart = line - 5
+                            lineEnd = line + 5
+                        }
+                        lineStart = lineStart.coerceAtLeast(0)
+                        lineEnd = lineEnd.coerceAtMost(editor.document.lineCount - 1)
 
-                val blameResult = agent.getBlame(GetBlameParams(
-                    uri,
-                    lineStart,
-                    lineEnd
-                ))
-                blameResult.blame.forEachIndexed { index, lineBlame ->
-                    lineBlames[index + lineStart] = lineBlame
-                    iconsCache.load(lineBlame.gravatarUrl)
+                        val blameResult = agent.getBlame(GetBlameParams(
+                            uri,
+                            lineStart,
+                            lineEnd
+                        ))
+                        blameResult.blame.forEachIndexed { index, lineBlame ->
+                            lineBlames[index + lineStart] = lineBlame
+                            iconsCache.load(lineBlame.gravatarUrl)
+                        }
+                    } catch (ex: Exception) {
+                        logger.warn(ex)
+                    } finally {
+                        isLoadingBlame?.complete(Unit)
+                    }
                 }
-            } catch (ex: Exception) {
-                logger.warn(ex)
-            } finally {
-                isLoadingBlame?.complete(Unit)
             }
+            isLoadingBlame?.await()
         }
 
         return lineBlames[line]
     }
 
     override fun caretPositionChanged(e: CaretEvent) {
-        if (!settingsService.showGitBlame) {
-            inlay?.dispose()
-            return
+        if (e.newPosition.line != currentLine) {
+            currentLine = e.newPosition.line
+            renderBlame()
         }
-        if (e.newPosition.line != lastLine) {
-            lastLine = e.newPosition.line
-            val project = editor.project ?: return
-            val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-            GlobalScope.launch {
-                try {
-                    val blame = getBlame(lastLine) ?: return@launch
-                    val textPresentation = presentationFactory.smallText(blame.formattedBlame)
-                    val insetPresentation = presentationFactory.inset(textPresentation, 0, 0, textMetricsStorage.getFontMetrics(true).offsetFromTop(), 0)
-                    val presentation = if (!blame.isUncommitted) {
-                        val blameHover = BlameHover().also {
-                            it.configure(project, editor, psiFile, blame, iconsCache)
-                        }
-                        csPresentationFactory.withTooltip(blameHover, insetPresentation)
-                    } else {
-                        insetPresentation
+    }
+
+    fun renderBlame() = ApplicationManager.getApplication().invokeLater {
+        inlay?.dispose()
+        inlay = null
+        if (!settingsService.showGitBlame) return@invokeLater
+        val project = editor.project ?: return@invokeLater
+        GlobalScope.launch {
+            try {
+                val blame = getBlame(currentLine) ?: return@launch
+                val textPresentation = presentationFactory.smallText(blame.formattedBlame)
+                val insetPresentation = presentationFactory.inset(textPresentation, 0, 0, textMetricsStorage.getFontMetrics(true).offsetFromTop(), 0)
+                val presentation = if (!blame.isUncommitted) {
+                    val blameHover = BlameHover().also {
+                        it.configure(project, editor, psiFile, blame, iconsCache)
                     }
-                    val renderer = PresentationRenderer(presentation)
-                    setInlay(e.newPosition.line, renderer)
-                } catch (ex: Exception) {
-                    logger.error(ex)
+                    csPresentationFactory.withTooltip(blameHover, insetPresentation)
+                } else {
+                    insetPresentation
                 }
+                val renderer = PresentationRenderer(presentation)
+                setInlay(currentLine, renderer)
+            } catch (ex: Exception) {
+                logger.warn(ex)
             }
         }
     }
 
+    private var debouncedRenderBlame: Job? = null
     override fun documentChanged(event: DocumentEvent) {
         lineBlames.clear()
+        debouncedRenderBlame?.cancel()
+        debouncedRenderBlame = GlobalScope.launch {
+            delay(2000L)
+            renderBlame()
+        }
     }
 
     fun clearCache() {
         lineBlames.clear()
+        renderBlame()
     }
 }
 
