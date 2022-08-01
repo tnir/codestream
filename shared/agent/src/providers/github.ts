@@ -1184,9 +1184,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		}
 
-		if (result.length) {
-			this._pullRequestsContainingShaCache.set(sha, result);
-		}
+		this._pullRequestsContainingShaCache.set(sha, result);
 
 		return result;
 	}
