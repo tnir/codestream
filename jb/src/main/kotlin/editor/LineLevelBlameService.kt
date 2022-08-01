@@ -134,7 +134,7 @@ class LineLevelBlameService(val project: Project) : SelectionListener {
                                 val blameHover = BlameHover().also {
                                     it.configure(project, editor, psiFile, blame, iconsCache)
                                 }
-                                csPresentationFactory.withTooltip(blameHover.rootPanel, insetPresentation)
+                                csPresentationFactory.withTooltip(blameHover, insetPresentation)
                             } else {
                                 insetPresentation
                             }

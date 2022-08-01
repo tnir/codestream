@@ -7,26 +7,28 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.OnHoverPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.LightweightHint
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Contract
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
-import javax.swing.event.HyperlinkListener
 
 class CodeStreamPresentationFactory(val editor: EditorImpl) {
 
     @Contract(pure = true)
-    fun withTooltip(tooltip: JPanel, base: InlayPresentation): InlayPresentation {
+    fun withTooltip(blameHover: BlameHover, base: InlayPresentation): InlayPresentation {
         var hint: LightweightHint? = null
+
         return onHover(base, object : InlayPresentationFactory.HoverListener {
             override fun onHover(event: MouseEvent, translated: Point) {
                 if (hint?.isVisible != true) {
-                    hint = showTooltip(editor, event, tooltip)
+                    blameHover.onActionInvoked {
+                        hint?.hide()
+                        hint = null
+                    }
+                    hint = showTooltip(editor, event, blameHover.rootPanel)
                 }
             }
 

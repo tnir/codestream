@@ -14,11 +14,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBUI;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -48,9 +48,10 @@ public class BlameHover {
 
         blame.getPrs().forEach(pr -> {
             ActionLink actionLink = new ActionLink(pr.getTitle(),  actionEvent -> {
-                WebViewNotification notification = new PullRequestNotifications.Show(pr.getProviderId(), pr.getId(), null);
+                WebViewNotification notification = new PullRequestNotifications.Show(pr.getProviderId(), pr.getId(), pr.getUrl(), null);
                 DirectoryKt.getCodeStream(project).show(() -> {
                     DirectoryKt.getWebViewService(project).postNotification(notification, false);
+                    notifyActionInvokedListeners();
                     return null;
                 });
             });
@@ -63,6 +64,7 @@ public class BlameHover {
             WebViewNotification notification = new ReviewNotifications.Show(review.getId(), null, null, null, false);
             DirectoryKt.getCodeStream(project).show(() -> {
                 DirectoryKt.getWebViewService(project).postNotification(notification, false);
+                notifyActionInvokedListeners();
                 return null;
             });
 
@@ -72,11 +74,21 @@ public class BlameHover {
             actionLink.setMargin(JBUI.insets(3, 0));
             externalContents.add(actionLink);
         });
+    }
 
-//        addComment.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED);
-//        createIssue.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED);
-//        sharePermalink.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED);
-//        linkLabel.sett
+    public interface ActionInvokedListener extends EventListener {
+        void onActionInvoked();
+    }
+
+    private List<ActionInvokedListener> actionInvokedListeners = new ArrayList<ActionInvokedListener>();
+    public void onActionInvoked(ActionInvokedListener listener) {
+        actionInvokedListeners.add(listener);
+    }
+
+    private void notifyActionInvokedListeners() {
+        for (ActionInvokedListener listener : actionInvokedListeners) {
+            listener.onActionInvoked();
+        }
     }
 
     public JPanel rootPanel;
@@ -92,8 +104,17 @@ public class BlameHover {
     private JLabel authorEmail;
 
     private void createUIComponents() {
-        addComment = new ActionLink("Add Comment", actionEvent -> { (new AddComment()).invoke(_project, _editor, _psiFile); });
-        createIssue = new ActionLink("Create issue", actionEvent -> { (new CreateIssue()).invoke(_project, _editor, _psiFile); });
-        sharePermalink = new ActionLink("Share permalink", actionEvent -> { (new GetPermalink()).invoke(_project, _editor, _psiFile); });
+        addComment = new ActionLink("Add Comment", actionEvent -> {
+            (new AddComment()).invoke(_project, _editor, _psiFile);
+            notifyActionInvokedListeners();
+        });
+        createIssue = new ActionLink("Create issue", actionEvent -> {
+            (new CreateIssue()).invoke(_project, _editor, _psiFile);
+            notifyActionInvokedListeners();
+        });
+        sharePermalink = new ActionLink("Share permalink", actionEvent -> {
+            (new GetPermalink()).invoke(_project, _editor, _psiFile);
+            notifyActionInvokedListeners();
+        });
     }
 }
