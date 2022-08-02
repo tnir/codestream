@@ -36,7 +36,7 @@ class CodeStreamPresentationFactory(val editor: EditorImpl) {
                     hint = showTooltip(editor, event, blameHover.rootPanel)
                     try {
                         editor.project?.agentService?.agent?.telemetry(TelemetryParams("Blame Hover Viewed", mapOf(
-                            "extension" to editor.virtualFile.extension
+                            "File Extension" to editor.virtualFile.extension
                         )))
                     } catch(ex: Exception) {
                         logger.warn(ex)
