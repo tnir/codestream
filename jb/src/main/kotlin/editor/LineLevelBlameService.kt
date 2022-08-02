@@ -1,6 +1,7 @@
 package com.codestream.editor
 
 import com.codestream.agentService
+import com.codestream.extensions.getOffset
 import com.codestream.extensions.uri
 import com.codestream.protocols.agent.GetBlameParams
 import com.codestream.protocols.agent.GetBlameResultLineInfo
@@ -29,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import org.eclipse.lsp4j.Position
 import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
@@ -36,7 +38,7 @@ import javax.swing.ImageIcon
 
 private val logger = Logger.getInstance(LineLevelBlameService::class.java)
 
-class LineLevelBlameService(val project: Project) : SelectionListener {
+class LineLevelBlameService(val project: Project) {
     private val gitToolboxInstalled = PluginManager.isPluginInstalled(PluginId.getId("zielu.gittoolbox"))
     private val iconsCache = IconsCache()
     private val blameManagers = mutableMapOf<Editor, BlameManager>()
@@ -78,7 +80,7 @@ private class BlameManager(private val editor: EditorImpl, private val iconsCach
         ApplicationManager.getApplication().invokeLater {
             synchronized(this) {
                 inlay?.dispose()
-                inlay = editor.inlayModel.addAfterLineEndElement(editor.visualLineStartOffset(line), false, renderer)
+                inlay = editor.inlayModel.addAfterLineEndElement(editor.getOffset(Position(currentLine, 0)), false, renderer)
             }
         }
     }
