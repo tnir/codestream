@@ -18,7 +18,7 @@ export interface Config {
 	serverUrl: string;
 	showAvatars: boolean;
 	showInStatusBar: "left" | "right" | false;
-	showLineBlames: boolean;
+	showLineLevelBlame: boolean;
 	showMarkerCodeLens: boolean;
 	showMarkerGlyphs: boolean;
 	goldenSignalsInEditor: boolean;
