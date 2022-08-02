@@ -1,5 +1,21 @@
 # Change Log
 
+## [13.4.0] - 2022-8-3
+
+### Added
+
+- Adds support for Visual Studio 2022, and drops support for Visual Studio 2017
+
+### Changed
+
+- Update display of issues from Azure to include issues where state is not in 'Closed','Done','Completed','Inactive','Removed', and limit number of results to 200
+
+### Fixed
+
+- Fixes an issue where creating an issue on Asana fails if the description contains mismatched angle brackets
+- Fixes an issue where adding a reaction to a GitLab merge request fails
+- Fixes the display of organization name in the toolbar
+
 ## [13.3.0] - 2022-7-25
 
 ### Added
