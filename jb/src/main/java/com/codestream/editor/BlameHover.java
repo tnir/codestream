@@ -17,11 +17,10 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 public class BlameHover {
 
@@ -37,15 +36,22 @@ public class BlameHover {
         Icon icon = iconsCache.get(blame.getGravatarUrl()).join();
         userIcon.setIcon(icon);
         userIcon.setText(null);
+        userIcon.setBorder(new EmptyBorder(2, 0, 0, 0));
 
         authorName.setText(blame.getAuthorName());
         authorEmail.setText(blame.getAuthorEmail());
         commitDate.setText(blame.getDateFromNow() + " (" + blame.getDateFormatted() + ")");
         commitSha.setText(blame.getSha().substring(0, 8));
         commitSha.setIcon(IconLoader.getIcon("/images/git-commit.svg"));
+        commitSha.setBorder(new EmptyBorder(7, 0, 0, 0));
         commitMessage.setText(blame.getSummary());
+        commitMessage.setBorder(new EmptyBorder(0, 0, 7, 0));
 
-        externalContents.setLayout(new BoxLayout(externalContents, BoxLayout.Y_AXIS));
+        if (blame.getPrs().isEmpty() && blame.getReviews().isEmpty()) {
+            externalContents.setSize(0, 0);
+        } else {
+            externalContents.setLayout(new BoxLayout(externalContents, BoxLayout.Y_AXIS));
+        }
 
         blame.getPrs().forEach(pr -> {
             ActionLink actionLink = new ActionLink(pr.getTitle(),  actionEvent -> {
@@ -53,7 +59,7 @@ public class BlameHover {
                 notifyActionInvokedListeners();
             });
             actionLink.setIcon(IconLoader.getIcon("/images/pull-request.svg"));
-            actionLink.setMargin(JBUI.insets(3, 0));
+            actionLink.setBorder(new EmptyBorder(2, 0, 2, 0));
             externalContents.add(actionLink);
         });
 
@@ -64,11 +70,9 @@ public class BlameHover {
                 notifyActionInvokedListeners();
                 return null;
             });
-
-
         })).forEach(actionLink -> {
             actionLink.setIcon(IconLoader.getIcon("/images/marker-fr.svg"));
-            actionLink.setMargin(JBUI.insets(3, 0));
+            actionLink.setBorder(new EmptyBorder(2, 0, 2, 0));
             externalContents.add(actionLink);
         });
     }
@@ -99,6 +103,7 @@ public class BlameHover {
     private ActionLink createIssue;
     private JPanel externalContents;
     private JLabel authorEmail;
+    private JSeparator separator;
 
     private void createUIComponents() {
         addComment = new ActionLink("Add Comment", actionEvent -> {
