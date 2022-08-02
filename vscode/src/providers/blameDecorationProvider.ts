@@ -120,7 +120,7 @@ export class BlameDecorationProvider implements Disposable {
 				cursor.line
 			);
 			const lineBlame = blame[0];
-			const hoverMessage = this.formatHover(lineBlame);
+			const hoverMessage = lineBlame.isUncommitted ? undefined : this.formatHover(lineBlame);
 			editor.setDecorations(this._decorationTypes!.blameSuffix, [
 				{ hoverMessage, range, renderOptions: { after: { contentText: lineBlame.formattedBlame } } }
 			]);
