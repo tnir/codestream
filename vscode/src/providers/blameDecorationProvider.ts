@@ -145,7 +145,7 @@ export class BlameDecorationProvider implements Disposable {
 				`![headshot](${commitInfo.gravatarUrl}) ${authorString} ${dateString}`
 			);
 			mdString.appendText("\n\n");
-			mdString.appendText(commitInfo.authorEmail);
+			mdString.appendMarkdown(`<${commitInfo.authorEmail}>`);
 		}
 		mdString.appendText("\n\n");
 		if (!commitInfo.sha || commitInfo.sha.length === 0 || commitInfo.sha.match(/0{40}/)) {
