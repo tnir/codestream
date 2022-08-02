@@ -136,9 +136,7 @@ export class BlameDecorationProvider implements Disposable {
 		const mdString = new MarkdownString("", true);
 		mdString.isTrusted = true;
 		if (commitInfo.gravatarUrl && commitInfo.gravatarUrl.length > 0) {
-			const authorString = commitInfo.authorEmail
-				? `**[${commitInfo.authorName}](mailto:${commitInfo.authorEmail})**`
-				: "**You**";
+			const authorString = commitInfo.authorEmail ? `**${commitInfo.authorName}**` : "**You**";
 			const dateString =
 				commitInfo.dateFormatted && commitInfo.dateFromNow
 					? `${commitInfo.dateFromNow} (${commitInfo.dateFormatted})`
@@ -146,6 +144,8 @@ export class BlameDecorationProvider implements Disposable {
 			mdString.appendMarkdown(
 				`![headshot](${commitInfo.gravatarUrl}) ${authorString} ${dateString}`
 			);
+			mdString.appendText("\n\n");
+			mdString.appendText(commitInfo.authorEmail);
 		}
 		mdString.appendText("\n\n");
 		if (!commitInfo.sha || commitInfo.sha.length === 0 || commitInfo.sha.match(/0{40}/)) {
