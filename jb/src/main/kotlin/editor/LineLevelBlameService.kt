@@ -50,6 +50,7 @@ class LineLevelBlameService(val project: Project) {
     }
 
     fun remove(editor: Editor) {
+        blameManagers[editor]?.dispose()
         blameManagers.remove(editor)
     }
 
@@ -76,11 +77,24 @@ private class BlameManager(private val editor: EditorImpl, private val iconsCach
         editor.document.addDocumentListener(this)
     }
 
+    fun dispose() {
+        try {
+            editor.caretModel.removeCaretListener(this)
+            editor.document.removeDocumentListener(this)
+        } catch (ex: Exception) {
+            logger.warn(ex)
+        }
+    }
+
     private fun setInlay(line: Int, renderer: PresentationRenderer) {
         ApplicationManager.getApplication().invokeLater {
             synchronized(this) {
-                inlay?.dispose()
-                inlay = editor.inlayModel.addAfterLineEndElement(editor.getOffset(Position(currentLine, 0)), false, renderer)
+                try {
+                    inlay?.dispose()
+                    inlay = editor.inlayModel.addAfterLineEndElement(editor.getOffset(Position(currentLine, 0)), false, renderer)
+                } catch (ex: Exception) {
+                    logger.warn(ex)
+                }
             }
         }
     }
