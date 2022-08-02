@@ -11,7 +11,7 @@ New Relic CodeStream is a developer collaboration platform that integrates all o
 
 ## Requirements
 
-- This version of CodeStream requires Visual Studio 2022 or later. For Visual Studio 2019, check here. CodeStream is also available for [JetBrains](https://plugins.jetbrains.com/plugin/12206-codestream) or [VS Code](https://marketplace.visualstudio.com/items?itemName=CodeStream.codestream).
+- This version of CodeStream requires Visual Studio 2022 or later. For Visual Studio 2019, [check here](https://marketplace.visualstudio.com/items?itemName=CodeStream.codestream-vs). CodeStream is also available for [JetBrains](https://plugins.jetbrains.com/plugin/12206-codestream) or [VS Code](https://marketplace.visualstudio.com/items?itemName=CodeStream.codestream).
 - Your repository must be managed by Git, or a Git hosting service like GitHub.
 - For Windows users, CodeStream now requires a 64-bit version of the OS.
 
