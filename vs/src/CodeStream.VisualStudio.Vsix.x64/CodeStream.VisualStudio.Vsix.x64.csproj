@@ -474,9 +474,6 @@
     <Resource Include="..\resources\assets\marker-trap-yellow.png">
       <Link>resources\assets\marker-trap-yellow.png</Link>
     </Resource>
-    <Content Include="..\resources\CHANGELOG.txt">
-      <Link>CHANGELOG.txt</Link>
-    </Content>
     <Content Include="..\resources\CodeStream.VisualStudio.pkgdef">
       <Link>CodeStream.VisualStudio.pkgdef</Link>
     </Content>
