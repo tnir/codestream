@@ -60,6 +60,7 @@ import {
 } from "./provider";
 import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
 import { ProviderVersion } from "./types";
+import { TernarySearchTree } from "../../../ui/utilities/searchTree";
 
 interface GitHubRepo {
 	id: string;
@@ -4578,9 +4579,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			debugger;
 		}
 
-		changedFiles.sort((a, b) => a.filename.localeCompare(b.filename));
+		const filesInOrder = this.sortFilesInTreeOrder(changedFiles);
 
-		return changedFiles;
+		return filesInOrder;
 	}
 
 	_timelineQueryItemsString!: string;
