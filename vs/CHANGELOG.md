@@ -1,6 +1,6 @@
 # Change Log
 
-## [13.4.0] - 2022-8-3
+## [13.4.0] - 2022-8-4
 
 ### Added
 
@@ -15,6 +15,7 @@
 - Fixes an issue where creating an issue on Asana fails if the description contains mismatched angle brackets
 - Fixes an issue where adding a reaction to a GitLab merge request fails
 - Fixes the display of organization name in the toolbar
+- Fixes an issue where you couldn't view diffs in a feedback request after going through the feedback-request intro tour
 
 ## [13.3.0] - 2022-7-25
 
