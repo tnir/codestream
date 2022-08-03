@@ -40,6 +40,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.Range
@@ -125,7 +126,7 @@ abstract class CLMEditorManager(
 
                 GlobalScope.launch {
                     try {
-                        lastResult = project.agentService?.fileLevelTelemetry(
+                        val result = project.agentService?.fileLevelTelemetry(
                             FileLevelTelemetryParams(
                                 path,
                                 languageId,
@@ -135,7 +136,9 @@ abstract class CLMEditorManager(
                                 resetCache,
                                 OPTIONS
                             )
-                        )
+                        ) ?: return@launch
+                        // result guaranteed to be non-null, don't overwrite previous result if we get a NR timeout
+                        lastResult = result
                         metricsBySymbol.clear()
 
                         lastResult?.errorRate?.forEach { errorRate ->
@@ -163,8 +166,13 @@ abstract class CLMEditorManager(
         }
     }
 
+    private var debouncedRenderBlame: Job? = null
     override fun documentChanged(event: DocumentEvent) {
-        updateInlays()
+        debouncedRenderBlame?.cancel()
+        debouncedRenderBlame = GlobalScope.launch {
+            delay(750L)
+            updateInlays()
+        }
     }
 
     private fun _updateInlays() {
@@ -181,7 +189,7 @@ abstract class CLMEditorManager(
     }
 
     private fun updateInlays() {
-        ApplicationManager.getApplication().runWriteAction {
+        ApplicationManager.getApplication().invokeLater() {
             _updateInlays()
         }
     }
@@ -217,8 +225,6 @@ abstract class CLMEditorManager(
         if (project.isDisposed) {
             return
         }
-        // Force document update so we can move inlay to correct position after user adds lines to file
-        PsiDocumentManager.getInstance(project).commitDocument(editor.document)
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
         val presentationFactory = PresentationFactory(editor)
         val since = result.sinceDateFormatted ?: "30 minutes ago"
