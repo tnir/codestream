@@ -39,6 +39,7 @@ export const ChangesetFileList = (props: {
 	withTelemetry?: boolean;
 	repoRoots?: { [repoId: string]: string };
 	showViewOptions?: boolean;
+	isTouring?: boolean;
 }) => {
 	const { review, noOnClick, loading, checkpoint } = props;
 	const dispatch = useDispatch<Dispatch>();
@@ -402,13 +403,15 @@ export const ChangesetFileList = (props: {
 		checkpoint,
 		visitedFiles,
 		mode,
-		hasLoaded
+		hasLoaded,
+		props.isTouring
 	]);
 
 	const goDiff = React.useCallback(
 		async index => {
 			// console.warn("GOING TO: ", index);
 			// console.warn("FIO: ", filesInOrder);
+
 			if (index < 0) index = filesInOrder.length - 1;
 			if (index > filesInOrder.length - 1) index = 0;
 			const f = filesInOrder[index];
