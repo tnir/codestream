@@ -1,6 +1,7 @@
 "use strict";
 
 import { GetBlameLineInfo } from "protocols/agent/agent.protocol.scm";
+import { Functions } from "system";
 import {
 	ConfigurationChangeEvent,
 	Disposable,
@@ -10,7 +11,8 @@ import {
 	TextEditorDecorationType,
 	TextEditorSelectionChangeEvent,
 	ThemeColor,
-	window
+	window,
+	workspace
 } from "vscode";
 import { SessionStatus, SessionStatusChangedEvent } from "../api/session";
 import { NewCodemarkCommandArgs } from "../commands";
@@ -22,12 +24,15 @@ export class BlameDecorationProvider implements Disposable {
 	private _decorationTypes: { [key: string]: TextEditorDecorationType } | undefined;
 	private readonly _disposable: Disposable;
 	private _enabledDisposable: Disposable | undefined;
+	private _latestCursorEvent: TextEditorSelectionChangeEvent | undefined;
+	private _blameCache: Map<number, GetBlameLineInfo>;
 
 	constructor() {
 		this._disposable = Disposable.from(
 			configuration.onDidChange(this.onConfigurationChanged, this),
 			Container.session.onDidChangeSessionStatus(this.onSessionStatusChanged, this)
 		);
+		this._blameCache = new Map<number, GetBlameLineInfo>();
 
 		this.onConfigurationChanged(configuration.initializingChangeEvent);
 	}
@@ -69,6 +74,7 @@ export class BlameDecorationProvider implements Disposable {
 	}
 
 	private disable() {
+		this.resetBlameCache();
 		if (this._enabledDisposable === undefined) return;
 
 		this._enabledDisposable.dispose();
@@ -98,11 +104,25 @@ export class BlameDecorationProvider implements Disposable {
 		this._decorationTypes = decorationTypes;
 
 		this._enabledDisposable = Disposable.from(
-			window.onDidChangeTextEditorSelection(this.onCursorChange, this)
+			workspace.onDidChangeTextDocument(Functions.debounce(this.onSourceChange.bind(this), 2000)),
+			window.onDidChangeTextEditorSelection(this.onCursorChange, this),
+			Container.agent.onDidChangeRepositoryCommitHash(this.onSourceChange, this)
 		);
 	}
 
+	private resetBlameCache() {
+		this._blameCache.clear();
+	}
+
+	private async onSourceChange() {
+		this.resetBlameCache();
+		if (this._latestCursorEvent) {
+			await this.onCursorChange(this._latestCursorEvent);
+		}
+	}
+
 	private async onCursorChange(e: TextEditorSelectionChangeEvent) {
+		this._latestCursorEvent = e;
 		const cursor = e.selections[0].active;
 		const editor = e.textEditor;
 		if (editor.document.uri.scheme !== "file") {
@@ -114,16 +134,30 @@ export class BlameDecorationProvider implements Disposable {
 			end: new Position(cursor.line, length)
 		});
 		try {
-			const { blame } = await Container.agent.scm.getBlame(
-				editor.document.uri.toString(),
-				cursor.line,
-				cursor.line
-			);
-			const lineBlame = blame[0];
-			const hoverMessage = lineBlame.isUncommitted ? undefined : this.formatHover(lineBlame);
-			editor.setDecorations(this._decorationTypes!.blameSuffix, [
-				{ hoverMessage, range, renderOptions: { after: { contentText: lineBlame.formattedBlame } } }
-			]);
+			if (!this._blameCache.get(cursor.line)) {
+				const startLine = Math.max(cursor.line - 5, 0);
+				const endLine = Math.min(cursor.line + 5, editor.document.lineCount);
+				const { blame } = await Container.agent.scm.getBlame(
+					editor.document.uri.toString(),
+					startLine,
+					endLine
+				);
+				blame.forEach((blameInfo, index) => {
+					const lineNumber = startLine + index;
+					this._blameCache.set(lineNumber, blameInfo);
+				});
+			}
+			const lineBlame = this._blameCache.get(cursor.line);
+			if (lineBlame) {
+				const hoverMessage = lineBlame.isUncommitted ? undefined : this.formatHover(lineBlame);
+				editor.setDecorations(this._decorationTypes!.blameSuffix, [
+					{
+						hoverMessage,
+						range,
+						renderOptions: { after: { contentText: lineBlame.formattedBlame } }
+					}
+				]);
+			}
 		} catch (ex) {
 			Logger.error(ex);
 		}
