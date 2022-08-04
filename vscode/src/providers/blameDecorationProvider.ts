@@ -8,6 +8,7 @@ import {
 	extensions,
 	MarkdownString,
 	Position,
+	TextDocumentChangeEvent,
 	TextEditorDecorationType,
 	TextEditorSelectionChangeEvent,
 	ThemeColor,
@@ -26,6 +27,11 @@ export class BlameDecorationProvider implements Disposable {
 	private _enabledDisposable: Disposable | undefined;
 	private _latestCursorEvent: TextEditorSelectionChangeEvent | undefined;
 	private _blameCache: Map<number, GetBlameLineInfo>;
+	private readonly onSourceChangeDebounced = Functions.debounce(
+		this.onSourceChange.bind(this),
+		2000,
+		{ track: true }
+	);
 
 	constructor() {
 		this._disposable = Disposable.from(
@@ -104,7 +110,8 @@ export class BlameDecorationProvider implements Disposable {
 		this._decorationTypes = decorationTypes;
 
 		this._enabledDisposable = Disposable.from(
-			workspace.onDidChangeTextDocument(Functions.debounce(this.onSourceChange.bind(this), 2000)),
+			workspace.onDidChangeTextDocument(this.onTextDocumentChange, this),
+			workspace.onDidSaveTextDocument(this.onTextDocumentSave, this),
 			window.onDidChangeTextEditorSelection(this.onCursorChange, this),
 			Container.agent.onDidChangeRepositoryCommitHash(this.onSourceChange, this)
 		);
@@ -114,6 +121,19 @@ export class BlameDecorationProvider implements Disposable {
 		this._blameCache.clear();
 	}
 
+	private async onTextDocumentChange(e: TextDocumentChangeEvent) {
+		if (e.document.uri.scheme !== "file") {
+			return;
+		}
+		this.clearDecorations();
+		await this.onSourceChangeDebounced();
+	}
+
+	private async onTextDocumentSave() {
+		this.onSourceChangeDebounced.flush();
+		await this.onSourceChange();
+	}
+
 	private async onSourceChange() {
 		this.resetBlameCache();
 		if (this._latestCursorEvent) {
@@ -121,8 +141,18 @@ export class BlameDecorationProvider implements Disposable {
 		}
 	}
 
+	private clearDecorations() {
+		if (this._latestCursorEvent) {
+			const editor = this._latestCursorEvent.textEditor;
+			editor.setDecorations(this._decorationTypes!.blameSuffix, []);
+		}
+	}
+
 	private async onCursorChange(e: TextEditorSelectionChangeEvent) {
 		this._latestCursorEvent = e;
+		if (this.onSourceChangeDebounced.pending()) {
+			return;
+		}
 		const cursor = e.selections[0].active;
 		const editor = e.textEditor;
 		if (editor.document.uri.scheme !== "file") {
