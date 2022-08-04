@@ -1471,6 +1471,7 @@ export class ScmManager {
 					Logger.warn(e);
 				}
 			}
+			prs = [...prs.reduce((map, obj) => map.set(obj.url, obj), new Map()).values()];
 
 			const dateFormatter = toFormatter(revisionEntry.date);
 			commitInfos.set(revisionEntry.sha, {
