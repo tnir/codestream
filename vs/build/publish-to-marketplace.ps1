@@ -44,13 +44,13 @@ else {
     Write-Host 'Publishing assets to marketplace...'
     # https://docs.microsoft.com/en-us/visualstudio/extensibility/walkthrough-publishing-a-visual-studio-extension-via-command-line?view=vs-2019
     #  -ignoreWarnings "VSIXValidatorWarning01,VSIXValidatorWarning02"
-    & $exe publish -payload $x86Asset -publishManifest "$($vsDir)\CodeStream.VisualStudio.Vsix.x86\publish\publishManifest.json" -personalAccessToken $pat
+    & $exe publish -payload $x86Asset -publishManifest "$($vsDir)\src\CodeStream.VisualStudio.Vsix.x86\publish\publishManifest.json" -personalAccessToken $pat
     if ($LastExitCode -ne $null -and $LastExitCode -ne 0) {
         Write-Error "Failed to publish $($x86Asset) to marketplace"
 		exit 1
 	}
 
-    & $exe publish -payload $x64Asset -publishManifest "$($vsDir)\CodeStream.VisualStudio.Vsix.x64\publish\publishManifest.json" -personalAccessToken $pat
+    & $exe publish -payload $x64Asset -publishManifest "$($vsDir)\src\CodeStream.VisualStudio.Vsix.x64\publish\publishManifest.json" -personalAccessToken $pat
     if ($LastExitCode -ne $null -and $LastExitCode -ne 0) {
         Write-Error "Failed to publish $($x64Asset) to marketplace"
 		exit 1
