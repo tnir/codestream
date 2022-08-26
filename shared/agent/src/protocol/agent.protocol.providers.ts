@@ -132,7 +132,6 @@ export interface TransitionsEntity {
 	id: string;
 	name: string;
 }
-
 export interface ThirdPartyProviderCard {
 	id: string;
 	title: string;
@@ -877,6 +876,14 @@ export interface GetNewRelicErrorGroupRequest {
 	timestamp?: number;
 }
 
+export interface GetNewRelicRelatedEntitiesRequest {
+	entityGuid: string;
+	direction: string;
+}
+export interface GetNewRelicUrlRequest {
+	entityGuid: string;
+}
+
 export interface NewRelicUser {
 	email?: string;
 	gravatar?: string;
@@ -957,12 +964,39 @@ export interface GetNewRelicErrorGroupResponse {
 	};
 }
 
+export interface GetNewRelicRelatedEntitiesResponse {
+	CALLS?: RelatedEntitiesByType;
+	CONNECTS_TO?: RelatedEntitiesByType;
+	error?: {
+		message: string;
+	};
+	message?: string;
+}
+
+export interface GetNewRelicUrlResponse {
+	newRelicUrl: string;
+}
+
 export const GetNewRelicErrorGroupRequestType = new RequestType<
 	GetNewRelicErrorGroupRequest,
 	GetNewRelicErrorGroupResponse,
 	void,
 	void
 >("codestream/newrelic/errorGroup");
+
+export const GetNewRelicRelatedEntitiesRequestType = new RequestType<
+	GetNewRelicRelatedEntitiesRequest,
+	GetNewRelicRelatedEntitiesResponse,
+	void,
+	void
+>("codestream/newrelic/relatedEntities");
+
+export const GetNewRelicUrlRequestType = new RequestType<
+	GetNewRelicUrlRequest,
+	GetNewRelicUrlResponse,
+	void,
+	void
+>("codestream/newrelic/url");
 
 export interface GetNewRelicAssigneesRequest {}
 export interface GetNewRelicAssigneesResponse {
@@ -1140,6 +1174,8 @@ export interface GetServiceLevelTelemetryRequest {
 	repoId: string;
 	/** entity id of the NewRelic entity */
 	newRelicEntityGuid: string;
+	/** related service needs less data, skips redundant call */
+	skipRepoFetch?: boolean;
 }
 
 export type MetricTimesliceNameMapping = {
@@ -1338,9 +1374,21 @@ export interface RelatedEntity {
 	target: {
 		entity: Entity;
 	};
-	type: "BUILT_FROM";
+	type: string;
 }
 
+export interface RelatedEntityByType {
+	alertSeverity: string;
+	guid: string;
+	name: string;
+	type: string;
+	domain: string;
+	accountName?: string;
+}
+
+export interface RelatedEntitiesByType extends Array<RelatedEntityByType> {}
+
+export interface RelatedEntities extends Array<RelatedEntity> {}
 export interface EntitySearchResponse {
 	actor: {
 		entitySearch: {

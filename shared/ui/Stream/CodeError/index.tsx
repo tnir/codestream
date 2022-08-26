@@ -224,6 +224,14 @@ export const ALERT_SEVERITY_COLORS = {
 	// if not connected, we're unknown
 	UNKNOWN: "transparent"
 };
+export const ALERT_SEVERITY_SORTING_ORDER: string[] = [
+	"",
+	"CRITICAL",
+	"NOT_ALERTING",
+	"NOT_CONFIGURED",
+	"WARNING",
+	"UNKNOWN"
+];
 
 /**
  * States are from NR
@@ -576,6 +584,12 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		);
 	};
 
+	const handleEntityLinkClick = () => {
+		HostApi.instance.track("Open Service Summary on NR", {
+			Section: "Error"
+		});
+	};
+
 	return (
 		<>
 			{openConnectionModal && (
@@ -658,7 +672,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 											<>
 												{props.errorGroup && (
 													<>
-														<Link href={props.errorGroup.entityUrl}>
+														<Link onClick={handleEntityLinkClick} href={props.errorGroup.entityUrl}>
 															<span className="subtle">{props.errorGroup.entityName}</span>{" "}
 															<Icon name="link-external" className="open-external"></Icon>
 														</Link>
