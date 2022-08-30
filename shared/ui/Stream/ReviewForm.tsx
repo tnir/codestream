@@ -654,7 +654,7 @@ class ReviewForm extends React.Component<Props, State> {
 							{
 								topSelectionIndex: 0,
 								bottomSelectionIndex: 0,
-								startCommit: statusInfo.scm.commits && statusInfo.scm.commits[0]?.sha,
+								startCommit: statusInfo.scm.startCommit,
 								excludeCommit
 							},
 							() => this.handleRepoChange()
@@ -665,6 +665,7 @@ class ReviewForm extends React.Component<Props, State> {
 						});
 						this.setState({
 							bottomSelectionIndex: -2,
+							startCommit: statusInfo.scm.startCommit,
 							excludeCommit
 						});
 					} else if (!hasSavedFiles && this.state.topSelectionIndex === -2) {
@@ -673,6 +674,7 @@ class ReviewForm extends React.Component<Props, State> {
 						});
 						this.setState({
 							topSelectionIndex: -1,
+							startCommit: statusInfo.scm.startCommit,
 							excludeCommit
 						});
 					} else if (startCommitIndex === 0) {
@@ -680,6 +682,7 @@ class ReviewForm extends React.Component<Props, State> {
 							excludeCommit[commit.sha] = true;
 						});
 						this.setState({
+							startCommit: statusInfo.scm.startCommit,
 							excludeCommit
 						});
 					}
