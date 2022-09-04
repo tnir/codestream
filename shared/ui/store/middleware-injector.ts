@@ -49,7 +49,7 @@ class MiddlewareInjector {
 		return {
 			dispose: () => {
 				middlewareForType!.delete(fn);
-			}
+			},
 		};
 	}
 }

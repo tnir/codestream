@@ -1,20 +1,20 @@
-import { getUserProviderInfo } from "@codestream/webview/store/providers/utils";
-import { ActionType } from "../common";
-import * as actions from "./actions";
-import { ProvidersState, ProvidersActionsType } from "./types";
-import { CodeStreamState } from "..";
+import { ThirdPartyProviderConfig } from "@codestream/protocols/agent";
 import {
 	CSMe,
 	CSMSTeamsProviderInfo,
 	CSProviderInfos,
-	CSSlackProviderInfo
+	CSSlackProviderInfo,
 } from "@codestream/protocols/api";
-import { mapFilter, safe } from "@codestream/webview/utils";
-import { ThirdPartyProviderConfig } from "@codestream/protocols/agent";
-import { createSelector } from "reselect";
+import { getUserProviderInfo } from "@codestream/webview/store/providers/utils";
 import { PROVIDER_MAPPINGS } from "@codestream/webview/Stream/CrossPostIssueControls/types";
-import { UsersState } from "../users/types";
+import { mapFilter, safe } from "@codestream/webview/utils";
+import { createSelector } from "reselect";
+import { CodeStreamState } from "..";
+import { ActionType } from "../common";
 import { SessionState } from "../session/types";
+import { UsersState } from "../users/types";
+import * as actions from "./actions";
+import { ProvidersActionsType, ProvidersState } from "./types";
 
 type ProviderActions = ActionType<typeof actions>;
 
@@ -74,7 +74,7 @@ const MRLabel: LabelHash = {
 	repoBaseLabel: "target",
 	repoBranchBaseLabel: "target",
 	repoHeadLabel: "source",
-	repoBranchHeadLabel: "source"
+	repoBranchHeadLabel: "source",
 };
 
 const PRLabel: LabelHash = {
@@ -90,7 +90,7 @@ const PRLabel: LabelHash = {
 	repoBaseLabel: "base",
 	repoBranchBaseLabel: "base",
 	repoHeadLabel: "head",
-	repoBranchHeadLabel: "compare"
+	repoBranchHeadLabel: "compare",
 };
 
 const BBPRLabel: LabelHash = {
@@ -106,7 +106,7 @@ const BBPRLabel: LabelHash = {
 	repoBaseLabel: "base",
 	repoBranchBaseLabel: "destination",
 	repoHeadLabel: "head",
-	repoBranchHeadLabel: "source"
+	repoBranchHeadLabel: "source",
 };
 
 export const getPRLabel = createSelector(
@@ -316,7 +316,7 @@ export const getConnectedSharingTargets = (state: CodeStreamState): ThirdPartyTe
 				icon: PROVIDER_MAPPINGS.slack.icon!,
 				providerId: getProviderConfig(state, "slack")!.id,
 				teamId,
-				teamName: info.data!.team_name
+				teamName: info.data!.team_name,
 			}))
 		);
 	}
@@ -331,7 +331,7 @@ export const getConnectedSharingTargets = (state: CodeStreamState): ThirdPartyTe
 					icon: PROVIDER_MAPPINGS.msteams.icon!,
 					providerId: getProviderConfig(state, "msteams")!.id,
 					teamId,
-					teamName: len === 1 ? "MS Teams Org" : `MS Teams Org ${index + 1}`
+					teamName: len === 1 ? "MS Teams Org" : `MS Teams Org ${index + 1}`,
 				};
 			})
 		);
@@ -396,7 +396,7 @@ export const getConnectedSupportedPullRequestHosts = createSelector(
 				return {
 					..._,
 					hasAccessTokenError: !!obj.accessTokenError,
-					isConnected: value
+					isConnected: value,
 				};
 			})
 			.filter(_ => _.isConnected);
@@ -425,7 +425,7 @@ export const getConnectedGitLabHosts = createSelector(
 				return {
 					..._,
 					hasAccessTokenError: !!obj.accessTokenError,
-					isConnected: value
+					isConnected: value,
 				};
 			})
 			.filter(_ => _.isConnected);

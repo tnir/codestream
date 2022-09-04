@@ -14,7 +14,7 @@ import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { HostApi } from "../../../webview-api";
 import { GitLabMergeRequest, SwitchBranchRequestType } from "@codestream/protocols/agent";
 import { confirmPopup } from "../../Confirm";
-import { getProviderPullRequestRepoObject } from "@codestream/webview/store/providerPullRequests/reducer";
+import { getProviderPullRequestRepoObject } from "@codestream/webview/store/providerPullRequests/slice";
 import { pluralize } from "@codestream/webview/utilities/strings";
 import { logError } from "@codestream/webview/logger";
 

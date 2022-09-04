@@ -1,7 +1,7 @@
 export interface IdeState {
-	name: string | undefined
+	name: string | undefined;
 }
 
 export enum IdeActionType {
-	Set = "SET_IDE"
+	Set = "SET_IDE",
 }

@@ -1,33 +1,50 @@
-import { CSMe } from "@codestream/protocols/api";
-import { FloatingLoadingMessage } from "@codestream/webview/src/components/FloatingLoadingMessage";
-import { Tabs, Tab } from "@codestream/webview/src/components/Tabs";
-import { CodeStreamState } from "@codestream/webview/store";
-import {
-	getCurrentProviderPullRequest,
-	getCurrentProviderPullRequestLastUpdated,
-	getPullRequestExactId,
-	getPullRequestId,
-} from "../../../store/providerPullRequests/reducer";
-import { LoadingMessage } from "../../../src/components/LoadingMessage";
-import { ErrorMessage } from "../../../src/components/ErrorMessage";
-import { CreateCodemarkIcons } from "../../CreateCodemarkIcons";
-import { getPreferences } from "../../../store/users/reducer";
-import Tooltip from "../../Tooltip";
-import React, { useState, useEffect, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import styled, { ThemeProvider } from "styled-components";
-import Icon from "../../Icon";
-import { Button } from "../../../src/components/Button";
-import { Link } from "../../Link";
-import { PullRequestCommitsTab } from "../../PullRequestCommitsTab";
 import {
 	ChangeDataType,
 	DidChangeDataNotificationType,
 	FetchThirdPartyPullRequestPullRequest,
+	FetchThirdPartyPullRequestResponse,
 	GetReposScmRequestType,
 	GitLabMergeRequest,
-	GitLabMergeRequestWrapper,
 } from "@codestream/protocols/agent";
+import { CSMe } from "@codestream/protocols/api";
+import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import { FloatingLoadingMessage } from "@codestream/webview/src/components/FloatingLoadingMessage";
+import { PRHeadshot } from "@codestream/webview/src/components/Headshot";
+import { PRHeadshotName } from "@codestream/webview/src/components/HeadshotName";
+import { Tab, Tabs } from "@codestream/webview/src/components/Tabs";
+import { CodeStreamState } from "@codestream/webview/store";
+import { bootstrapReviews } from "@codestream/webview/store/reviews/thunks";
+import { useAppDispatch, useAppSelector, useDidMount } from "@codestream/webview/utilities/hooks";
+import React, { useEffect, useState } from "react";
+import styled, { ThemeProvider } from "styled-components";
+import { GetReposScmResponse } from "../../../protocols/agent/agent.protocol";
+import { Button } from "../../../src/components/Button";
+import { ErrorMessage } from "../../../src/components/ErrorMessage";
+import { LoadingMessage } from "../../../src/components/LoadingMessage";
+import { clearCurrentPullRequest, setCurrentPullRequest } from "../../../store/context/actions";
+import {
+	clearPullRequestCommits,
+	getCurrentProviderPullRequest,
+	getCurrentProviderPullRequestLastUpdated,
+	getPullRequestExactId,
+	getPullRequestId,
+} from "../../../store/providerPullRequests/slice";
+import {
+	api,
+	clearPullRequestFiles,
+	getPullRequestConversations,
+	getPullRequestConversationsFromProvider,
+} from "../../../store/providerPullRequests/thunks";
+import { getPreferences } from "../../../store/users/reducer";
+import { HostApi } from "../../../webview-api";
+import CancelButton from "../../CancelButton";
+import { CreateCodemarkIcons } from "../../CreateCodemarkIcons";
+import { DropdownButton } from "../../DropdownButton";
+import Icon from "../../Icon";
+import { Link } from "../../Link";
+import { MarkdownText } from "../../MarkdownText";
+import { PullRequestBottomComment } from "../../PullRequestBottomComment";
+import { PullRequestCommitsTab } from "../../PullRequestCommitsTab";
 import {
 	PRActionIcons,
 	PRBadge,
@@ -40,38 +57,20 @@ import {
 	PRSubmitReviewButton,
 	PRTitle,
 } from "../../PullRequestComponents";
+import { PRAuthorBadges } from "../../PullRequestConversationTab";
 import { PullRequestFileComments } from "../../PullRequestFileComments";
 import { PullRequestFilesChangedTab } from "../../PullRequestFilesChangedTab";
 import { PullRequestFinishReview } from "../../PullRequestFinishReview";
 import Timestamp from "../../Timestamp";
-import {
-	api,
-	clearPullRequestCommits,
-	clearPullRequestFiles,
-	getPullRequestConversations,
-	getPullRequestConversationsFromProvider,
-} from "../../../store/providerPullRequests/actions";
-import { HostApi } from "../../../webview-api";
-import { clearCurrentPullRequest, setCurrentPullRequest } from "../../../store/context/actions";
-import { useDidMount } from "@codestream/webview/utilities/hooks";
-import { bootstrapReviews } from "@codestream/webview/store/reviews/actions";
-import { PullRequestBottomComment } from "../../PullRequestBottomComment";
-import { GetReposScmResponse } from "../../../protocols/agent/agent.protocol";
-import { PRHeadshotName } from "@codestream/webview/src/components/HeadshotName";
-import { PRHeadshot } from "@codestream/webview/src/components/Headshot";
-import { DropdownButton } from "../../DropdownButton";
+import Tooltip from "../../Tooltip";
 import { ApproveBox } from "./ApproveBox";
-import { MergeBox } from "./MergeBox";
-import { ReactAndDisplayOptions } from "./ReactAndDisplayOptions";
-import { SummaryBox } from "./SummaryBox";
-import { RightActionBar } from "./RightActionBar";
-import { MarkdownText } from "../../MarkdownText";
 import { EditPullRequest } from "./EditPullRequest";
-import CancelButton from "../../CancelButton";
-import { Timeline } from "./Timeline";
-import { PRAuthorBadges } from "../../PullRequestConversationTab";
+import { MergeBox } from "./MergeBox";
 import { PipelineBox } from "./PipelineBox";
-import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import { ReactAndDisplayOptions } from "./ReactAndDisplayOptions";
+import { RightActionBar } from "./RightActionBar";
+import { SummaryBox } from "./SummaryBox";
+import { Timeline } from "./Timeline";
 
 export const PullRequestRoot = styled.div`
 	position: absolute;
@@ -289,8 +288,8 @@ let focusOnMessageInput;
 const GL_404_HELP = "https://docs.newrelic.com/docs/codestream/troubleshooting/reverse-proxy";
 
 export const PullRequest = () => {
-	const dispatch = useDispatch();
-	const derivedState = useSelector((state: CodeStreamState) => {
+	const dispatch = useAppDispatch();
+	const derivedState = useAppSelector((state: CodeStreamState) => {
 		const { preferences } = state;
 		const currentUser = state.users[state.session.userId!] as CSMe;
 		const team = state.teams[state.context.currentTeamId];
@@ -413,8 +412,8 @@ export const PullRequest = () => {
 
 		let _didChangeDataNotification;
 		getOpenRepos();
-		initialFetch().then((_: GitLabMergeRequestWrapper | undefined) => {
-			_didChangeDataNotification = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
+		initialFetch().then((_: FetchThirdPartyPullRequestResponse | { error: Error } | undefined) => {
+			_didChangeDataNotification = HostApi.instance.on(DidChangeDataNotificationType, e => {
 				if (e.type === ChangeDataType.Commits) {
 					reload("Updating...");
 				}
@@ -442,13 +441,13 @@ export const PullRequest = () => {
 					return;
 				}
 
-				const response = (await dispatch(
-					api(
-						"getPullRequestLastUpdated",
-						{},
-						{ preventClearError: true, preventErrorReporting: true }
-					)
-				)) as any;
+				const response = await dispatch(
+					api({
+						method: "getPullRequestLastUpdated",
+						params: {},
+						options: { preventClearError: true, preventErrorReporting: true },
+					})
+				).unwrap();
 				if (
 					derivedState.currentPullRequest &&
 					derivedState.currentPullRequestLastUpdated &&
@@ -485,21 +484,21 @@ export const PullRequest = () => {
 		};
 	}, [didMount, derivedState.currentPullRequestLastUpdated, derivedState.currentPullRequest]);
 
-	const pr: GitLabMergeRequest =
-		derivedState.currentPullRequest?.conversations?.project?.mergeRequest;
+	const pr = derivedState.currentPullRequest?.conversations?.project
+		?.mergeRequest as GitLabMergeRequest;
 
 	const initialFetch = async (message?: string) => {
 		if (message) setIsLoadingMessage(message);
 		setIsLoadingPR(true);
 
-		const response = (await dispatch(
-			getPullRequestConversations(
-				derivedState.currentPullRequestProviderId!,
-				derivedState.currentPullRequestId!
-			)
-		)) as any;
+		const response = await dispatch(
+			getPullRequestConversations({
+				providerId: derivedState.currentPullRequestProviderId!,
+				id: derivedState.currentPullRequestId!,
+			})
+		).unwrap();
 		setGeneralError("");
-		if (response.error && response.error.message) {
+		if (response?.error && response?.error.message) {
 			setIsLoadingPR(false);
 			setIsLoadingMessage("");
 			setGeneralError(response.error.message);
@@ -520,12 +519,12 @@ export const PullRequest = () => {
 		if (message) setIsLoadingMessage(message);
 		setIsLoadingPR(true);
 
-		const response = (await dispatch(
-			getPullRequestConversationsFromProvider(
-				derivedState.currentPullRequestProviderId!,
-				derivedState.currentPullRequestId!
-			)
-		)) as any;
+		const response = await dispatch(
+			getPullRequestConversationsFromProvider({
+				providerId: derivedState.currentPullRequestProviderId!,
+				id: derivedState.currentPullRequestId!,
+			})
+		).unwrap();
 		_assignState(response);
 	};
 
@@ -541,10 +540,10 @@ export const PullRequest = () => {
 			)
 		);
 		dispatch(
-			clearPullRequestCommits(
-				derivedState.currentPullRequestProviderId!,
-				derivedState.currentPullRequestId!
-			)
+			clearPullRequestCommits({
+				providerId: derivedState.currentPullRequestProviderId!,
+				id: derivedState.currentPullRequestId!,
+			})
 		);
 		// we can force the child components to update
 		// by changing part of its key attribute
@@ -611,8 +610,11 @@ export const PullRequest = () => {
 		const onOff = !pr.isDraft;
 		setIsLoadingMessage(onOff ? "Marking as draft..." : "Marking as ready...");
 		await dispatch(
-			api("setWorkInProgressOnPullRequest", {
-				onOff,
+			api({
+				method: "setWorkInProgressOnPullRequest",
+				params: {
+					onOff,
+				},
 			})
 		);
 		setIsLoadingMessage("");
@@ -622,13 +624,13 @@ export const PullRequest = () => {
 
 	const reopen = async () => {
 		setIsLoadingMessage("Reopening...");
-		await dispatch(api("createPullRequestCommentAndReopen", { text: "" }));
+		await dispatch(api({ method: "createPullRequestCommentAndReopen", params: { text: "" } }));
 		setIsLoadingMessage("");
 	};
 
 	const close = async () => {
 		setIsLoadingMessage("Closing...");
-		await dispatch(api("createPullRequestCommentAndClose", { text: "" }));
+		await dispatch(api({ method: "createPullRequestCommentAndClose", params: { text: "" } }));
 		setIsLoadingMessage("");
 	};
 

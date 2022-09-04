@@ -1,48 +1,44 @@
 import {
+	FetchThirdPartyPullRequestPullRequest,
+	GetReposScmRequestType,
+} from "@codestream/protocols/agent";
+import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
+import { CodeStreamState } from "@codestream/webview/store";
+import { HostApi } from "@codestream/webview/webview-api";
+import { prettyPrintOne } from "code-prettify";
+import { isEmpty } from "lodash-es";
+import * as Path from "path-browserify";
+import React, { PropsWithChildren, useEffect, useState } from "react";
+import styled from "styled-components";
+import { Position, Range } from "vscode-languageserver-types";
+import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
+import { EditorScrollToNotificationType } from "../ipc/webview.protocol";
+import { Button } from "../src/components/Button";
+import {
+	getProviderPullRequestCollaborators,
+	getProviderPullRequestRepo,
+	getPullRequestId,
+} from "../store/providerPullRequests/slice";
+import { api } from "../store/providerPullRequests/thunks";
+import { useAppDispatch, useAppSelector, useDidMount } from "../utilities/hooks";
+import { escapeHtml } from "../utils";
+import Icon from "./Icon";
+import { MarkdownText } from "./MarkdownText";
+import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
+import {
 	PRActionIcons,
 	PRButtonRow,
 	PRCodeCommentBody,
 	PRCodeCommentWrapper,
-	PRThreadedCommentHeader
+	PRThreadedCommentHeader,
 } from "./PullRequestComponents";
-import React, { PropsWithChildren, useState, useEffect } from "react";
-import Timestamp from "./Timestamp";
-import Icon from "./Icon";
-import { MarkdownText } from "./MarkdownText";
-import {
-	FetchThirdPartyPullRequestPullRequest,
-	GetReposScmRequestType
-} from "@codestream/protocols/agent";
 import { PRAuthorBadges } from "./PullRequestConversationTab";
-import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
-import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
-import { PullRequestMinimizedComment } from "./PullRequestMinimizedComment";
 import { PullRequestEditingComment } from "./PullRequestEditingComment";
+import { PullRequestMinimizedComment } from "./PullRequestMinimizedComment";
+import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 import { PullRequestReplyComment } from "./PullRequestReplyComment";
-import { Button } from "../src/components/Button";
-import { api } from "../store/providerPullRequests/actions";
-import { useDispatch, useSelector } from "react-redux";
 import { GHOST } from "./PullRequestTimelineItems";
-import { prettyPrintOne } from "code-prettify";
-import { escapeHtml } from "../utils";
-import * as Path from "path-browserify";
-import styled from "styled-components";
-import { HostApi } from "@codestream/webview/webview-api";
-import { CodeStreamState } from "@codestream/webview/store";
-import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
-import {
-	getProviderPullRequestCollaborators,
-	getProviderPullRequestRepo,
-	getPullRequestId
-} from "../store/providerPullRequests/reducer";
-import {
-	EditorHighlightRangeRequestType,
-	EditorRevealRangeRequestType
-} from "@codestream/protocols/webview";
-import { EditorScrollToNotificationType } from "../ipc/webview.protocol";
-import { Range, Position } from "vscode-languageserver-types";
-import { useDidMount } from "../utilities/hooks";
-import { isEmpty } from "lodash-es";
+import Timestamp from "./Timestamp";
 
 const PRBranchContainer = styled.div`
 	display: inline-block;
@@ -83,12 +79,12 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		setIsLoadingMessage,
 		pr,
 		commentRef,
-		clickedComment
+		clickedComment,
 	} = props;
-	const dispatch = useDispatch();
+	const dispatch = useAppDispatch();
 	const myRef = React.useRef(null);
 
-	const derivedState = useSelector((state: CodeStreamState) => {
+	const derivedState = useAppSelector((state: CodeStreamState) => {
 		return {
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			pullRequestFilesChangedMode: state.preferences.pullRequestFilesChangedMode || "files",
@@ -102,7 +98,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			pullRequestId: getPullRequestId(state),
 			documentMarkers: state.documentMarkers[state.editorContext.textEditorUri || ""] || [],
 			textEditorUri: state.editorContext.textEditorUri,
-			collaborators: getProviderPullRequestCollaborators(state)
+			collaborators: getProviderPullRequestCollaborators(state),
 		};
 	});
 
@@ -152,7 +148,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				await HostApi.instance.notify(EditorScrollToNotificationType, {
 					uri: textEditorUri,
 					//@ts-ignore
-					position: Position.create(commentRange?.start?.line, 0)
+					position: Position.create(commentRange?.start?.line, 0),
 				});
 				setPendingLineNavigationAndUriChange(false);
 			}
@@ -175,7 +171,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				await HostApi.instance.notify(EditorScrollToNotificationType, {
 					uri: textEditorUri,
 					//@ts-ignore
-					position: Position.create(commentRange?.start?.line, 0)
+					position: Position.create(commentRange?.start?.line, 0),
 				});
 				setPendingLineNavigationAndUriChange(false);
 			}
@@ -200,10 +196,10 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 						pullRequest: {
 							providerId: pr.providerId,
 							id: derivedState.pullRequestId,
-							collaborators: derivedState.collaborators
-						}
+							collaborators: derivedState.collaborators!,
+						},
 				  }
-				: undefined
+				: undefined,
 		};
 		try {
 			await HostApi.instance.send(CompareLocalFilesRequestType, request);
@@ -212,7 +208,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		}
 
 		HostApi.instance.track("PR Diff Viewed", {
-			Host: pr && pr.providerId
+			Host: pr && pr.providerId,
 		});
 
 		setPendingLineNavigation(true);
@@ -223,7 +219,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		let repoRoot = currentRepoRoot;
 		if (!repoRoot) {
 			const response = await HostApi.instance.send(GetReposScmRequestType, {
-				inEditorOnly: false
+				inEditorOnly: false,
 			});
 			if (!response.repositories) return;
 
@@ -243,12 +239,12 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		if (repoRoot && _lineNumber) {
 			HostApi.instance.send(EditorRevealRangeRequestType, {
 				uri: Path.join("file://", repoRoot, path),
-				range: Range.create(_lineNumber, 0, _lineNumber, 9999)
+				range: Range.create(_lineNumber, 0, _lineNumber, 9999),
 			});
 		}
 
 		HostApi.instance.track("PR Jump to Local File", {
-			Host: pr && pr.providerId
+			Host: pr && pr.providerId,
 		});
 	};
 
@@ -256,8 +252,11 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		try {
 			setIsResolving(true);
 			await dispatch(
-				api("resolveReviewThread", {
-					threadId: threadId
+				api({
+					method: "resolveReviewThread",
+					params: {
+						threadId: threadId,
+					},
 				})
 			);
 		} catch (ex) {
@@ -271,8 +270,11 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		try {
 			setIsResolving(true);
 			await dispatch(
-				api("unresolveReviewThread", {
-					threadId: threadId
+				api({
+					method: "unresolveReviewThread",
+					params: {
+						threadId: threadId,
+					},
 				})
 			);
 		} catch (ex) {
@@ -349,7 +351,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const expandComment = id => {
 		setExpandedComments({
 			...expandedComments,
-			[id]: !expandedComments[id]
+			[id]: !expandedComments[id],
 		});
 	};
 
@@ -360,18 +362,18 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const handleTextInputFocus = async (databaseCommentId: number) => {
 		setOpenComments({
 			...openComments,
-			[databaseCommentId]: true
+			[databaseCommentId]: true,
 		});
 	};
 
 	const setEditingComment = (comment, value) => {
 		setEditingComments({
 			...editingComments,
-			[comment.id]: value
+			[comment.id]: value,
 		});
 		setPendingComments({
 			...pendingComments,
-			[comment.id]: value ? comment.body : ""
+			[comment.id]: value ? comment.body : "",
 		});
 	};
 
@@ -464,7 +466,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 													onClick={e => {
 														handleDiffClick();
 														HostApi.instance.track("PR Jump to Diff", {
-															Host: pr && pr.providerId
+															Host: pr && pr.providerId,
 														});
 													}}
 												>
