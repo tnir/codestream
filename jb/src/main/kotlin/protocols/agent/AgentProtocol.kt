@@ -530,7 +530,7 @@ class FileLevelTelemetryOptions(
 )
 
 class FunctionLocator(
-    val namespace: String?,
+    val namespaces: List<String>?,
     val functionName: String?
 )
 

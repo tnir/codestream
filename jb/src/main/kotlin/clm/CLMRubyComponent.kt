@@ -24,7 +24,7 @@ class CLMRubyComponent(project: Project) :
 
 class CLMRubyEditorManager(editor: Editor) : CLMEditorManager(editor, "ruby", false) {
 
-    override fun getLookupClassName(psiFile: PsiFile): String? {
+    override fun getLookupClassNames(psiFile: PsiFile): List<String>? {
         return null
     }
 

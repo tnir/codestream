@@ -176,6 +176,12 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 			: this.missingGoExtensionCodelens();
 	}
 
+	private checkPhpPlugin(): vscode.CodeLens[] | undefined {
+		return extensions.getExtension("bmewburn.vscode-intelephense-client")?.isActive === true
+			? undefined
+			: this.missingPhpExtensionCodelens();
+	}
+
 	private checkPlugin(languageId: string): vscode.CodeLens[] | undefined {
 		switch (languageId) {
 			case "ruby": {
@@ -192,6 +198,8 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 			}
 			case "go": {
 				return this.checkGoPlugin();
+			} case "php" : {
+				return this.checkPhpPlugin();
 			}
 		}
 		return undefined;
@@ -265,6 +273,17 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 		);
 	}
 
+	private missingPhpExtensionCodelens(newRelicAccountId?: number): vscode.CodeLens[] {
+		return this.errorCodelens(
+			"NO_PHP_VSCODE_EXTENSION",
+			"php",
+			"Click to configure golden signals from New Relic",
+			"To see code-level metrics you'll need to install one of the following extensions for VS Code...",
+			newRelicAccountId
+		);
+	}
+	
+
 	private errorCodelens(
 		errorCode: string,
 		languageId: string,
@@ -321,6 +340,7 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 	): Promise<vscode.CodeLens[]> {
 		let codeLenses: vscode.CodeLens[] = [];
 		let instrumentableSymbols: InstrumentableSymbol[] = [];
+		let allSymbols: vscode.DocumentSymbol[] = [];
 
 		const checkPluginResult = this.checkPlugin(document.languageId);
 		if (checkPluginResult) {
@@ -332,7 +352,9 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 				Logger.log("provideCodeLenses isCancellationRequested0");
 				return [];
 			}
-			instrumentableSymbols = await this.symbolLocator.locate(document, token);
+			const result = await this.symbolLocator.locate(document, token);
+			instrumentableSymbols = result.instrumentableSymbols;
+			allSymbols = result.allSymbols;
 		} catch (ex) {
 			Logger.warn("provideCodeLenses", {
 				error: ex,
@@ -392,6 +414,14 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 				functionLocator = {
 					namespace: this.parseGoPackage(document.getText())
 				};
+			}
+
+			if (document.languageId === "php") {				
+				const phpNamespace = allSymbols.find(_ => _.kind === vscode.SymbolKind.Namespace)?.name;
+				const classesAndFunctions = allSymbols.filter(_ => _.kind === vscode.SymbolKind.Class || _.kind === vscode.SymbolKind.Function);
+				const prefix = phpNamespace ? (phpNamespace + "\\") : "";
+				const namespaces = classesAndFunctions.map(_ => prefix + _.name);
+				functionLocator = { namespaces };
 			}
 
 			const fileLevelTelemetryResponse = await this.observabilityService.getFileLevelTelemetry(
@@ -477,10 +507,16 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 				let result: boolean;
 				// Strip off any trailing () for function (csharp and java) - undo this if we get types in agent
 				const simpleSymbolName = symbol.symbol.name.replace(/\(.*?\)$/, "");
+				let simpleClassName;
+				if (data.className !== undefined) {
+					const parts = data.className.split("\\");
+					simpleClassName = parts[parts.length - 1];
+				}
 				if (symbol.parent) {
 					result =
 						(data.className === symbol.parent.name && data.functionName === simpleSymbolName) ||
-						(data.namespace === symbol.parent.name && data.functionName === simpleSymbolName);
+						(data.namespace === symbol.parent.name && data.functionName === simpleSymbolName) ||
+						(simpleClassName === symbol.parent.name && data.functionName === simpleSymbolName);
 				} else {
 					// if no parent (aka class) ensure we find a function that doesn't have a parent
 					result = !symbol.parent && data.functionName === simpleSymbolName;

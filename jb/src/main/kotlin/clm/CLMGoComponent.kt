@@ -21,10 +21,10 @@ class CLMGoComponent(project: Project) :
 
 class CLMGoEditorManager(editor: Editor) : CLMEditorManager(editor, "go", true) {
 
-    override fun getLookupClassName(psiFile: PsiFile): String? {
+    override fun getLookupClassNames(psiFile: PsiFile): List<String>? {
         if (psiFile !is GoFile) return null
         val pkg = psiFile.children.find { it is GoPackageClause } as GoPackageClause?
-        return pkg?.identifier?.text
+        return pkg?.identifier?.text?.let { listOf(it) }
     }
 
     override fun findClassFunctionFromFile(

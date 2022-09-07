@@ -84,11 +84,11 @@ intellij {
     // sandboxDir = "$System.env.HOME/ide-sandbox" // It is sometimes useful to not have IDE config inside source control
 
     // 2021.2.1
-    // plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:212.5080.55', 'Pythonid:212.5080.64', 'org.jetbrains.plugins.ruby:212.5080.8']
+    // plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:212.5080.55', 'Pythonid:212.5080.64', 'org.jetbrains.plugins.ruby:212.5080.8', 'com.jetbrains.php:212.5080.71']
     // 2022.1.4
     // plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:221.6008.13', 'Pythonid:221.6008.17', 'org.jetbrains.plugins.ruby:221.6008.13']
     // 2021.3.1
-    plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:213.6461.48', 'Pythonid:213.6461.79', 'org.jetbrains.plugins.ruby:213.6461.79']
+    plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:213.6461.48', 'Pythonid:213.6461.79', 'org.jetbrains.plugins.ruby:213.6461.79', 'com.jetbrains.php:213.6461.83']
 }
 
 runIde {

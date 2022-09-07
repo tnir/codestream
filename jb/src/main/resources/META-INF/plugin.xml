@@ -21,6 +21,8 @@
     </depends>
     <depends optional="true" config-file="com.codestream.jetbrains-codestream-withRuby.xml">org.jetbrains.plugins.ruby
     </depends>
+    <depends optional="true" config-file="com.codestream.jetbrains-codestream-withPhp.xml">com.jetbrains.php
+    </depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="CodeStream" icon="/images/codestream.svg" anchor="right"
@@ -72,7 +74,6 @@
                                  handlerClass="com.codestream.editor.GutterPullRequestTooltipExternalLinkHandler"/>
         <codeInsight.linkHandler prefix="#codemark/link/"
                                  handlerClass="com.codestream.editor.GutterCodemarkLinkTooltipLinkHandler"/>
-
     </extensions>
 
     <project-components>

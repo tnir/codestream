@@ -1263,6 +1263,7 @@ export interface FileLevelTelemetryRequestOptions {
 export interface FunctionLocator {
 	// example CodeStream.VisualStudio.CodeLens.VisualStudioConnection.Refresh
 	namespace?: string; // CodeStream.VisualStudio.CodeLens
+	namespaces?: string[];
 	// className?: string; // VisualStudioConnection
 	functionName?: string; // Refresh
 }
@@ -1633,6 +1634,7 @@ export interface GoldenMetricsQueryResult {
 			goldenMetrics: {
 				metrics: {
 					query: string;
+					extrapolationQuery?: string;
 					title: string;
 					name: string;
 				}[];
@@ -1728,6 +1730,7 @@ export interface GoldenMetricsResult {
 		/* end new  */
 	}[];
 	timeWindow: number;
+	extrapolated?: boolean;
 }
 
 export interface RelatedEntityByRepositoryGuidsResult {

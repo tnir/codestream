@@ -117,3 +117,16 @@ export function MissingGoExtension() {
 		</MissingExtensionBase>
 	);
 }
+
+export function MissingPhpExtension() {
+	return (
+		<MissingExtensionBase>
+			<h3>Code-Level Metrics</h3>
+			<p style={{ marginTop: 0 }}>
+				To see code-level metrics you'll need to install the{" "}
+				<Link href={"vscode:extension/bmewburn.vscode-intelephense-client"}>PHP Extension</Link> for
+				VS Code that allows CodeStream to identify the methods in your PHP code.
+			</p>
+		</MissingExtensionBase>
+	);
+}

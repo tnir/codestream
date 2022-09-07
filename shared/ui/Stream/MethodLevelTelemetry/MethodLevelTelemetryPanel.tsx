@@ -12,7 +12,6 @@ import {
 } from "recharts";
 import Tooltip from "../Tooltip";
 
-import styled from "styled-components";
 import {
 	DidChangeObservabilityDataNotificationType,
 	GetMethodLevelTelemetryRequestType,
@@ -20,29 +19,31 @@ import {
 	WarningOrError,
 } from "@codestream/protocols/agent";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
-import { LoadingMessage } from "@codestream/webview/src/components/LoadingMessage";
-import { CodeStreamState } from "@codestream/webview/store";
-import { useDidMount, usePrevious } from "@codestream/webview/utilities/hooks";
-import { HostApi } from "@codestream/webview/webview-api";
-import { PanelHeader } from "../../src/components/PanelHeader";
-import { closePanel, setUserPreference, setUserPreferences } from "../actions";
-import CancelButton from "../CancelButton";
-import Icon from "../Icon";
-import { Link } from "../Link";
-import { WarningBox } from "../WarningBox";
-import { CurrentMethodLevelTelemetry } from "@codestream/webview/store/context/types";
 import {
 	OpenUrlRequestType,
 	RefreshEditorsCodeLensRequestType,
 	UpdateConfigurationRequestType,
 } from "@codestream/webview/ipc/host.protocol";
+import { LoadingMessage } from "@codestream/webview/src/components/LoadingMessage";
+import { CodeStreamState } from "@codestream/webview/store";
 import { closeAllPanels } from "@codestream/webview/store/context/actions";
-import { EntityAssociator } from "../EntityAssociator";
+import { CurrentMethodLevelTelemetry } from "@codestream/webview/store/context/types";
+import { useDidMount, usePrevious } from "@codestream/webview/utilities/hooks";
+import { HostApi } from "@codestream/webview/webview-api";
+import styled from "styled-components";
+import { PanelHeader } from "../../src/components/PanelHeader";
+import { closePanel, setUserPreference } from "../actions";
+import CancelButton from "../CancelButton";
 import { DropdownButton } from "../DropdownButton";
+import { EntityAssociator } from "../EntityAssociator";
+import Icon from "../Icon";
+import { Link } from "../Link";
+import { WarningBox } from "../WarningBox";
 import {
 	MissingCsharpExtension,
 	MissingGoExtension,
 	MissingJavaExtension,
+	MissingPhpExtension,
 	MissingPythonExtension,
 	MissingRubyExtension,
 	RubyPluginLanguageServer,
@@ -230,6 +231,8 @@ export const MethodLevelTelemetryPanel = () => {
 			return <MissingCsharpExtension />;
 		case "NO_GO_VSCODE_EXTENSION":
 			return <MissingGoExtension />;
+		case "NO_PHP_VSCODE_EXTENSION":
+			return <MissingPhpExtension />;
 		case "RUBY_PLUGIN_NO_LANGUAGE_SERVER":
 			return <RubyPluginLanguageServer />;
 	}
@@ -372,6 +375,7 @@ export const MethodLevelTelemetryPanel = () => {
 											telemetryResponse.goldenMetrics.map((_, index) => {
 												// hide charts with no data.
 												if (_.result?.length === 0) return null;
+												const title = _.title + (_.extrapolated ? " (extrapolated)" : "");
 
 												return (
 													<div
@@ -410,6 +414,7 @@ export const MethodLevelTelemetryPanel = () => {
 																	stroke="#8884d8"
 																	activeDot={{ r: 8 }}
 																	connectNulls={true}
+																	name={title}
 																/>
 															</LineChart>
 														</ResponsiveContainer>

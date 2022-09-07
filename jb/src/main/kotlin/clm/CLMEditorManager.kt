@@ -107,7 +107,7 @@ abstract class CLMEditorManager(
         appSettings.addGoldenSignalsListener(this)
     }
 
-    abstract fun getLookupClassName(psiFile: PsiFile): String?
+    abstract fun getLookupClassNames(psiFile: PsiFile): List<String>?
 
     fun pollLoadInlays() {
         GlobalScope.launch {
@@ -132,8 +132,8 @@ abstract class CLMEditorManager(
                 if (!editor.component.isShowing) return@invokeLater
                 val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return@invokeLater
 
-                val className = if (lookupByClassName) {
-                    getLookupClassName(psiFile) ?: return@invokeLater
+                val classNames = if (lookupByClassName) {
+                    getLookupClassNames(psiFile) ?: return@invokeLater
                 } else {
                     null
                 }
@@ -146,7 +146,7 @@ abstract class CLMEditorManager(
                             FileLevelTelemetryParams(
                                 editor.document.uri,
                                 languageId,
-                                FunctionLocator(className, null),
+                                FunctionLocator(classNames, null),
                                 null,
                                 null,
                                 resetCache,

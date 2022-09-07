@@ -29,13 +29,13 @@ class CLMCSharpEditorManager(editor: Editor) : CLMEditorManager(editor, "csharp"
     private val fileTypeClass =
         CLMCSharpComponent::class.java.classLoader.loadClass(CSHARP_FILE_CLASS) as Class<PsiFile>
 
-    override fun getLookupClassName(psiFile: PsiFile): String? {
+    override fun getLookupClassNames(psiFile: PsiFile): List<String>? {
         if (!isPsiFileSupported(psiFile)) return null
         val classLeafPsiElement = traverseForElementType(psiFile, "CLASS_KEYWORD") ?: return null
         val classNameNode = findFirstSiblingOfType(classLeafPsiElement, "IDENTIFIER") ?: return null
         val namespaceNode = findParentOfType(classNameNode, "NAMESPACE_DECLARATION") ?: return null
         val namespaceText = getNamespaceQualifiedName(namespaceNode) ?: return null
-        return "${namespaceText}.${classNameNode.text}"
+        return listOf("${namespaceText}.${classNameNode.text}")
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -132,8 +132,12 @@ import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
 
 const ignoredErrors = [GraphqlNrqlTimeoutError];
 
-const supportedLanguages = ["python", "ruby", "csharp", "java", "go"] as const;
+const supportedLanguages = ["python", "ruby", "csharp", "java", "go", "php"] as const;
 export type LanguageId = typeof supportedLanguages[number];
+
+export function escapeNrql(nrql: string) {
+	return nrql.replace(/\\/g, "\\\\\\\\");
+}
 
 // Use type guard so that list of languages can be defined once and shared with union type LanguageId
 function isSupportedLanguage(value: string): value is LanguageId {
@@ -1637,8 +1641,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	async getMethodThroughput(request: MetricQueryRequest) {
+	async getMethodThroughput(request: MetricQueryRequest, languageId: LanguageId) {
 		const query = generateMethodThroughputQuery(
+			languageId,
 			request.newRelicEntityGuid,
 			request.metricTimesliceNames,
 			request.codeNamespace
@@ -1680,8 +1685,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	async getMethodErrorRate(request: MetricQueryRequest) {
+	async getMethodErrorRate(request: MetricQueryRequest, languageId: LanguageId) {
 		const query = generateMethodErrorRateQuery(
+			languageId,
 			request.newRelicEntityGuid,
 			request.metricTimesliceNames,
 			request.codeNamespace
@@ -1702,13 +1708,22 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async getSpans(request: SpanRequest): Promise<Span[] | undefined> {
 		if (!request.codeFilePath) return undefined;
 		try {
+			let bestMatchingCodeFilePath;
+			if (request.resolutionMethod === "hybrid") {
+				bestMatchingCodeFilePath = await this.getBestMatchingCodeFilePath(
+					request.newRelicAccountId,
+					request.newRelicEntityGuid,
+					request.codeFilePath
+				);
+			}
+
 			for (const queryType of spanQueryTypes) {
 				const query = generateSpanQuery(
 					request.newRelicEntityGuid,
 					request.resolutionMethod,
 					queryType,
-					request.codeFilePath,
-					request.locator
+					bestMatchingCodeFilePath || request.codeFilePath,
+					bestMatchingCodeFilePath ? undefined : request.locator
 				);
 
 				const response = await this.query(query, {
@@ -1716,7 +1731,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				});
 
 				if (response?.actor?.account?.nrql?.results?.length) {
-					Logger.warn(
+					Logger.log(
 						`Resolved ${response?.actor?.account?.nrql?.results?.length} spans with ${queryType} query`
 					);
 					return response.actor.account.nrql.results;
@@ -1978,6 +1993,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					break;
 				case "java":
 				case "go":
+				case "php":
 					functionInfo = {
 						functionName: additionalMetadata["code.function"],
 						className: additionalMetadata["code.namespace"],
@@ -2012,6 +2028,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			case "csharp":
 			case "java":
 				return "locator";
+			case "php":
+				return "hybrid";
 			default:
 				return "filePath";
 		}
@@ -2191,16 +2209,29 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					? this.getMethodAverageDuration(queryArgs, languageId)
 					: undefined,
 				request.options.includeThroughput && metricTimesliceNames?.length
-					? this.getMethodThroughput(queryArgs)
+					? this.getMethodThroughput(queryArgs, languageId)
 					: undefined,
 
 				request.options.includeErrorRate && metricTimesliceNames?.length
-					? this.getMethodErrorRate(queryArgs)
+					? this.getMethodErrorRate(queryArgs, languageId)
 					: undefined,
 			]);
 
 			[averageDurationResponse, throughputResponse, errorRateResponse].forEach(_ => {
 				if (_) {
+					const consolidatedResults = new Map<string, any>();
+					_.actor.account.extrapolations.results.forEach((e: any) => {
+						e.extrapolated = true;
+						consolidatedResults.set(e.metricTimesliceName, e);
+					});
+					_.actor.account.metrics.results.forEach((e: any) => {
+						consolidatedResults.set(e.metricTimesliceName, e);
+					});
+					_.actor.account.nrql = {
+						results: Array.from(consolidatedResults.values()),
+						metadata: _.actor.account.metrics.metadata || _.actor.account.extrapolations.metadata,
+					};
+
 					_.actor.account.nrql.results = this.addMethodName(
 						groupedByTransactionName,
 						_.actor.account.nrql.results,
@@ -2580,18 +2611,21 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 								// duration
 								{
 									query: `SELECT average(newrelic.timeslice.value) * 1000 AS 'Response time (ms)' FROM Metric WHERE entity.guid IN ('${entityGuid}') AND metricTimesliceName='${metricTimesliceNameMapping["d"]}' TIMESERIES`,
+									extrapolationQuery: `SELECT average(duration) * 1000 AS 'Response time (ms)' FROM Span WHERE entity.guid IN ('${entityGuid}') AND name='${metricTimesliceNameMapping["d"]}' FACET name EXTRAPOLATE TIMESERIES`,
 									title: "Response time (ms)",
 									name: "responseTimeMs",
 								},
 								// throughput
 								{
 									query: `SELECT count(newrelic.timeslice.value) AS 'Throughput' FROM Metric WHERE entity.guid IN ('${entityGuid}') AND metricTimesliceName='${metricTimesliceNameMapping["t"]}' TIMESERIES`,
+									extrapolationQuery: `SELECT rate(count(*), 1 minute) AS 'Throughput' FROM Span WHERE entity.guid IN ('${entityGuid}') AND name='${metricTimesliceNameMapping["t"]}' FACET name EXTRAPOLATE TIMESERIES`,
 									title: "Throughput",
 									name: "throughput",
 								},
 								// error
 								{
 									query: `SELECT rate(count(apm.service.transaction.error.count), 1 minute) AS \`errorsPerMinute\` FROM Metric WHERE \`entity.guid\` = '${entityGuid}' AND metricTimesliceName='${metricTimesliceNameMapping["e"]}' FACET metricTimesliceName TIMESERIES`,
+									extrapolationQuery: `SELECT rate(count(*), 1 minute) AS \`errorsPerMinute\` FROM Span WHERE entity.guid IN ('${entityGuid}') AND name='${metricTimesliceNameMapping["e"]}' AND \`error.group.guid\` IS NOT NULL FACET name EXTRAPOLATE TIMESERIES`,
 									title: "Error rate",
 									name: "errorRate",
 								},
@@ -2644,7 +2678,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					const q = `query getMetric($accountId: Int!) {
 						actor {
 						  account(id: $accountId) {
-							nrql(query: "${_query}") {
+							metrics: nrql(query: "${escapeNrql(_query)}") {
+							  results
+							  metadata {
+								timeWindow {
+								  end
+								}
+							  }
+							}
+							extrapolations: nrql(query: "${escapeNrql(_.extrapolationQuery || "")}") {
 							  results
 							  metadata {
 								timeWindow {
@@ -2665,11 +2707,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			);
 
 			const response = queries.actor.entity.goldenMetrics.metrics.map((_, i) => {
+				const account = results[i].actor.account;
+				const useExtrapolation =
+					!account.metrics.results.some((r: any) => r[_.title]) &&
+					account.extrapolations?.results?.length > 0;
+				const metricsOrExtrapolations = useExtrapolation ? account.extrapolations : account.metrics;
 				if (i === 2) {
 					// TODO this isn't great
 					// fix up the title for this one since the element title != the parent's title
 					_.title = "Error rate";
-					results[i].actor.account.nrql.results.forEach((element: any) => {
+					metricsOrExtrapolations.results.forEach((element: any) => {
 						element["Error rate"] = element["errorsPerMinute"]
 							? element["errorsPerMinute"].toFixed(2)
 							: null;
@@ -2677,7 +2724,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 				return {
 					..._,
-					result: results[i].actor.account.nrql.results.map((r: any) => {
+					result: metricsOrExtrapolations.results.map((r: any) => {
 						const ms = r.endTimeSeconds * 1000;
 						const date = new Date(ms);
 
@@ -2689,7 +2736,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							endDate: date,
 						};
 					}),
-					timeWindow: results[i].actor?.account?.nrql?.metadata?.timeWindow?.end,
+					timeWindow: metricsOrExtrapolations.metadata?.timeWindow?.end,
+					extrapolated: useExtrapolation,
 				};
 			});
 			Logger.log("getGoldenMetrics has response?", {
@@ -3962,6 +4010,77 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	private contextWarnLogIfNotIgnored(message: string, ...params: any[]) {
 		ContextLogger.warn(message, params);
+	}
+
+	private async getBestMatchingCodeFilePath(
+		newRelicAccountId: number,
+		newRelicEntityGuid: string,
+		codeFilePath: string
+	): Promise<string | undefined> {
+		const parts = codeFilePath.split("/");
+		const reverseParts = parts.slice().reverse();
+		// const partialPaths = [];
+		// let currentSuffix : string | undefined;
+		// for (const part of reverseParts) {
+		// 	const suffix = currentSuffix ? "/" + currentSuffix : "";
+		// 	const partialPath = part + suffix;
+		// 	partialPaths.push(partialPath);
+		// 	currentSuffix = partialPath;
+		// }
+		// const inClause = partialPaths.map(_ => `'${_}'`).join(",");
+		const filename = parts[parts.length - 1];
+		const nrql =
+			`FROM Span SELECT latest(code.filepath) as codeFilePath` +
+			` WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND \`code.filepath\` LIKE '%${filename}'` +
+			` FACET name SINCE 30 minutes AGO LIMIT 100`;
+
+		const results = await this.runNrql<{
+			name: string;
+			codeFilePath: string;
+		}>(newRelicAccountId, nrql);
+		if (!results.length) return undefined;
+		let maxScore = 0;
+		let bestMatch;
+		for (const result of results) {
+			const resultParts = result.codeFilePath.split("/");
+			const reverseResultParts = resultParts.slice().reverse();
+			const maxLength = Math.max(reverseParts.length, reverseResultParts.length);
+			let score = 0;
+			for (let i = 0; i < maxLength; i++) {
+				if (reverseResultParts[i] === reverseParts[i]) {
+					score++;
+				} else {
+					break;
+				}
+			}
+			if (score > maxScore) {
+				maxScore = score;
+				bestMatch = result;
+			}
+		}
+		return bestMatch?.codeFilePath;
+	}
+
+	private async runNrql<T>(accountId: number, nrql: string): Promise<T[]> {
+		const query = `query Nrql($accountId:Int!) {
+			actor {
+				account(id: $accountId) {
+					nrql(query: "${nrql}") {
+						results
+					}
+				}
+			}
+	  	}`;
+		const results = await this.query<{
+			actor: {
+				account: {
+					nrql: {
+						results: T[];
+					};
+				};
+			};
+		}>(query, { accountId });
+		return results.actor.account.nrql.results;
 	}
 }
 

@@ -19,7 +19,7 @@ class CLMPythonComponent(project: Project) :
 
 class CLMPythonEditorManager(editor: Editor) : CLMEditorManager(editor, "python", false) {
 
-    override fun getLookupClassName(psiFile: PsiFile): String? {
+    override fun getLookupClassNames(psiFile: PsiFile): List<String>? {
         return null
     }
 

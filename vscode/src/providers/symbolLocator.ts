@@ -14,30 +14,44 @@ export class InstrumentableSymbol {
 }
 
 export interface ISymbolLocator {
-	locate(document: TextDocument, token: vscode.CancellationToken): Promise<InstrumentableSymbol[]>;
+	locate(document: TextDocument, token: vscode.CancellationToken): Promise<{
+		instrumentableSymbols: InstrumentableSymbol[],
+		allSymbols: DocumentSymbol[]
+	}>;
 }
 
 export class SymbolLocator implements ISymbolLocator {
 	async locate(
 		document: TextDocument,
 		token: vscode.CancellationToken
-	): Promise<InstrumentableSymbol[]> {
+	): Promise<{
+		instrumentableSymbols: InstrumentableSymbol[],
+		allSymbols: DocumentSymbol[]
+	}> {
 		const instrumentableSymbols: InstrumentableSymbol[] = [];
+		const emptyResult = {
+			instrumentableSymbols: [],
+			allSymbols: []
+		}
 
 		try {
 			if (token.isCancellationRequested) {
-				return [];
+				return emptyResult;
 			}
 
 			const symbolResult = await this.locateCore(document, token);
 			this.buildLensCollection(undefined, symbolResult, instrumentableSymbols, token);
+			return {
+				instrumentableSymbols,
+				allSymbols: symbolResult
+			};
 		} catch (ex) {
 			Logger.warn("SymbolLocator.locate", {
 				error: ex,
 				document: document
 			});
 		}
-		return instrumentableSymbols;
+		return emptyResult;
 	}
 
 	private async locateCore(
