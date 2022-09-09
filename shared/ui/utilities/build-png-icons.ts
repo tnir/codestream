@@ -61,6 +61,12 @@ const argv = yargs
 		type: "boolean",
 		default: false
 	})
+	.option("background", {
+		alias: "b",
+		description: "the background color",
+		type: "string",
+		default: "#ffffff"
+	})
 	.help()
 	.alias("help", "h").argv;
 
