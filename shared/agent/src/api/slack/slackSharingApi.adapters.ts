@@ -942,7 +942,7 @@ export function toSlackPostBlocks(
 		elements: [
 			{
 				type: "plain_text",
-				text: "Note that replies will be shared to CodeStream"
+				text: "Replies in thread will be shared to CodeStream"
 			}
 		]
 	});
@@ -1096,7 +1096,7 @@ export function toSlackReviewPostBlocks(
 		elements: [
 			{
 				type: "plain_text",
-				text: "Posted via CodeStream"
+				text: "Replies in thread will be shared to CodeStream"
 			}
 		]
 	});
@@ -1188,7 +1188,7 @@ export function toSlackCodeErrorPostBlocks(
 		elements: [
 			{
 				type: "plain_text",
-				text: "Posted via CodeStream"
+				text: "Replies in thread will be shared to CodeStream"
 			}
 		]
 	});
