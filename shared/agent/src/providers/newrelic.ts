@@ -6,7 +6,7 @@ import {
 	flatten as _flatten,
 	groupBy as _groupBy,
 	memoize,
-	uniq as _uniq
+	uniq as _uniq,
 } from "lodash";
 import { join, relative, sep } from "path";
 import Cache from "timed-cache";
@@ -80,10 +80,12 @@ import {
 	StackTraceResponse,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
+	ServiceGoldenMetricsQueryResult,
 	GetServiceLevelTelemetryRequest,
 	GetServiceLevelTelemetryRequestType,
 	GetServiceLevelTelemetryResponse,
-	ServiceGoldenMetricsQueryResult
+	GetAlertViolationsResponse,
+	GetAlertViolationsQueryResult,
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -103,12 +105,12 @@ import {
 	NewRelicId,
 	ResolutionMethod,
 	Span,
-	SpanRequest
+	SpanRequest,
 } from "./newrelic/newrelic.types";
 import {
 	generateClmSpanDataExistsQuery,
 	generateSpanQuery,
-	spanQueryTypes
+	spanQueryTypes,
 } from "./newrelic/spanQuery";
 import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
 
@@ -150,7 +152,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	get headers() {
 		return {
 			"Api-Key": this.accessToken!,
-			"Content-Type": "application/json"
+			"Content-Type": "application/json",
 		};
 	}
 
@@ -200,8 +202,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const { users } = SessionContainer.instance();
 			await users.updatePreferences({
 				preferences: {
-					observabilityRepoEntities: []
-				}
+					observabilityRepoEntities: [],
+				},
 			});
 		} catch (ex) {
 			ContextLogger.warn("failed to remove observabilityRepoEntities", ex);
@@ -216,16 +218,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		client.setHeaders({
 			"Api-Key": this.accessToken!,
 			"Content-Type": "application/json",
-			"NewRelic-Requesting-Services": "CodeStream"
+			"NewRelic-Requesting-Services": "CodeStream",
 		});
 		ContextLogger.setData({
 			nrUrl: this.graphQlBaseUrl,
 			versionInfo: {
 				version: this.session.versionInfo?.extension?.version,
-				build: this.session.versionInfo?.extension?.build
+				build: this.session.versionInfo?.extension?.build,
 			},
 			ide: this.session.versionInfo?.ide,
-			isProductionCloud: this.session.isProductionCloud
+			isProductionCloud: this.session.isProductionCloud,
 		});
 		return client;
 	}
@@ -252,7 +254,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		client.setHeaders({
 			"Api-Key": accessToken!,
 			"Content-Type": "application/json",
-			"NewRelic-Requesting-Services": "CodeStream"
+			"NewRelic-Requesting-Services": "CodeStream",
 		});
 
 		return client;
@@ -289,6 +291,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		const team = await SessionContainer.instance().teams.getByIdFromCache(this.session.teamId);
 		const company =
 			team && (await SessionContainer.instance().companies.getByIdFromCache(team.companyId));
+
 		if (orgId && company) {
 			ContextLogger.log(`Associating company ${company.id} with NR org ${orgId}`);
 			await this.session.api.addCompanyNewRelicInfo(company.id, undefined, [orgId]);
@@ -304,9 +307,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return true;
 	}
 
-	private async validateApiKey(
-		client: GraphQLClient
-	): Promise<{
+	private async validateApiKey(client: GraphQLClient): Promise<{
 		userId: number;
 		organizationId?: number;
 		accounts: any[];
@@ -341,7 +342,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				userId: response.actor.user.id,
 				accounts: response.actor.accounts,
-				organizationId: response.actor.organization?.id
+				organizationId: response.actor.organization?.id,
 			};
 		} catch (ex) {
 			const accessTokenError = this.getAccessTokenError(ex);
@@ -477,7 +478,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 */
 	@lspHandler(GetObservabilityEntitiesRequestType)
 	@log({
-		timed: true
+		timed: true,
 	})
 	async getEntities(
 		request: GetObservabilityEntitiesRequest
@@ -492,14 +493,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (this._applicationEntitiesCache != null) {
 				if (request.resetCache) {
 					ContextLogger.debug("query entities (resetting cache)", {
-						key: key
+						key: key,
 					});
 					delete this._applicationEntitiesCache[key];
 				} else {
 					const cached = this._applicationEntitiesCache[key];
 					if (cached) {
 						ContextLogger.debug("query entities (from cache)", {
-							key: key
+							key: key,
 						});
 						return cached;
 					}
@@ -569,14 +570,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				let nextCursor: undefined | boolean | string = true;
 				while (nextCursor != null) {
 					const response = (await this.query<EntitySearchResult>(query, {
-						cursor: typeof nextCursor === "string" ? nextCursor : null
+						cursor: typeof nextCursor === "string" ? nextCursor : null,
 					})) as EntitySearchResult;
 
 					results = results.concat(
 						response.actor.entitySearch.results.entities.map((_: any) => {
 							return {
 								guid: _.guid,
-								name: _.name
+								name: _.name,
 							};
 						})
 					);
@@ -609,7 +610,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					(_: { guid: string; name: string; account: { name: String } }) => {
 						return {
 							guid: _.guid,
-							name: `${_.name} (${_.account.name})`
+							name: `${_.name} (${_.account.name})`,
 						};
 					}
 				)
@@ -619,7 +620,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			if (results.length) {
 				const cachedResults = {
-					entities: results
+					entities: results,
 				} as GetObservabilityEntitiesResponse;
 				this._applicationEntitiesCache[key] = cachedResults;
 				return cachedResults;
@@ -629,13 +630,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			throw ex;
 		}
 		return {
-			entities: []
+			entities: [],
 		};
 	}
 
 	@lspHandler(GetObservabilityErrorGroupMetadataRequestType)
 	@log({
-		timed: true
+		timed: true,
 	})
 	async getErrorGroupMetadata(
 		request: GetObservabilityErrorGroupMetadataRequest
@@ -650,11 +651,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				entityId: metricResponse?.entityGuid,
 				occurrenceId: metricResponse?.traceId,
-				remote: mappedEntity?.url
+				remote: mappedEntity?.url,
 			} as GetObservabilityErrorGroupMetadataResponse;
 		} catch (ex) {
 			ContextLogger.error(ex, "getErrorGroupMetadata", {
-				request: request
+				request: request,
 			});
 		}
 		return undefined;
@@ -671,7 +672,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 */
 	@lspHandler(GetObservabilityErrorAssignmentsRequestType)
 	@log({
-		timed: true
+		timed: true,
 	})
 	async getObservabilityErrorAssignments(
 		request: GetObservabilityErrorAssignmentsRequest
@@ -695,24 +696,24 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							errorGroupGuid: _.id,
 							errorClass: _.name,
 							message: _.message,
-							errorGroupUrl: _.url
+							errorGroupUrl: _.url,
 						} as ObservabilityErrorCore;
 					});
 
 				if (response.items && response.items.find(_ => !_.errorClass)) {
 					ContextLogger.warn("getObservabilityErrorAssignments has empties", {
-						items: response.items
+						items: response.items,
 					});
 				}
 				ContextLogger.warn("getObservabilityErrorAssignments", {
-					itemsCount: response.items.length
+					itemsCount: response.items.length,
 				});
 			} else {
 				ContextLogger.log("getObservabilityErrorAssignments (none)");
 			}
 		} catch (ex) {
 			ContextLogger.warn("getObservabilityErrorAssignments", {
-				error: ex
+				error: ex,
 			});
 			throw ex;
 		}
@@ -731,7 +732,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 */
 	@lspHandler(GetObservabilityReposRequestType)
 	@log({
-		timed: true
+		timed: true,
 	})
 	async getObservabilityRepos(
 		request: GetObservabilityReposRequest
@@ -754,7 +755,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					ContextLogger.warn(
 						"getObservabilityRepos skipping repo with missing id and/or repo.remotes",
 						{
-							repo: repo
+							repo: repo,
 						}
 					);
 					continue;
@@ -763,7 +764,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 				if (response.repos.some(_ => _?.repoName === folderName)) {
 					ContextLogger.warn("getObservabilityRepos skipping duplicate repo name", {
-						repo: repo
+						repo: repo,
 					});
 					continue;
 				}
@@ -801,7 +802,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						remotes: remotes,
 						entities: repositoryEntitiesResponse?.entities?.map(_ => {
 							return { guid: _.guid, name: _.name };
-						})
+						}),
 					});
 				}
 
@@ -812,7 +813,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						ContextLogger.warn("");
 						ContextLogger.warn("getEntitiesByRepoRemote FOUND MORE THAN 1 UNIQUE REMOTE", {
 							remotes: remotes,
-							entityRemotes: remoteUrls
+							entityRemotes: remoteUrls,
 						});
 						ContextLogger.warn("");
 					}
@@ -880,17 +881,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 								entityName: entity.name,
 								tags: entity.tags,
 								domain: entity.domain,
-								alertSeverity: entity?.alertSeverity
+								alertSeverity: entity?.alertSeverity,
 							} as EntityAccount;
 						})
 						.filter(Boolean)
 						.sort((a, b) =>
 							`${a.accountName}-${a.entityName}`.localeCompare(`${b.accountName}-${b.entityName}`)
-						)
+						),
 				});
 				ContextLogger.log(`getObservabilityRepos hasRepoAssociation=${hasRepoAssociation}`, {
 					repoId: repo.id,
-					entities: repositoryEntitiesResponse?.entities?.map(_ => _.guid)
+					entities: repositoryEntitiesResponse?.entities?.map(_ => _.guid),
 				});
 			}
 		} catch (ex) {
@@ -912,7 +913,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 */
 	@lspHandler(GetObservabilityErrorsRequestType)
 	@log({
-		timed: true
+		timed: true,
 	})
 	async getObservabilityErrors(
 		request: GetObservabilityErrorsRequest
@@ -954,19 +955,20 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						for (const entity of repositoryEntitiesResponse.entities) {
 							if (!entity.account) {
 								ContextLogger.warn("count not find accountId for repo entity", {
-									entityGuid: entity.guid
+									entityGuid: entity.guid,
 								});
 								continue;
 							}
 							const relatedEntities = await this.findRelatedEntityByRepositoryGuid(entity.guid);
 
-							const builtFromApplications = relatedEntities.actor.entity.relatedEntities.results.filter(
-								r =>
-									r.type === "BUILT_FROM" &&
-									(entityFilter?.entityGuid
-										? r.source?.entity.guid === entityFilter.entityGuid
-										: true)
-							);
+							const builtFromApplications =
+								relatedEntities.actor.entity.relatedEntities.results.filter(
+									r =>
+										r.type === "BUILT_FROM" &&
+										(entityFilter?.entityGuid
+											? r.source?.entity.guid === entityFilter.entityGuid
+											: true)
+								);
 
 							const urlValue = entity.tags?.find(_ => _.key === "url")?.values[0];
 							for (const application of builtFromApplications) {
@@ -998,7 +1000,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 												occurrenceId: errorTrace.occurrenceId,
 												count: errorTrace.length,
 												lastOccurrence: errorTrace.lastOccurrence,
-												errorGroupUrl: response.actor.errorsInbox.errorGroup.url
+												errorGroupUrl: response.actor.errorsInbox.errorGroup.url,
 											});
 											if (observabilityErrors.length > 4) {
 												gotoEnd = true;
@@ -1007,7 +1009,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 										}
 									} catch (ex) {
 										ContextLogger.warn("internal error getErrorGroupGuid", {
-											ex: ex
+											ex: ex,
 										});
 									}
 								}
@@ -1026,7 +1028,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				response.repos.push({
 					repoId: repo.id!,
 					repoName: this.getRepoName(repo),
-					errors: observabilityErrors!
+					errors: observabilityErrors!,
 				});
 			}
 		} catch (ex) {
@@ -1051,7 +1053,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			  	`,
 				{
-					accountId: accountId
+					accountId: accountId,
 				}
 			);
 			const token = response.actor.account.pixie.pixieAccessToken;
@@ -1135,7 +1137,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  }				  
 			  	`,
 				{
-					entityGuid: request.entityGuid
+					entityGuid: request.entityGuid,
 				}
 			);
 			if (response?.actor?.entity?.relatedEntities?.results) {
@@ -1147,7 +1149,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						name: _entity.name,
 						type: _.type,
 						domain: _entity.domain,
-						accountName: _entity?.account?.name
+						accountName: _entity?.account?.name,
 					};
 				});
 				return results;
@@ -1212,7 +1214,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			ContextLogger.log(
 				`getNewRelicErrorGroupData hasRequest.entityGuid=${request.entityGuid != null}`,
 				{
-					request: request
+					request: request,
 				}
 			);
 
@@ -1228,7 +1230,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					message: errorGroupResponse.message,
 
 					errorGroupUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupGuid}`,
-					entityUrl: `${this.productUrl}/redirect/entity/${errorGroupResponse.entityGuid}`
+					entityUrl: `${this.productUrl}/redirect/entity/${errorGroupResponse.entityGuid}`,
 				};
 
 				if (
@@ -1239,7 +1241,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						path: errorGroupFullResponse.actor.entity.name,
 						stackTrace: errorGroupFullResponse.actor.entity.crash
 							? errorGroupFullResponse.actor.entity.crash.stackTrace.frames
-							: errorGroupFullResponse.actor.entity.exception?.stackTrace?.frames || []
+							: errorGroupFullResponse.actor.entity.exception?.stackTrace?.frames || [],
 					};
 					errorGroup.hasStackTrace = true;
 				}
@@ -1254,11 +1256,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				if (!errorGroup.hasStackTrace) {
 					errorGroup.attributes["Account"] = {
 						type: "string",
-						value: errorGroupFullResponse.actor.account.name
+						value: errorGroupFullResponse.actor.account.name,
 					};
 					errorGroup.attributes["Entity"] = {
 						type: "string",
-						value: errorGroupFullResponse.actor.entity.name
+						value: errorGroupFullResponse.actor.entity.name,
 					};
 				}
 
@@ -1281,7 +1283,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						email: assignee.email,
 						id: assignee.userInfo?.id,
 						name: assignee.userInfo?.name,
-						gravatar: assignee.userInfo?.gravatar
+						gravatar: assignee.userInfo?.gravatar,
 					};
 				}
 
@@ -1291,14 +1293,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				if (errorGroup.entity && builtFromResult) {
 					if (builtFromResult.error) {
 						errorGroup.entity.relationship = {
-							error: builtFromResult.error
+							error: builtFromResult.error,
 						};
 					} else {
 						errorGroup.entity = {
 							repo: {
 								name: builtFromResult.name!,
-								urls: [builtFromResult.url!]
-							}
+								urls: [builtFromResult.url!],
+							},
 						};
 					}
 				}
@@ -1308,7 +1310,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					occurrenceId: request.occurrenceId,
 					entityGuid: entityGuid,
 					hasErrorGroup: errorGroup != null,
-					hasStackTrace: errorGroup?.hasStackTrace === true
+					hasStackTrace: errorGroup?.hasStackTrace === true,
 				});
 			} else {
 				ContextLogger.warn(
@@ -1316,7 +1318,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					{
 						request: request,
 						entityGuid: entityGuid,
-						accountId: accountId
+						accountId: accountId,
 					}
 				);
 				return {
@@ -1327,14 +1329,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							accountId,
 							entityGuid,
 							errorGroupGuid
-						)) as any
-					}
+						)) as any,
+					},
 				};
 			}
 
 			return {
 				accountId,
-				errorGroup
+				errorGroup,
 			};
 		} catch (ex) {
 			ContextLogger.error(ex);
@@ -1342,7 +1344,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			let result: any = {};
 			if (ex.response?.errors) {
 				result = {
-					message: ex.response.errors.map((_: { message: string }) => _.message).join("\n")
+					message: ex.response.errors.map((_: { message: string }) => _.message).join("\n"),
 				};
 			} else {
 				result = { message: ex.message ? ex.message : ex.toString() };
@@ -1357,7 +1359,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				error: result,
 				accountId,
-				errorGroup: undefined as any
+				errorGroup: undefined as any,
 			};
 		}
 	}
@@ -1374,7 +1376,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					return {
 						id: _,
 						email: _,
-						group: "GIT"
+						group: "GIT",
 					};
 				})
 			);
@@ -1391,7 +1393,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		// });
 
 		return {
-			users: users
+			users: users,
 		};
 	}
 
@@ -1413,11 +1415,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							assignee: {
 								email: assignment.email,
 								id: assignment?.userInfo?.id,
-								name: assignment?.userInfo?.name
-							}
-						}
-					}
-				]
+								name: assignment?.userInfo?.name,
+							},
+						},
+					},
+				],
 			};
 		} catch (ex) {
 			ContextLogger.error(ex);
@@ -1439,10 +1441,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					{
 						type: "removeAssignee",
 						data: {
-							assignee: null
-						}
-					}
-				]
+							assignee: null,
+						},
+					},
+				],
 			};
 		} catch (ex) {
 			ContextLogger.error(ex);
@@ -1474,13 +1476,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  `,
 				{
 					errorGroupGuid: request.errorGroupGuid,
-					state: request.state
+					state: request.state,
 				}
 			);
 
 			ContextLogger.log("errorsInboxUpdateErrorGroupState", {
 				request: request,
-				response: response
+				response: response,
 			});
 
 			if (response?.errorTrackingUpdateErrorGroupState?.errors?.length) {
@@ -1488,7 +1490,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					.map(_ => _.description)
 					.join("\n");
 				ContextLogger.warn("errorsInboxUpdateErrorGroupState failure", {
-					error: stateFailure
+					error: stateFailure,
 				});
 				throw new Error(stateFailure);
 			}
@@ -1498,10 +1500,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					{
 						type: "setState",
 						data: {
-							state: request.state
-						}
-					}
-				]
+							state: request.state,
+						},
+					},
+				],
 			};
 		} catch (ex) {
 			ContextLogger.error(ex as Error);
@@ -1553,7 +1555,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				{
 					accountId: accountId,
 					name: name,
-					url: request.url
+					url: request.url,
 				}
 			);
 			ContextLogger.log("referenceEntityCreateOrUpdateRepository", {
@@ -1561,7 +1563,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				name: name,
 				url: request.url,
 				urlModified: request.url,
-				response: response
+				response: response,
 			});
 
 			if (response?.referenceEntityCreateOrUpdateRepository?.failures?.length) {
@@ -1572,7 +1574,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					accountId: accountId,
 					name: name,
 					url: request.url,
-					failures: failures
+					failures: failures,
 				});
 				throw new Error(failures);
 			}
@@ -1587,7 +1589,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					{
 						accountId: accountId,
 						name: name,
-						url: request.url
+						url: request.url,
 					}
 				);
 			}
@@ -1611,24 +1613,25 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  `,
 					{
 						sourceEntityGuid: entityId,
-						targetEntityGuid: repoEntityId
+						targetEntityGuid: repoEntityId,
 					}
 				);
 				ContextLogger.log("entityRelationshipUserDefinedCreateOrReplace", {
 					sourceEntityGuid: entityId,
 					targetEntityGuid: repoEntityId,
-					response: entityRelationshipUserDefinedCreateOrReplaceResponse
+					response: entityRelationshipUserDefinedCreateOrReplaceResponse,
 				});
 
 				if (
 					entityRelationshipUserDefinedCreateOrReplaceResponse
 						?.entityRelationshipUserDefinedCreateOrReplace?.errors?.length
 				) {
-					const createOrReplaceError = entityRelationshipUserDefinedCreateOrReplaceResponse.entityRelationshipUserDefinedCreateOrReplace?.errors
-						.map(_ => _.message)
-						.join("\n");
+					const createOrReplaceError =
+						entityRelationshipUserDefinedCreateOrReplaceResponse.entityRelationshipUserDefinedCreateOrReplace?.errors
+							.map(_ => _.message)
+							.join("\n");
 					ContextLogger.warn("entityRelationshipUserDefinedCreateOrReplace failure", {
-						error: createOrReplaceError
+						error: createOrReplaceError,
 					});
 					throw new Error(createOrReplaceError);
 				}
@@ -1643,17 +1646,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						return !!result?.entities?.length;
 					} catch (error) {
 						ContextLogger.warn("findRepositoryEntitiesByRepoRemotesResult error", {
-							error: error
+							error: error,
 						});
 						return false;
 					}
 				};
 				// max wait time is (1*1000)+(2*1000)+(3*1000)+(4*1000)+(5*1000) or 15 seconds
-				const findRepositoryEntitiesByRepoRemotesResult = await Functions.withExponentialRetryBackoff(
-					fn,
-					5,
-					1000
-				);
+				const findRepositoryEntitiesByRepoRemotesResult =
+					await Functions.withExponentialRetryBackoff(fn, 5, 1000);
 				ContextLogger.log(
 					`findRepositoryEntitiesByRepoRemotesResult result=${JSON.stringify(
 						findRepositoryEntitiesByRepoRemotesResult
@@ -1676,11 +1676,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 								repo: {
 									accountId: accountId,
 									name: request.name,
-									urls: [request.url]
-								}
-							}
-						}
-					]
+									urls: [request.url],
+								},
+							},
+						},
+					],
 				};
 			} else {
 				ContextLogger.warn(
@@ -1690,7 +1690,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		} catch (ex) {
 			ContextLogger.error(ex, "assignRepository", {
-				request: request
+				request: request,
 			});
 			throw ex;
 		}
@@ -1704,11 +1704,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 		try {
 			return this.query(query, {
-				accountId: request.newRelicAccountId!
+				accountId: request.newRelicAccountId!,
 			});
 		} catch (ex) {
 			Logger.error(ex, "getMethodThroughput", {
-				request
+				request,
 			});
 		}
 		return undefined;
@@ -1723,11 +1723,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 		try {
 			return await this.query(query, {
-				accountId: request.newRelicAccountId!
+				accountId: request.newRelicAccountId!,
 			});
 		} catch (ex) {
 			Logger.error(ex, "getMethodAverageDuration", {
-				request
+				request,
 			});
 		}
 		return undefined;
@@ -1741,7 +1741,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 		try {
 			return this.query(query, {
-				accountId: request.newRelicAccountId!
+				accountId: request.newRelicAccountId!,
 			});
 		} catch (ex) {
 			Logger.error(ex, "getMethodErrorRate", { request });
@@ -1762,7 +1762,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				);
 
 				const response = await this.query(query, {
-					accountId: request.newRelicAccountId!
+					accountId: request.newRelicAccountId!,
 				});
 
 				if (response?.actor?.account?.nrql?.results?.length) {
@@ -1779,7 +1779,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			locator: request.locator,
 			resolutionMethod: request.resolutionMethod,
 			codeFilePath: request.codeFilePath,
-			accountId: request.newRelicAccountId
+			accountId: request.newRelicAccountId,
 		});
 		return undefined;
 	}
@@ -1866,12 +1866,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			} catch (ex) {
 				Logger.warn("getGoldenSignalsEntity warning", {
-					error: ex
+					error: ex,
 				});
 			}
 			if (!entity) {
 				Logger.warn("getGoldenSignalsEntity: More than one NR entity, selecting first", {
-					entity: observabilityRepo.entityAccounts[0]
+					entity: observabilityRepo.entityAccounts[0],
 				});
 				entity = observabilityRepo.entityAccounts[0];
 			}
@@ -1880,7 +1880,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 
 		Logger.log("getGoldenSignalsEntity entity found?", {
-			entity
+			entity,
 		});
 
 		return entity;
@@ -1893,7 +1893,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return {
 			className,
 			namespace: theNamespace,
-			functionName: functionName
+			functionName: functionName,
 		};
 	}
 
@@ -1917,7 +1917,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return {
 			functionName,
 			className,
-			namespace: undefined
+			namespace: undefined,
 		};
 	}
 
@@ -1927,7 +1927,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const className = namespace;
 			return {
 				functionName,
-				className
+				className,
 			};
 		}
 
@@ -1940,7 +1940,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 			return {
 				namespace: myNamespace,
-				className
+				className,
 			};
 		}
 
@@ -1950,7 +1950,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				return {
 					namespace: myNamespace,
 					className,
-					functionName: coord
+					functionName: coord,
 				};
 			}
 			const parts = coord.split("/");
@@ -1959,7 +1959,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const className = parts.pop();
 				return {
 					className,
-					functionName
+					functionName,
 				};
 			} else {
 				return {};
@@ -1971,7 +1971,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return {
 			namespace: match[1],
 			className: match[2],
-			functionName: match[3]
+			functionName: match[3],
 		};
 	}
 
@@ -2027,7 +2027,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				case "go":
 					functionInfo = {
 						functionName: additionalMetadata["code.function"],
-						className: additionalMetadata["code.namespace"]
+						className: additionalMetadata["code.namespace"],
 					};
 					break;
 			}
@@ -2048,7 +2048,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				metadata: additionalMetadata,
 				namespace: additionalMetadata["code.namespace"],
 				className,
-				functionName
+				functionName,
 			};
 		});
 	}
@@ -2090,17 +2090,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 		if (request.resetCache) {
 			Logger.log("getFileLevelTelemetry: resetting cache", {
-				cacheKey
+				cacheKey,
 			});
 			this._mltTimedCache.clear();
 			Logger.log("getFileLevelTelemetry: reset cache complete", {
-				cacheKey
+				cacheKey,
 			});
 		} else {
 			const cached = this._mltTimedCache.get(cacheKey);
 			if (cached) {
 				Logger.log("getFileLevelTelemetry: from cache", {
-					cacheKey
+					cacheKey,
 				});
 				return cached;
 			}
@@ -2111,21 +2111,21 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		const isConnected = this.isConnected(codeStreamUser);
 		if (!isConnected) {
 			ContextLogger.warn("getFileLevelTelemetry: not connected", {
-				request
+				request,
 			});
 			return {
 				isConnected: isConnected,
 				error: {
 					message: "Not connected to New Relic",
-					type: "NOT_CONNECTED"
-				}
+					type: "NOT_CONNECTED",
+				},
 			} as any;
 		}
 
 		const repoForFile = await git.getRepositoryByFilePath(request.filePath);
 		if (!repoForFile?.id) {
 			ContextLogger.warn("getFileLevelTelemetry: no repo for file", {
-				request
+				request,
 			});
 			return undefined;
 		}
@@ -2156,12 +2156,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				repo: {
 					id: repoForFile.id,
 					name: this.getRepoName(repoForFile),
-					remote: remote
+					remote: remote,
 				},
 				error: {
 					message: "",
-					type: "NOT_ASSOCIATED"
-				}
+					type: "NOT_ASSOCIATED",
+				},
 			} as any;
 		}
 
@@ -2179,7 +2179,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					newRelicEntityGuid,
 					codeFilePath: relativeFilePath,
 					locator: request.locator,
-					resolutionMethod
+					resolutionMethod,
 				})) || [];
 
 			const spans = this.applyLanguageFilter(spanResponse, languageId);
@@ -2192,7 +2192,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const queryArgs: MetricQueryRequest = {
 				newRelicAccountId,
 				newRelicEntityGuid,
-				metricTimesliceNames
+				metricTimesliceNames,
 			};
 			const [averageDurationResponse, throughputResponse, errorRateResponse] = await Promise.all([
 				request.options.includeAverageDuration && metricTimesliceNames?.length
@@ -2204,7 +2204,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 				request.options.includeErrorRate && metricTimesliceNames?.length
 					? this.getMethodErrorRate(queryArgs)
-					: undefined
+					: undefined,
 			]);
 
 			[averageDurationResponse, throughputResponse, errorRateResponse].forEach(_ => {
@@ -2252,10 +2252,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				repo: {
 					id: repoForFile.id,
 					name: this.getRepoName(repoForFile),
-					remote: remote
+					remote: remote,
 				},
 				relativeFilePath: relativeFilePath,
-				newRelicUrl: `${this.productUrl}/redirect/entity/${newRelicEntityGuid}`
+				newRelicUrl: `${this.productUrl}/redirect/entity/${newRelicEntityGuid}`,
 			};
 
 			if (spans?.length) {
@@ -2266,17 +2266,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					data: {
 						throughputResponseLength,
 						averageDurationResponseLength,
-						errorRateResponseLength
+						errorRateResponseLength,
 					},
 					newRelicEntityGuid,
-					newRelicAccountId
+					newRelicAccountId,
 				});
 			} else {
 				Logger.log("getFileLevelTelemetry no spans", {
 					hasAnyData,
 					relativeFilePath,
 					newRelicEntityGuid,
-					newRelicAccountId
+					newRelicAccountId,
 				});
 			}
 			return response;
@@ -2284,14 +2284,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			Logger.error(ex, "getFileLevelTelemetry", {
 				request,
 				newRelicEntityGuid,
-				newRelicAccountId
+				newRelicAccountId,
 			});
 		}
 
 		Logger.log("getFileLevelTelemetry returning undefined", {
 			relativeFilePath,
 			newRelicEntityGuid,
-			newRelicAccountId
+			newRelicAccountId,
 		});
 
 		return undefined;
@@ -2329,7 +2329,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 		if (!entity) {
 			ContextLogger.warn("Missing entity", {
-				entityId: request.newRelicEntityGuid
+				entityId: request.newRelicEntityGuid,
 			});
 			return undefined;
 		}
@@ -2346,11 +2346,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				newRelicAlertSeverity: entity.alertSeverity,
 				newRelicEntityName: entity.entityName!,
 				newRelicEntityGuid: entity.entityGuid!,
-				newRelicUrl: `${this.productUrl}/redirect/entity/${entity.entityGuid}`
+				newRelicUrl: `${this.productUrl}/redirect/entity/${entity.entityGuid}`,
 			};
 		} catch (ex) {
 			Logger.error(ex, "getMethodLevelTelemetry", {
-				request
+				request,
 			});
 		}
 
@@ -2372,9 +2372,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 		if (!request.skipRepoFetch && !entity) {
 			ContextLogger.warn("Missing entity", {
-				entityId: request.newRelicEntityGuid
+				entityId: request.newRelicEntityGuid,
 			});
 			return undefined;
+		}
+
+		let recentAlertViolations: GetAlertViolationsResponse | undefined = {};
+		if (request.fetchRecentAlertViolations) {
+			recentAlertViolations = await this.getRecentAlertViolations(request.newRelicEntityGuid);
 		}
 
 		try {
@@ -2387,13 +2392,62 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				newRelicAlertSeverity: entity?.alertSeverity,
 				newRelicEntityName: entity?.entityName!,
 				newRelicEntityGuid: entity?.entityGuid! || request.newRelicEntityGuid,
-				newRelicUrl: `${this.productUrl}/redirect/entity/${entity?.entityGuid ||
-					request.newRelicEntityGuid}`
+				newRelicUrl: `${this.productUrl}/redirect/entity/${
+					entity?.entityGuid || request.newRelicEntityGuid
+				}`,
+				recentAlertViolations: recentAlertViolations || {},
 			};
 		} catch (ex) {
 			Logger.error(ex, "getServiceLevelTelemetry", {
-				request
+				request,
 			});
+		}
+
+		return undefined;
+	}
+
+	async getRecentAlertViolations(
+		entityGuid: string
+	): Promise<GetAlertViolationsResponse | undefined> {
+		try {
+			const response = await this.query<GetAlertViolationsQueryResult>(
+				`query getRecentAlertViolations($entityGuid: EntityGuid!) {
+					actor {
+					  entity(guid: $entityGuid) {
+						name
+						guid
+						recentAlertViolations(count: 2) {
+						  agentUrl
+						  alertSeverity
+						  closedAt
+						  label
+						  level
+						  openedAt
+						  violationId
+						  violationUrl
+						}
+					  }
+					}
+				  }				  
+				`,
+				{
+					entityGuid: entityGuid,
+				}
+			);
+			return response?.actor?.entity;
+		} catch (ex) {
+			ContextLogger.warn("getRecentAlertViolations failure", {
+				entityGuid,
+				error: ex,
+			});
+			const accessTokenError = ex as {
+				message: string;
+				innerError?: { message: string };
+				isAccessTokenError: boolean;
+			};
+			if (accessTokenError && accessTokenError.innerError && accessTokenError.isAccessTokenError) {
+				throw new Error(accessTokenError.message);
+			}
 		}
 
 		return undefined;
@@ -2414,14 +2468,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let observabilityRepos: GetObservabilityReposResponse | undefined;
 		try {
 			observabilityRepos = await this.getObservabilityRepos({
-				filters: [{ repoId: repoId }]
+				filters: [{ repoId: repoId }],
 			});
 		} catch (err) {
 			ContextLogger.warn("getObservabilityEntityRepos", { error: err });
 		}
 		if (!observabilityRepos?.repos?.length) {
 			ContextLogger.warn("observabilityRepos.repos empty", {
-				repoId: repoId
+				repoId: repoId,
 			});
 			return undefined;
 		}
@@ -2429,7 +2483,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		const repo = observabilityRepos.repos.find(_ => _.repoId === repoId);
 		if (!repo) {
 			ContextLogger.warn("observabilityRepos.repos unmatched for repo", {
-				repoId: repoId
+				repoId: repoId,
 			});
 			return undefined;
 		}
@@ -2466,24 +2520,24 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 								{
 									query: `SELECT average(newrelic.timeslice.value) * 1000 AS 'Response time (ms)' FROM Metric WHERE entity.guid IN ('${entityGuid}') AND metricTimesliceName='${metricTimesliceNameMapping["d"]}' TIMESERIES`,
 									title: "Response time (ms)",
-									name: "responseTimeMs"
+									name: "responseTimeMs",
 								},
 								// throughput
 								{
 									query: `SELECT count(newrelic.timeslice.value) AS 'Throughput' FROM Metric WHERE entity.guid IN ('${entityGuid}') AND metricTimesliceName='${metricTimesliceNameMapping["t"]}' TIMESERIES`,
 									title: "Throughput",
-									name: "throughput"
+									name: "throughput",
 								},
 								// error
 								{
 									query: `SELECT rate(count(apm.service.transaction.error.count), 1 minute) AS \`errorsPerMinute\` FROM Metric WHERE \`entity.guid\` = '${entityGuid}' AND metricTimesliceName='${metricTimesliceNameMapping["e"]}' FACET metricTimesliceName TIMESERIES`,
 									title: "Error rate",
-									name: "errorRate"
-								}
-							]
-						}
-					}
-				}
+									name: "errorRate",
+								},
+							],
+						},
+					},
+				},
 			};
 		} else {
 			return this.query(
@@ -2513,7 +2567,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 		if (queries?.actor?.entity?.goldenMetrics) {
 			Logger.log("getGoldenMetrics has goldenMetrics", {
-				entityGuid
+				entityGuid,
 			});
 			const parsedId = NewRelicProvider.parseId(entityGuid)!;
 
@@ -2542,7 +2596,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  }
 					  `;
 					return this.query(q, {
-						accountId: parsedId.accountId
+						accountId: parsedId.accountId,
 					}).catch(ex => {
 						Logger.warn(ex);
 					});
@@ -2571,20 +2625,20 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							["Response time (ms)"]: r["Response time (ms)"]
 								? r["Response time (ms)"].toFixed(2)
 								: null,
-							endDate: date
+							endDate: date,
 						};
 					}),
-					timeWindow: results[i].actor?.account?.nrql?.metadata?.timeWindow?.end
+					timeWindow: results[i].actor?.account?.nrql?.metadata?.timeWindow?.end,
 				};
 			});
 			Logger.log("getGoldenMetrics has response?", {
 				entityGuid,
-				responseLength: response?.length
+				responseLength: response?.length,
 			});
 			return response;
 		}
 		Logger.log("getGoldenMetrics no response", {
-			entityGuid
+			entityGuid,
 		});
 		return undefined;
 	}
@@ -2647,10 +2701,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 										},
 										0
 								  ) || 0
-								: 0
-						}
+								: 0,
+						},
 					],
-					timeWindow: account?.responseTimeMs?.metadata?.timeWindow?.end || 0
+					timeWindow: account?.responseTimeMs?.metadata?.timeWindow?.end || 0,
 				},
 				{
 					name: "throughput",
@@ -2658,10 +2712,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						{
 							throughput: account?.throughput?.results
 								? account.throughput.results[0]?.throughput || 0
-								: 0
-						}
+								: 0,
+						},
 					],
-					timeWindow: account?.throughput?.metadata?.timeWindow?.end || 0
+					timeWindow: account?.throughput?.metadata?.timeWindow?.end || 0,
 				},
 				{
 					name: "errorRate",
@@ -2670,18 +2724,18 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							// errors is a decimal here -- return it as a % with a * 100
 							errorRate: account?.errorRate?.results
 								? account.errorRate.results[0]?.errors * 100 || 0
-								: 0
-						}
+								: 0,
+						},
 					],
-					timeWindow: account?.errorRate?.metadata?.timeWindow?.end || 0
-				}
+					timeWindow: account?.errorRate?.metadata?.timeWindow?.end || 0,
+				},
 			];
 
 			return response;
 		} catch (ex) {
 			Logger.warn("getServiceGoldenMetrics no response", {
 				entityGuid,
-				error: ex
+				error: ex,
 			});
 			return undefined;
 		}
@@ -2699,11 +2753,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					const id = this._providerInfo.data.userId;
 					this._newRelicUserId = parseInt(id.toString(), 10);
 					ContextLogger.log("getUserId (found data)", {
-						userId: id
+						userId: id,
 					});
 				} catch (ex) {
 					ContextLogger.warn("getUserId", {
-						error: ex
+						error: ex,
 					});
 				}
 			}
@@ -2714,13 +2768,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (id) {
 				this._newRelicUserId = parseInt(id, 10);
 				ContextLogger.log("getUserId (found api)", {
-					userId: id
+					userId: id,
 				});
 				return this._newRelicUserId;
 			}
 		} catch (ex) {
 			ContextLogger.warn("getUserId " + ex.message, {
-				error: ex
+				error: ex,
 			});
 		}
 		return undefined;
@@ -2748,7 +2802,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return response?.actor?.organization?.id;
 		} catch (ex) {
 			ContextLogger.warn("getOrgId " + ex.message, {
-				error: ex
+				error: ex,
 			});
 		}
 
@@ -2791,13 +2845,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				  }`,
 				{
-					ids: [errorGroupGuid]
+					ids: [errorGroupGuid],
 				}
 			);
 			return response?.actor?.errorsInbox?.errorGroups?.results[0] || undefined;
 		} catch (ex) {
 			ContextLogger.warn("fetchErrorGroupDataById failure", {
-				errorGroupGuid
+				errorGroupGuid,
 			});
 			const accessTokenError = ex as {
 				message: string;
@@ -2901,7 +2955,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			{
 				entityGuid: entityGuid,
 				occurrenceId: occurrenceId,
-				fingerprintId: fingerprintId
+				fingerprintId: fingerprintId,
 			}
 		);
 	}
@@ -2980,7 +3034,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return this.query(q, {
 			accountId: accountId,
 			errorGroupGuids: [errorGroupGuid],
-			entityGuid: entityGuid
+			entityGuid: entityGuid,
 		});
 	}
 
@@ -3000,7 +3054,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			} catch (ex) {
 				ContextLogger.warn("fetchErrorGroup (stack trace missing)", {
 					entityGuid: entityGuid,
-					occurrenceId: occurrenceId
+					occurrenceId: occurrenceId,
 				});
 				stackTracePromise = undefined;
 			}
@@ -3015,7 +3069,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		if (response?.actor?.errorsInbox?.errorGroups?.results?.length === 0) {
 			ContextLogger.warn("fetchErrorGroup (retrying without timestamp)", {
 				entityGuid: entityGuid,
-				occurrenceId: occurrenceId
+				occurrenceId: occurrenceId,
 			});
 			response = await this._fetchErrorGroup(accountId, errorGroupGuid, entityGuid);
 		}
@@ -3038,7 +3092,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		} catch (ex) {
 			ContextLogger.warn("fetchErrorGroup (stack trace missing upon waiting)", {
 				entityGuid: entityGuid,
-				occurrenceId: occurrenceId
+				occurrenceId: occurrenceId,
 			});
 		}
 
@@ -3109,8 +3163,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					entityGuid: entityGuid,
 					codeStreamUserId: meUser?.id,
 					codeStreamTeamId: session?.teamId,
-					apiUrl: this.apiUrl
-				}
+					apiUrl: this.apiUrl,
+				},
 			};
 		}
 		return undefined;
@@ -3150,9 +3204,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 * 	>)}
 	 * @memberof NewRelicProvider
 	 */
-	protected async findRepositoryEntitiesByRepoRemotes(
-		remotes: string[]
-	): Promise<
+	protected async findRepositoryEntitiesByRepoRemotes(remotes: string[]): Promise<
 		| {
 				entities?: Entity[];
 				remotes?: string[];
@@ -3190,19 +3242,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const queryResponse = await this.query<EntitySearchResponse>(query);
 			return {
 				entities: queryResponse.actor.entitySearch.results.entities,
-				remotes: remoteVariants
+				remotes: remoteVariants,
 			};
 		} catch (ex) {
 			ContextLogger.warn("getEntitiesByRepoRemote", {
-				error: ex
+				error: ex,
 			});
 			return undefined;
 		}
 	}
 
-	protected async findClmSpanDataExists(
-		newRelicGuids: string[]
-	): Promise<
+	protected async findClmSpanDataExists(newRelicGuids: string[]): Promise<
 		{
 			name: string;
 			"code.function": string;
@@ -3213,7 +3263,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const results = await Promise.all(
 				newRelicGuids.map(async _ => {
 					const response = await this.query(generateClmSpanDataExistsQuery(_), {
-						accountId: NewRelicProvider.parseId(_)?.accountId
+						accountId: NewRelicProvider.parseId(_)?.accountId,
 					});
 					return response?.actor?.account?.nrql?.results[0];
 				})
@@ -3243,7 +3293,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			`WHERE fingerprint IS NOT NULL and entityGuid='${applicationGuid}'`,
 			"FACET fingerprint AS 'fingerPrintId'", // group the results by fingerprint
 			"SINCE 3 days ago",
-			"LIMIT MAX"
+			"LIMIT MAX",
 		].join(" ");
 
 		const browserNrql = [
@@ -3259,7 +3309,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			`WHERE stackHash IS NOT NULL AND entityGuid='${applicationGuid}'`,
 			"FACET stackTrace", // group the results by fingerprint
 			"SINCE 3 days ago",
-			"LIMIT MAX"
+			"LIMIT MAX",
 		].join(" ");
 
 		const mobileNrql1 = [
@@ -3275,7 +3325,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			`WHERE entityGuid='${applicationGuid}'`,
 			"FACET crashFingerprint", // group the results by fingerprint
 			"SINCE 3 days ago",
-			"LIMIT MAX"
+			"LIMIT MAX",
 		].join(" ");
 
 		const mobileNrql2 = [
@@ -3291,7 +3341,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			`WHERE entityGuid='${applicationGuid}'`,
 			"FACET handledExceptionUuid", // group the results by fingerprint
 			"SINCE 3 days ago",
-			"LIMIT MAX"
+			"LIMIT MAX",
 		].join(" ");
 
 		switch (entityType) {
@@ -3332,7 +3382,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  }
 					  `,
 					{
-						accountId: accountId
+						accountId: accountId,
 					}
 				);
 				if (response.actor.account.nrql.results?.length) {
@@ -3386,15 +3436,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		  }
 		  `,
 			{
-				guids: repositoryGuids
+				guids: repositoryGuids,
 			}
 		);
 	}
 
 	@log({ timed: true })
-	private async findRelatedEntityByRepositoryGuid(
-		repositoryGuid: string
-	): Promise<{
+	private async findRelatedEntityByRepositoryGuid(repositoryGuid: string): Promise<{
 		actor: {
 			entity: {
 				relatedEntities: {
@@ -3442,7 +3490,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		  }
 		  `,
 			{
-				guid: repositoryGuid
+				guid: repositoryGuid,
 			}
 		);
 	}
@@ -3469,7 +3517,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			{
 				name: name,
 				message: message,
-				entityGuid: entityGuid
+				entityGuid: entityGuid,
 			}
 		);
 	}
@@ -3503,13 +3551,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			  }`,
 				{
 					userId: userId,
-					emailAddress: emailAddress
+					emailAddress: emailAddress,
 				}
 			);
 		} catch (ex) {
 			ContextLogger.warn("getErrorsInboxAssignments", {
 				userId: userId,
-				usingEmailAddress: emailAddress != null
+				usingEmailAddress: emailAddress != null,
 			});
 			return undefined;
 		}
@@ -3529,9 +3577,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 * 	>)}
 	 * @memberof NewRelicProvider
 	 */
-	private async getMetricData(
-		errorGroupGuid: string
-	): Promise<
+	private async getMetricData(errorGroupGuid: string): Promise<
 		| {
 				entityGuid: string;
 				traceId?: string;
@@ -3577,7 +3623,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						}
 					  }`,
 				{
-					accountId: accountId
+					accountId: accountId,
 				}
 			);
 
@@ -3587,30 +3633,28 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					ContextLogger.warn("getMetric missing errorTraceResult", {
 						accountId: accountId,
 						errorGroupGuid: errorGroupGuid,
-						metricResult: errorGroupResponse
+						metricResult: errorGroupResponse,
 					});
 					return {
-						entityGuid: entityGuid
+						entityGuid: entityGuid,
 					};
 				}
 				if (errorTraceResult) {
 					return {
 						entityGuid: entityGuid || errorGroupResponse.entityGuid,
-						traceId: errorTraceResult.id
+						traceId: errorTraceResult.id,
 					};
 				}
 			}
 		} catch (ex) {
 			ContextLogger.error(ex, "getMetric", {
-				errorGroupGuid: errorGroupGuid
+				errorGroupGuid: errorGroupGuid,
 			});
 		}
 		return undefined;
 	}
 
-	private async findMappedRemoteByEntity(
-		entityGuid: string
-	): Promise<
+	private async findMappedRemoteByEntity(entityGuid: string): Promise<
 		| {
 				url: string;
 				name: string;
@@ -3625,7 +3669,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (result?.name && result.url) {
 				return {
 					name: result.name,
-					url: result.url
+					url: result.url,
 				};
 			}
 		}
@@ -3650,7 +3694,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		  `,
 			{
 				email: request.emailAddress,
-				errorGroupGuid: request.errorGroupGuid
+				errorGroupGuid: request.errorGroupGuid,
 			}
 		);
 	}
@@ -3672,7 +3716,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			  }`,
 			{
 				errorGroupGuid: request.errorGroupGuid,
-				userId: parseInt(request.userId, 10)
+				userId: parseInt(request.userId, 10),
 			}
 		);
 	}
@@ -3714,29 +3758,29 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					) {
 						return {
 							url: targetEntityTagsValues.values[0],
-							name: builtFrom.target.entity.name
+							name: builtFrom.target.entity.name,
 						};
 					} else {
 						ContextLogger.warn("findBuiltFrom missing tags with url[s]", {
-							relatedEntities: relatedEntities
+							relatedEntities: relatedEntities,
 						});
 						return {
 							error: {
 								message:
-									"Could not find a repository relationship. Please check your setup and try again."
-							}
+									"Could not find a repository relationship. Please check your setup and try again.",
+							},
 						};
 					}
 				}
 			} else {
 				ContextLogger.warn("findBuiltFrom missing tags", {
-					relatedEntities: relatedEntities
+					relatedEntities: relatedEntities,
 				});
 				return {
 					error: {
 						message:
-							"Could not find a repository relationship. Please check your setup and try again."
-					}
+							"Could not find a repository relationship. Please check your setup and try again.",
+					},
 				};
 			}
 		}
@@ -3756,11 +3800,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				accountId: accountId != null ? parseInt(accountId, 10) : 0,
 				unknownAbbreviation,
 				entityType,
-				unknownGuid
+				unknownGuid,
 			};
 		} catch (e) {
 			ContextLogger.warn("" + e.message, {
-				idLike
+				idLike,
 			});
 		}
 		return undefined;
@@ -3784,7 +3828,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		} catch (ex) {
 			ContextLogger.warn("getRepoName", {
 				repoLike: repoLike,
-				error: ex
+				error: ex,
 			});
 		}
 		return "repo";
@@ -3812,12 +3856,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			return {
 				startTime: timestampInMilliseconds - plusOrMinusInMinutes * 60 * 1000,
-				endTime: timestampInMilliseconds + plusOrMinusInMinutes * 60 * 1000
+				endTime: timestampInMilliseconds + plusOrMinusInMinutes * 60 * 1000,
 			};
 		} catch (ex) {
 			ContextLogger.warn("generateTimestampRange failed", {
 				timestampInMilliseconds: timestampInMilliseconds,
-				plusOrMinusInMinutes: plusOrMinusInMinutes
+				plusOrMinusInMinutes: plusOrMinusInMinutes,
 			});
 		}
 		return undefined;
