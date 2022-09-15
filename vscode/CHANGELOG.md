@@ -1,5 +1,18 @@
 # Change Log
 
+## [14.1.0] - 2022-9-15
+
+### Added
+
+- Adds active violations for services listed in the Observability section
+- Adds the ability to associate a repo with additional services on New Relic
+
+### Fixed
+
+- Addresses [#1154](https://github.com/TeamCodeStream/CodeStream/issues/1154) &mdash; Cannot read properties of null (reading 'id')
+- Addresses [#1168](https://github.com/TeamCodeStream/CodeStream/issues/1168) &mdash; Cannot read properties of null (reading 'origin')
+- Fixes an issue where the sorting of commits in a PR didn't take year into account
+
 ## [14.0.0] - 2022-9-8
 
 ### Added
