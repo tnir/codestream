@@ -336,7 +336,7 @@ export default class Container extends React.Component {
 									<br />
 									<br />
 									If the problem persists please contact{" "}
-									<a href="mailto:support@codestream.com">support@codestream.com</a>
+									<a href="mailto:codestream@newrelic.com">codestream@newrelic.com</a>
 								</div>
 							</div>
 						</fieldset>

@@ -1705,7 +1705,7 @@ Note that CodeStream 10.0 requires VS Code version 1.50.
 
 ### Added
 
-- Adds the ability to do [shift-left code reviews](<https://github.com/TeamCodeStream/CodeStream/wiki/Code-Review-(BETA)>). Currently in beta for VS Code. Contact us at support@codestream.com to participate.
+- Adds the ability to do [shift-left code reviews](<https://github.com/TeamCodeStream/CodeStream/wiki/Code-Review-(BETA)>). Currently in beta for VS Code. Contact us at codestream@newrelic.com to participate.
 - Adds the ability to create an issue not connected to a block of code via the + menu in the global nav
 
 ### Changed

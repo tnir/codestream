@@ -619,7 +619,7 @@ export const Signup = (props: Props) => {
 									<div className="error-message form-error">
 										<FormattedMessage id="signUp.conflict" defaultMessage="Invitation conflict." />{" "}
 										<FormattedMessage id="contactSupport" defaultMessage="Contact support">
-											{text => <Link href="mailto:support@codestream.com">{text}</Link>}
+											{text => <Link href="mailto:codestream@newrelic.com">{text}</Link>}
 										</FormattedMessage>
 										.
 									</div>

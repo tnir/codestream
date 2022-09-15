@@ -653,7 +653,7 @@ class Team extends React.Component<Props, State> {
 		confirmPopup({
 			title: "Delete Team",
 			message:
-				"Team deletion is handled by customer service. Please send an email to support@codestream.com.",
+				"Team deletion is handled by customer service. Please send an email to codestream@newrelic.com.",
 			centered: false,
 			buttons: [{ label: "OK", className: "control-button" }]
 		});

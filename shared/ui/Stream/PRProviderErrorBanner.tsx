@@ -153,7 +153,7 @@ export const PRProviderErrorBanner = () => {
 							<p>
 								If you continue to experience problems with your {derivedState.failedProviderName}{" "}
 								integration, please contact{" "}
-								<a href="mailto:support@codestream.com">customer support</a>.
+								<a href="mailto:codestream@newrelic.com">customer support</a>.
 							</p>
 						</div>
 					</div>
