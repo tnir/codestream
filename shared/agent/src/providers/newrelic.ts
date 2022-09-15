@@ -7,6 +7,7 @@ import {
 	groupBy as _groupBy,
 	memoize,
 	uniq as _uniq,
+	uniqBy as _uniqBy,
 } from "lodash";
 import { join, relative, sep } from "path";
 import Cache from "timed-cache";
@@ -432,6 +433,19 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			);
 		}
 		return undefined;
+	}
+
+	// Map array of objects based on order of array of strings
+	// @TODO: might be worth creating a agent/src/providers/newrelic/utils.tsx file
+	// for some of these private functions
+	private mapOrder(array: any = [], order: string[] = [], key: string = "") {
+		if (array.length > 0 && order.length > 0 && key) {
+			array.sort(function (a: any, b: any) {
+				return order.indexOf(a[key]) > order.indexOf(b[key]) ? 1 : -1;
+			});
+		}
+
+		return array;
 	}
 
 	private getInsufficientApiKeyError(ex: any): { message: string } | undefined {
@@ -2481,7 +2495,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  entity(guid: $entityGuid) {
 						name
 						guid
-						recentAlertViolations(count: 2) {
+						recentAlertViolations(count: 20) {
 						  agentUrl
 						  alertSeverity
 						  closedAt
@@ -2499,7 +2513,43 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					entityGuid: entityGuid,
 				}
 			);
-			return response?.actor?.entity;
+
+			if (response?.actor?.entity) {
+				let entity = response?.actor?.entity;
+				const recentAlertViolationsArray = entity?.recentAlertViolations;
+
+				const ALERT_SEVERITY_SORTING_ORDER: string[] = [
+					"",
+					"CRITICAL",
+					"NOT_ALERTING",
+					"NOT_CONFIGURED",
+					"WARNING",
+					"UNKNOWN",
+				];
+
+				// get unique labels
+				const recentAlertViolationsArrayUnique = _uniqBy(recentAlertViolationsArray, "label");
+
+				// sort based on openedAt time
+				recentAlertViolationsArrayUnique.sort((a, b) =>
+					a.openedAt > b.openedAt ? 1 : b.openedAt > a.openedAt ? -1 : 0
+				);
+
+				// sort based on alert serverity defined in ALERT_SEVERITY_SORTING_ORDER
+				const recentAlertViolationsArraySorted = this.mapOrder(
+					recentAlertViolationsArray,
+					ALERT_SEVERITY_SORTING_ORDER,
+					"alertSeverity"
+				);
+
+				// take top 2
+				const topTwoRecentAlertViolations = recentAlertViolationsArraySorted.slice(0, 2);
+
+				entity.recentAlertViolations = topTwoRecentAlertViolations;
+
+				return entity;
+			}
+			return {};
 		} catch (ex) {
 			ContextLogger.warn("getRecentAlertViolations failure", {
 				entityGuid,
