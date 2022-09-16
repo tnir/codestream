@@ -4,6 +4,7 @@ import { describe, expect, it } from "@jest/globals";
 import { Dictionary } from "lodash";
 import {
 	Entity,
+	GetEntityCountResponse,
 	GetReposScmResponse,
 	ObservabilityRepo,
 	RelatedEntity,
@@ -998,6 +999,10 @@ class NewRelicProviderStubBase extends NewRelicProvider {
 		return true;
 	}
 
+	public async getEntityCount(): Promise<GetEntityCountResponse> {
+		return { entityCount: 1 };
+	}
+
 	protected async getObservabilityEntityRepos(
 		repoId: string
 	): Promise<ObservabilityRepo | undefined> {
@@ -1574,6 +1579,10 @@ class NewRelicProviderStub extends NewRelicProviderStubBase {
 
 	isConnected(user: CSMe): boolean {
 		return true;
+	}
+
+	public async getEntityCount(): Promise<GetEntityCountResponse> {
+		return { entityCount: 1 };
 	}
 
 	protected async getObservabilityEntityRepos(
