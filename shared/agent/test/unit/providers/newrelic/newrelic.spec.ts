@@ -16,7 +16,6 @@ import {
 	GraphqlNrqlErrorResponse,
 	GraphqlNrqlTimeoutError,
 	isGetFileLevelTelemetryResponse,
-	isGraphqlNrqlError,
 } from "../../../../src/providers/newrelic.types";
 import {
 	MetricQueryRequest,
@@ -750,7 +749,7 @@ describe("NewRelicProvider", () => {
 		provider.sessionServiceContainer = serviceLocatorStub;
 
 		const results = await provider.getFileLevelTelemetry({
-			filePath: "/foo.py",
+			fileUri: "/foo.py",
 			languageId: "python",
 			options: {
 				includeAverageDuration: true,
@@ -805,7 +804,7 @@ describe("NewRelicProvider", () => {
 		provider.sessionServiceContainer = serviceLocatorStub;
 
 		const results = await provider.getFileLevelTelemetry({
-			filePath: "/foo2.py",
+			fileUri: "/foo2.py",
 			languageId: "python",
 			options: {
 				includeAverageDuration: true,
