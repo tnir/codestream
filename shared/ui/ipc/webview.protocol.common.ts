@@ -1,10 +1,4 @@
-import {
-	EnvironmentHost,
-	GetFileScmInfoResponse,
-	ThirdPartyProviderCard,
-	ThirdPartyProviderConfig,
-	TransitionsEntity,
-} from "@codestream/protocols/agent";
+import { EnvironmentHost, GetFileScmInfoResponse } from "@codestream/protocols/agent";
 import { Position, Range } from "vscode-languageserver-types";
 import { NewPullRequestBranch } from "./webview.protocol";
 

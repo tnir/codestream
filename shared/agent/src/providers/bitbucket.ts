@@ -26,7 +26,7 @@ import {
 	MoveThirdPartyCardResponse,
 	ProviderGetForkedReposResponse,
 	ThirdPartyDisconnect,
-	ThirdPartyProviderCard
+	ThirdPartyProviderCard,
 } from "../protocol/agent.protocol";
 import { CSBitbucketProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -39,7 +39,7 @@ import {
 	ProviderPullRequestInfo,
 	PullRequestComment,
 	ThirdPartyProviderSupportsIssues,
-	ThirdPartyProviderSupportsPullRequests
+	ThirdPartyProviderSupportsPullRequests,
 } from "./provider";
 import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
 
@@ -75,8 +75,10 @@ interface BitbucketValues<T> {
  * @see https://developer.atlassian.com/bitbucket/api/2/reference/
  */
 @lspProvider("bitbucket")
-export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketProviderInfo>
-	implements ThirdPartyProviderSupportsIssues, ThirdPartyProviderSupportsPullRequests {
+export class BitbucketProvider
+	extends ThirdPartyIssueProviderBase<CSBitbucketProviderInfo>
+	implements ThirdPartyProviderSupportsIssues, ThirdPartyProviderSupportsPullRequests
+{
 	private _knownRepos = new Map<string, BitbucketRepo>();
 	private _reposWithIssues: BitbucketRepo[] = [];
 
@@ -91,7 +93,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 	get headers() {
 		return {
 			Authorization: `Bearer ${this.accessToken}`,
-			"Content-Type": "application/json"
+			"Content-Type": "application/json",
 		};
 	}
 
@@ -100,19 +102,19 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 			provider: {
 				name: this.displayName,
 				icon: this.name,
-				id: this.providerConfig.id
+				id: this.providerConfig.id,
 			},
 			subhead: `#${comment.pullRequest.id}`,
 			actions: [
 				{
 					label: "Open Comment",
-					uri: comment.url
+					uri: comment.url,
 				},
 				{
 					label: `Open Merge Request #${comment.pullRequest.id}`,
-					uri: comment.pullRequest.url
-				}
-			]
+					uri: comment.pullRequest.url,
+				},
+			],
 		};
 	}
 
@@ -148,14 +150,14 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 					name: r.full_name,
 					apiIdentifier: r.full_name,
 					path: r.path,
-					singleAssignee: true // bitbucket issues only allow one assignee
+					singleAssignee: true, // bitbucket issues only allow one assignee
 				}));
 		} else {
 			let bitbucketRepos: BitbucketRepo[] = [];
 			try {
 				let apiResponse = await this.get<BitbucketValues<BitbucketPermission[]>>(
 					`/user/permissions/repositories?${qs.stringify({
-						fields: "+values.repository.has_issues"
+						fields: "+values.repository.has_issues",
 					})}`
 				);
 				bitbucketRepos = apiResponse.body.values.map(p => p.repository);
@@ -177,7 +179,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 					id: r.uuid,
 					name: r.full_name,
 					apiIdentifier: r.full_name,
-					singleAssignee: true // bitbucket issues only allow one assignee
+					singleAssignee: true, // bitbucket issues only allow one assignee
 				};
 			});
 		}
@@ -211,7 +213,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 						title: card.title,
 						modifiedAt: new Date(card.updated_on).getTime(),
 						tokenId: card.id,
-						body: card.content ? card.content.raw : ""
+						body: card.content ? card.content.raw : "",
 					});
 				});
 			})
@@ -228,8 +230,8 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 			title: data.title,
 			content: {
 				raw: data.description,
-				markup: "markdown"
-			}
+				markup: "markdown",
+			},
 		};
 		if (data.assignee) {
 			cardData.assignee = { uuid: data.assignee.uuid };
@@ -281,7 +283,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 				}
 
 				return {
-					users: members.map(u => ({ ...u, id: u.account_id, displayName: u.display_name }))
+					users: members.map(u => ({ ...u, id: u.account_id, displayName: u.display_name })),
 				};
 			} else {
 				const userResponse = await this.get<BitbucketUser>("/user");
@@ -334,7 +336,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 		const name = toRepoName(split[2]);
 		return {
 			owner,
-			name
+			name,
 		};
 	}
 
@@ -354,7 +356,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 			const repoInfo = await this.getRepoInfo({ remote: request.remote });
 			if (repoInfo && repoInfo.error) {
 				return {
-					error: repoInfo.error
+					error: repoInfo.error,
 				};
 			}
 			const { owner, name } = this.getOwnerFromRemote(request.remote);
@@ -367,17 +369,17 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 					source: {
 						branch: { name: request.headRefName },
 						repository: {
-							full_name: request.headRefRepoNameWithOwner
-						}
+							full_name: request.headRefRepoNameWithOwner,
+						},
 					},
 					destination: {
 						branch: { name: request.baseRefName },
 						repository: {
-							full_name: request.baseRefRepoNameWithOwner
-						}
+							full_name: request.baseRefRepoNameWithOwner,
+						},
 					},
 					title: request.title,
-					description: this.createDescription(request)
+					description: this.createDescription(request),
 				});
 			} else {
 				createPullRequestResponse = await this.post<
@@ -387,20 +389,20 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 					source: { branch: { name: request.headRefName } },
 					destination: { branch: { name: request.baseRefName } },
 					title: request.title,
-					description: this.createDescription(request)
+					description: this.createDescription(request),
 				});
 			}
 
 			const title = `#${createPullRequestResponse.body.id} ${createPullRequestResponse.body.title}`;
 			return {
 				url: createPullRequestResponse.body.links.html.href,
-				title: title
+				title: title,
 			};
 		} catch (ex) {
 			Logger.error(ex, `${this.displayName}: createPullRequest`, {
 				remote: request.remote,
 				head: request.headRefName,
-				base: request.baseRefName
+				base: request.baseRefName,
 			});
 			let message = ex.message;
 			if (message.indexOf("credentials lack one or more required privilege scopes") > -1) {
@@ -410,8 +412,8 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 			return {
 				error: {
 					type: "PROVIDER",
-					message: `${this.displayName}: ${message}`
-				}
+					message: `${this.displayName}: ${message}`,
+				},
 			};
 		}
 	}
@@ -432,7 +434,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 						url: _.links!.html!.href,
 						baseRefName: _.destination.branch.name,
 						headRefName: _.source.branch.name,
-						nameWithOwner: _.source.repository.full_name
+						nameWithOwner: _.source.repository.full_name,
 					};
 				});
 			}
@@ -449,7 +451,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 					repoResponse.body.mainbranch.type === "branch"
 						? repoResponse.body.mainbranch.name
 						: undefined,
-				pullRequests: pullRequests
+				pullRequests: pullRequests,
 			};
 		} catch (ex) {
 			return this.handleProviderError(ex, request);
@@ -495,17 +497,17 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 					refs: {
 						nodes: branchesByProjectId
 							.get(repoResponse.body.uuid)!
-							.map(branch => ({ name: branch.name }))
-					}
+							.map(branch => ({ name: branch.name })),
+					},
 				},
 				forks: (forksResponse?.body?.values).map((fork: any) => ({
 					nameWithOwner: fork.full_name,
 					owner: fork.slug,
 					id: fork.uuid,
 					refs: {
-						nodes: branchesByProjectId.get(fork.uuid)!.map(branch => ({ name: branch.name }))
-					}
-				}))
+						nodes: branchesByProjectId.get(fork.uuid)!.map(branch => ({ name: branch.name })),
+					},
+				})),
 			} as ProviderGetForkedReposResponse;
 			if (repoResponse.body.parent) {
 				response.parent = {
@@ -515,8 +517,8 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 					refs: {
 						nodes: branchesByProjectId
 							.get(parentOrSelfProject.uuid)!
-							.map(branch => ({ name: branch.name }))
-					}
+							.map(branch => ({ name: branch.name })),
+					},
 				};
 			}
 			return response;

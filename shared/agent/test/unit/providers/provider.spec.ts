@@ -33,7 +33,7 @@ describe("provider", () => {
 			GitLabProvider,
 			GitLabEnterpriseProvider,
 			BitbucketProvider,
-			BitbucketServerProvider
+			BitbucketServerProvider,
 		].forEach(Provider => {
 			const provider = new Provider({} as any, Provider as any);
 			expect(ThirdPartyIssueProvider.supportsCreatingPullRequests(provider)).toEqual(true);

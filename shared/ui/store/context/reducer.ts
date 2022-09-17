@@ -1,12 +1,11 @@
 import { ActionType } from "../common";
 import * as preferencesActions from "../preferences/actions";
 // import * as sessionActions from "../session/actions";
+import { WebviewPanels } from "@codestream/protocols/webview";
+import { CodeStreamState } from "..";
 import { PreferencesActionsType } from "../preferences/types";
 import * as actions from "./actions";
 import { ContextActionsType, ContextState, Route } from "./types";
-import { WebviewPanels } from "@codestream/protocols/webview";
-import { SessionActionType } from "../session/types";
-import { CodeStreamState } from "..";
 
 type ContextActions = ActionType<typeof actions>;
 type PreferencesActions = ActionType<typeof preferencesActions>;

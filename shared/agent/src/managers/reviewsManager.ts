@@ -1,5 +1,4 @@
 "use strict";
-import { parseUri } from "@grpc/grpc-js/build/src/uri-parser";
 import { ParsedDiff } from "diff";
 import * as fs from "fs";
 import { flatten } from "lodash";

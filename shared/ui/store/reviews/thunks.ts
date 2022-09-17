@@ -20,13 +20,13 @@ import { CodeStreamState } from "@codestream/webview/store";
 import { addPosts } from "@codestream/webview/store/posts/actions";
 import { getConnectedProviders } from "@codestream/webview/store/providers/reducer";
 import {
-	_bootstrapReviews,
-	_deleteReview,
 	addReviews,
 	EditableAttributes,
 	NewReviewAttributes,
 	saveReviews,
 	updateReviews,
+	_bootstrapReviews,
+	_deleteReview,
 } from "@codestream/webview/store/reviews/actions";
 import { addStreams } from "@codestream/webview/store/streams/actions";
 import { findMentionedUserIds, getTeamMembers } from "@codestream/webview/store/users/reducer";

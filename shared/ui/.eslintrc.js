@@ -5,6 +5,7 @@ module.exports = {
 	},
 	extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
 	overrides: [],
+	ignorePatterns: ["newrelic-browser.js"],
 	parser: "@typescript-eslint/parser",
 	parserOptions: {
 		ecmaVersion: "latest",

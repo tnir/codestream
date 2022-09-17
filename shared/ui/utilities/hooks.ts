@@ -1,16 +1,16 @@
 import { AppDispatch, CodeStreamState } from "@codestream/webview/store";
 import {
+	EffectCallback,
+	useCallback,
 	useEffect,
+	useLayoutEffect,
+	useMemo,
 	useRef,
 	useState,
-	useCallback,
-	useLayoutEffect,
-	EffectCallback,
-	useMemo,
 } from "react";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
-import { noop } from "../utils";
 import { RequestType } from "vscode-jsonrpc";
+import { noop } from "../utils";
 import { HostApi, RequestParamsOf, RequestResponseOf } from "../webview-api";
 
 type Fn = () => void;

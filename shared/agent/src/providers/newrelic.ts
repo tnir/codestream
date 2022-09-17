@@ -1,7 +1,5 @@
 "use strict";
 import fs from "fs";
-import * as csUri from "../system/uri";
-import * as path from "path";
 import { GraphQLClient } from "graphql-request";
 import {
 	Dictionary,
@@ -11,14 +9,15 @@ import {
 	uniq as _uniq,
 	uniqBy as _uniqBy,
 } from "lodash";
+import * as path from "path";
 import { join, relative, sep } from "path";
 import Cache from "timed-cache";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
 import { URI } from "vscode-uri";
+import * as csUri from "../system/uri";
 
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer, SessionServiceContainer } from "../container";
-import { git } from "../git/git";
 import { GitRemoteParser } from "../git/parsers/remoteParser";
 import { Logger } from "../logger";
 import { ReviewsManager } from "../managers/reviewsManager";
@@ -30,17 +29,20 @@ import {
 	EntityAccount,
 	EntitySearchResponse,
 	EntityType,
+	ErrorGroup,
+	ErrorGroupResponse,
+	ErrorGroupsResponse,
+	ErrorGroupStateType,
 	ERROR_NR_CONNECTION_INVALID_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_URL,
 	ERROR_NR_INSUFFICIENT_API_KEY,
 	ERROR_PIXIE_NOT_CONFIGURED,
-	ErrorGroup,
-	ErrorGroupResponse,
-	ErrorGroupsResponse,
-	ErrorGroupStateType,
 	GetAlertViolationsQueryResult,
 	GetAlertViolationsResponse,
+	GetEntityCountRequest,
+	GetEntityCountRequestType,
+	GetEntityCountResponse,
 	GetFileLevelTelemetryRequest,
 	GetFileLevelTelemetryRequestType,
 	GetFileLevelTelemetryResponse,
@@ -92,9 +94,6 @@ import {
 	StackTraceResponse,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
-	GetEntityCountRequestType,
-	GetEntityCountRequest,
-	GetEntityCountResponse,
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";

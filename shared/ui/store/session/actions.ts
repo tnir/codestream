@@ -1,6 +1,5 @@
 import { ConfirmLoginCodeRequest, TokenLoginRequest } from "@codestream/protocols/agent";
 import { PasswordLoginParams } from "@codestream/webview/Authentication/actions";
-import { setUserPreference } from "../../Stream/actions";
 import { reset } from "../actions";
 import { action } from "../common";
 import { SessionActionType, SessionState } from "./types";

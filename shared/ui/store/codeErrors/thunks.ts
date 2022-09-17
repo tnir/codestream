@@ -9,15 +9,10 @@ import {
 	UpdateCodeErrorRequestType,
 } from "@codestream/protocols/agent";
 import { CSCodeError, CSStackTraceLine } from "@codestream/protocols/api";
-import { EditorRevealRangeRequestType, WebviewPanels } from "@codestream/protocols/webview";
+import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
 import { logError } from "@codestream/webview/logger";
 import { CodeStreamState } from "@codestream/webview/store";
 import {
-	_addProviderError,
-	_clearProviderError,
-	_isLoadingErrorGroup,
-	_setErrorGroup,
-	_updateCodeErrors,
 	addCodeErrors,
 	bootstrapCodeErrors,
 	claimCodeError,
@@ -26,9 +21,14 @@ import {
 	PENDING_CODE_ERROR_ID_FORMAT,
 	PENDING_CODE_ERROR_ID_PREFIX,
 	removeCodeError,
+	_addProviderError,
+	_clearProviderError,
+	_isLoadingErrorGroup,
+	_setErrorGroup,
+	_updateCodeErrors,
 } from "@codestream/webview/store/codeErrors/actions";
 import { getCodeError } from "@codestream/webview/store/codeErrors/reducer";
-import { openPanel, setCurrentCodeError } from "@codestream/webview/store/context/actions";
+import { setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { addPosts } from "@codestream/webview/store/posts/actions";
 import { addStreams } from "@codestream/webview/store/streams/actions";
 import { createPostAndCodeError } from "@codestream/webview/Stream/actions";

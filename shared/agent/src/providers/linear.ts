@@ -14,7 +14,7 @@ import {
 	MoveThirdPartyCardRequest,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderBoard,
-	ThirdPartyProviderCard
+	ThirdPartyProviderCard,
 } from "../protocol/agent.protocol";
 import { CSLinearProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -36,7 +36,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 	get headers() {
 		return {
 			"Content-Type": "application/json",
-			"Linear-Token": this.accessToken!
+			"Linear-Token": this.accessToken!,
 		};
 	}
 
@@ -68,7 +68,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 		}
 
 		this._client.setHeaders({
-			Authorization: `Bearer ${this.accessToken}`
+			Authorization: `Bearer ${this.accessToken}`,
 		});
 
 		return this._client;
@@ -106,7 +106,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 				}
 			}`,
 			{
-				id: this._linearUserInfo!.id
+				id: this._linearUserInfo!.id,
 			}
 		);
 
@@ -122,7 +122,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 					modifiedAt: new Date(issue.updatedAt).getTime(),
 					tokenId: issue.identifier,
 					body: issue.description,
-					branchName: issue.branchName
+					branchName: issue.branchName,
 				};
 			});
 
@@ -165,7 +165,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 				}
 			}`,
 				{
-					teamId: team.id
+					teamId: team.id,
 				}
 			);
 
@@ -180,9 +180,9 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 					return {
 						...project,
 						id: `${team.id}_${project.id}`,
-						name: `${team.name}/${project.name}`
+						name: `${team.name}/${project.name}`,
 					};
-				})
+				}),
 			];
 		}
 		return { boards };
@@ -225,7 +225,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 			description: data.description.trim(),
 			teamId: teamId,
 			projectId: projectId || null,
-			assigneeId
+			assigneeId,
 		};
 		const response = await this.query<{ issueCreate: { issue: LinearIssue } }>(query, vars);
 		return response.issueCreate.issue;

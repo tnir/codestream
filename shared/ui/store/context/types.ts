@@ -1,12 +1,12 @@
 import { MetricTimesliceNameMapping, RepoProjectType } from "@codestream/protocols/agent";
+import { CodemarkType } from "@codestream/protocols/api";
 import {
-	WebviewContext,
-	WebviewPanels,
-	WebviewModals,
 	NewPullRequestBranch,
+	WebviewContext,
+	WebviewModals,
+	WebviewPanels,
 } from "@codestream/protocols/webview";
 import { AnyObject } from "@codestream/webview/utils";
-import { CodemarkType } from "@codestream/protocols/api";
 
 export enum ContextActionsType {
 	SetProfileUser = "@context/SetProfileUser",
