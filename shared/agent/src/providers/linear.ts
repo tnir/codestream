@@ -30,7 +30,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 		graphQlApi: { fns: {} },
 		restApi: { rateLimits: {}, fns: {} },
 	};
-	private _teamProjectCache: Cache | undefined;
+	private _teamProjectCache: Cache<LinearTeam[]> | undefined;
 	private _teamProjectsCacheKey = "teamProjects";
 
 	get displayName() {
@@ -50,7 +50,6 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 
 	async onConnected(providerInfo?: CSLinearProviderInfo) {
 		super.onConnected(providerInfo);
-		// @ts-ignore
 		this._teamProjectCache = new Cache({ defaultTtl: 300 * 1000 }); //5 minutes
 		this._linearUserInfo = await this.getMemberInfo();
 	}

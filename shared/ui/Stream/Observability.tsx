@@ -5,7 +5,6 @@ import {
 	ERROR_NR_INSUFFICIENT_API_KEY,
 	GetAlertViolationsResponse,
 	GetEntityCountRequestType,
-	GetObservabilityEntitiesRequestType,
 	GetObservabilityErrorAssignmentsRequestType,
 	GetObservabilityErrorAssignmentsResponse,
 	GetObservabilityErrorsRequestType,
@@ -327,7 +326,7 @@ export const Observability = React.memo((props: Props) => {
 			});
 	};
 
-	const _useDidMount = async (force: boolean = false) => {
+	const _useDidMount = async (force = false) => {
 		if (!derivedState.newRelicIsConnected) return;
 
 		setGenericError(undefined);
@@ -338,7 +337,7 @@ export const Observability = React.memo((props: Props) => {
 		let repoIds: string[] = [];
 		let reposResponse: GetObservabilityReposResponse | undefined;
 		try {
-			reposResponse = await HostApi.instance.send(GetObservabilityReposRequestType, {});
+			reposResponse = await HostApi.instance.send(GetObservabilityReposRequestType, { force });
 			setObservabilityRepos(reposResponse.repos || []);
 			repoIds = reposResponse.repos?.filter(r => r.repoId).map(r => r.repoId!) || [];
 
@@ -498,13 +497,14 @@ export const Observability = React.memo((props: Props) => {
 		}
 	};
 
-	const fetchObservabilityRepos = (entityGuid?: string, repoId?) => {
+	const fetchObservabilityRepos = (entityGuid?: string, repoId?, force = false) => {
 		loading(repoId, true);
 		setLoadingEntities(true);
 
 		return HostApi.instance
 			.send(GetObservabilityReposRequestType, {
 				filters: [{ repoId: repoId, entityGuid: entityGuid }],
+				force,
 			})
 			.then(response => {
 				if (response?.repos) {
@@ -553,7 +553,11 @@ export const Observability = React.memo((props: Props) => {
 			});
 	};
 
-	const fetchGoldenMetrics = async (entityGuid?: string | null, noLoadingSpinner?: boolean) => {
+	const fetchGoldenMetrics = async (
+		entityGuid?: string | null,
+		noLoadingSpinner?: boolean,
+		force = false
+	) => {
 		if (entityGuid) {
 			if (!noLoadingSpinner) {
 				setLoadingGoldenMetrics(true);
@@ -654,7 +658,7 @@ export const Observability = React.memo((props: Props) => {
 				// Only triggers conditional occurs during _useOnMount
 				if (_isEmpty(_entityGuid) && currentEntityAccountIndex) {
 					let __entityGuid = _currentEntityAccounts[currentEntityAccountIndex]?.entityGuid;
-					fetchGoldenMetrics(__entityGuid);
+					fetchGoldenMetrics(__entityGuid, true);
 					setExpandedEntity(__entityGuid);
 					setCurrentEntityAccountIndex(null);
 					// Set user observabilityRepoEntities preference to expanded entity if one doesnt exist
@@ -672,7 +676,7 @@ export const Observability = React.memo((props: Props) => {
 
 				if (!_isEmpty(_entityGuid)) {
 					fetchObservabilityErrors(_entityGuid, currentRepoId);
-					fetchGoldenMetrics(_entityGuid);
+					fetchGoldenMetrics(_entityGuid, true);
 				}
 			}
 		}
@@ -762,7 +766,7 @@ export const Observability = React.memo((props: Props) => {
 			const currentRepo = _head(observabilityRepos.filter(_ => _.repoId === currentRepoId));
 			if (!currentRepo) {
 				HostApi.instance
-					.send(GetObservabilityReposRequestType, {})
+					.send(GetObservabilityReposRequestType, { force: true })
 					.then((_: GetObservabilityReposResponse) => {
 						setObservabilityRepos(_.repos || []);
 					});
@@ -1068,7 +1072,7 @@ export const Observability = React.memo((props: Props) => {
 													{currentObsRepo && (
 														<ObservabilityAddAdditionalService
 															onSuccess={async e => {
-																_useDidMount();
+																_useDidMount(true);
 															}}
 															remote={currentObsRepo.repoRemote}
 															remoteName={currentObsRepo.repoName}
@@ -1103,7 +1107,8 @@ export const Observability = React.memo((props: Props) => {
 
 																await fetchObservabilityRepos(
 																	e.entityGuid,
-																	repoForEntityAssociator.repoId
+																	repoForEntityAssociator.repoId,
+																	true
 																);
 																fetchObservabilityErrors(
 																	e.entityGuid,

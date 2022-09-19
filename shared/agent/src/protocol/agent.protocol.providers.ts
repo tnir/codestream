@@ -1087,7 +1087,7 @@ export const GetNewRelicAccountsRequestType = new RequestType<
 >("codestream/newrelic/accounts");
 
 export interface GetObservabilityErrorsRequest {
-	filters?: { repoId: string; entityGuid?: string }[];
+	filters: { repoId: string; entityGuid?: string }[];
 }
 
 export interface ObservabilityErrorCore {
@@ -1134,6 +1134,7 @@ export const GetObservabilityErrorsRequestType = new RequestType<
 
 export interface GetObservabilityReposRequest {
 	filters?: { repoId: string; entityGuid?: string }[];
+	force?: boolean;
 }
 
 export interface EntityAccount {
@@ -1238,7 +1239,9 @@ export interface GetMethodLevelTelemetryRequest {
 	metricTimesliceNameMapping?: MetricTimesliceNameMapping;
 }
 
-export interface GetEntityCountRequest {}
+export interface GetEntityCountRequest {
+	force?: boolean;
+}
 
 export interface GetEntityCountResponse {
 	entityCount: number;
