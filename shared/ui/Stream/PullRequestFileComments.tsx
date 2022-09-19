@@ -1,16 +1,14 @@
-import React, { PropsWithChildren, useCallback, useEffect, useState } from "react";
-import Icon from "./Icon";
-import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
-import { getPullRequestFiles } from "../store/providerPullRequests/thunks";
-import { useDispatch, useSelector } from "react-redux";
-import copy from "copy-to-clipboard";
 import { FileStatus } from "@codestream/protocols/api";
-import { CodeStreamState } from "../store";
+import copy from "copy-to-clipboard";
+import { orderBy } from "lodash-es";
+import React, { PropsWithChildren, useEffect, useState } from "react";
 import styled from "styled-components";
+import { CodeStreamState } from "../store";
+import { getPullRequestFiles } from "../store/providerPullRequests/thunks";
+import { useAppDispatch, useAppSelector, useDidMount } from "../utilities/hooks";
+import Icon from "./Icon";
 import { Modal } from "./Modal";
 import { PullRequestFileCommentCard } from "./PullRequestFileCommentCard";
-import { useAppDispatch, useAppSelector, useDidMount } from "../utilities/hooks";
-import { orderBy } from "lodash-es";
 
 const Root = styled.div`
 	background: var(--app-background-color);
@@ -123,7 +121,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 		(async () => {
 			const data = await dispatch(
 				getPullRequestFiles({ providerId: pr.providerId, id: derivedState.currentPullRequestId! })
-			);
+			).unwrap();
 			_mapData(data);
 		})();
 
@@ -182,6 +180,28 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 					});
 				}
 			});
+		} else if (derivedState.currentPullRequestProviderId === "bitbucket*org") {
+			// TODO some typings
+			(pr as any).comments.forEach(comment => {
+				//check for deleted flag in comment object / comment.deleted
+				if (comment.deleted === true) {
+					return;
+				}
+				if (comment && comment.inline && comment.inline.path) {
+					if (!map[comment.inline.path]) map[comment.inline.path] = [];
+					map[comment.inline.path].push({
+						review: {
+							// TODO??
+							state: comment.state,
+						},
+						// TODO? what shape is this (need type)
+						comment: comment,
+					});
+					if (comment.id === props.commentId) {
+						setFilename(comment.inline.path);
+					}
+				}
+			});
 		} else {
 			const reviews = pr
 				? pr.timelineItems.nodes.filter(node => node.__typename === "PullRequestReview")
@@ -216,7 +236,10 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 		setSortedComments(sortedCommentsWithRefs);
 	}, [commentMap]);
 
-	if (!filename) return null;
+	if (!filename) {
+		console.warn("no filename");
+		return null;
+	}
 
 	return (
 		<Modal translucent onClose={() => props.onClose()}>

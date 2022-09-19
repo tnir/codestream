@@ -1,99 +1,99 @@
-import { upgradePendingCodeError } from "@codestream/webview/store/codeErrors/thunks";
-import { Range } from "vscode-languageserver-types";
 import {
+	BlameAuthor,
 	CodemarkPlus,
+	CreateDocumentMarkerPermalinkRequestType,
+	CrossPostIssueValues,
 	FetchAssignableUsersRequestType,
 	GetRangeScmInfoRequestType,
 	GetRangeScmInfoResponse,
-	CreateDocumentMarkerPermalinkRequestType,
-	ThirdPartyProviderBoard,
-	ThirdPartyProviderConfig,
-	CrossPostIssueValues,
 	GetReviewRequestType,
-	BlameAuthor,
 	GetShaDiffsRangesRequestType,
 	GetShaDiffsRangesResponse,
+	ThirdPartyProviderBoard,
+	ThirdPartyProviderConfig,
 } from "@codestream/protocols/agent";
 import {
 	CodemarkType,
 	CSChannelStream,
 	CSCodemark,
+	CSMe,
 	CSStream,
 	CSUser,
 	StreamType,
-	CSMe,
 } from "@codestream/protocols/api";
+import {
+	EditorHighlightRangeRequestType,
+	EditorSelection,
+	EditorSelectRangeRequestType,
+	WebviewPanels,
+} from "@codestream/protocols/webview";
+import { upgradePendingCodeError } from "@codestream/webview/store/codeErrors/thunks";
 import cx from "classnames";
+import { prettyPrintOne } from "code-prettify";
 import * as paths from "path-browserify";
 import React, { SyntheticEvent } from "react";
+import { FormattedMessage } from "react-intl";
 import { connect } from "react-redux";
 import Select from "react-select";
+import { Range } from "vscode-languageserver-types";
+import { Checkbox } from "../src/components/Checkbox";
+import { LabeledSwitch } from "../src/components/controls/LabeledSwitch";
+import { CSText } from "../src/components/CSText";
+import { PanelHeader } from "../src/components/PanelHeader";
+import { CodeStreamState } from "../store";
+import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { fetchCodeError } from "../store/codeErrors/actions";
+import { CodeErrorsState } from "../store/codeErrors/types";
+import { NewCodemarkAttributes, parseCodeStreamDiffUri } from "../store/codemarks/actions";
+import { getCodemark } from "../store/codemarks/reducer";
+import { CodemarksState } from "../store/codemarks/types";
+import { setCurrentPullRequestNeedsRefresh, setCurrentStream } from "../store/context/actions";
+import { getCurrentSelection } from "../store/editorContext/reducer";
+import { getPullRequestConversationsFromProvider } from "../store/providerPullRequests/thunks";
+import { getPRLabel, LabelHash } from "../store/providers/reducer";
+import { ReposState } from "../store/repos/types";
 import {
+	getChannelStreamsForTeam,
 	getStreamForId,
 	getStreamForTeam,
-	getChannelStreamsForTeam,
 } from "../store/streams/reducer";
+import { getCurrentTeamProvider } from "../store/teams/reducer";
 import {
-	mapFilter,
+	getActiveMemberIds,
+	getTeamMates,
+	getTeamMembers,
+	getTeamTagsArray,
+} from "../store/users/reducer";
+import {
 	arrayToRange,
+	escapeHtml,
 	forceAsLine,
 	isRangeEmpty,
-	replaceHtml,
 	keyFilter,
+	mapFilter,
+	replaceHtml,
 	safe,
 } from "../utils";
 import { HostApi } from "../webview-api";
+import { markItemRead, openModal, openPanel, setUserPreference } from "./actions";
+import { getDocumentFromMarker } from "./api-functions";
 import Button from "./Button";
+import CancelButton from "./CancelButton";
+import { confirmPopup } from "./Confirm";
 import CrossPostIssueControls from "./CrossPostIssueControls";
-import Tag from "./Tag";
-import Icon from "./Icon";
-import Menu from "./Menu";
-import Tooltip from "./Tooltip";
-import {
-	EditorSelectRangeRequestType,
-	EditorSelection,
-	EditorHighlightRangeRequestType,
-	WebviewPanels,
-} from "@codestream/protocols/webview";
-import { getCurrentSelection } from "../store/editorContext/reducer";
+import { VideoLink } from "./Flow";
 import Headshot from "./Headshot";
-import {
-	getTeamMembers,
-	getTeamTagsArray,
-	getTeamMates,
-	getActiveMemberIds,
-} from "../store/users/reducer";
+import Icon from "./Icon";
+import { Link } from "./Link";
+import Menu from "./Menu";
 import MessageInput, { AttachmentField } from "./MessageInput";
-import { getCurrentTeamProvider } from "../store/teams/reducer";
-import { getCodemark } from "../store/codemarks/reducer";
-import { CodemarksState } from "../store/codemarks/types";
-import { setCurrentStream, setCurrentPullRequestNeedsRefresh } from "../store/context/actions";
+import { Modal } from "./Modal";
+import { SharingAttributes, SharingControls } from "./SharingControls";
+import { SmartFormattedList } from "./SmartFormattedList";
 import ContainerAtEditorLine from "./SpatialView/ContainerAtEditorLine";
 import ContainerAtEditorSelection from "./SpatialView/ContainerAtEditorSelection";
-import { prettyPrintOne } from "code-prettify";
-import { escapeHtml } from "../utils";
-import { CodeStreamState } from "../store";
-import { LabeledSwitch } from "../src/components/controls/LabeledSwitch";
-import { CSText } from "../src/components/CSText";
-import { NewCodemarkAttributes, parseCodeStreamDiffUri } from "../store/codemarks/actions";
-import { SharingControls, SharingAttributes } from "./SharingControls";
-import { SmartFormattedList } from "./SmartFormattedList";
-import { Modal } from "./Modal";
-import { Checkbox } from "../src/components/Checkbox";
-import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { FormattedMessage } from "react-intl";
-import { Link } from "./Link";
-import { confirmPopup } from "./Confirm";
-import { openPanel, openModal, setUserPreference, markItemRead } from "./actions";
-import { fetchCodeError } from "../store/codeErrors/actions";
-import CancelButton from "./CancelButton";
-import { VideoLink } from "./Flow";
-import { PanelHeader } from "../src/components/PanelHeader";
-import { ReposState } from "../store/repos/types";
-import { getDocumentFromMarker } from "./api-functions";
-import { getPRLabel, LabelHash } from "../store/providers/reducer";
-import { CodeErrorsState } from "../store/codeErrors/types";
-import { getPullRequestConversationsFromProvider } from "../store/providerPullRequests/thunks";
+import Tag from "./Tag";
+import Tooltip from "./Tooltip";
 
 export interface ICrossPostIssueContext {
 	setSelectedAssignees(any: any): void;
@@ -178,6 +178,7 @@ interface ConnectedProps {
 	repos: ReposState;
 	prLabel: LabelHash;
 	codeErrors: CodeErrorsState;
+	currentPullRequestSupportsReview?: boolean;
 }
 
 interface State {
@@ -2544,32 +2545,34 @@ class CodemarkForm extends React.Component<Props, State> {
 										: "Submit"}
 								</Button>
 							</Tooltip>
-							{this.props.textEditorUriHasPullRequestContext && this.state.isInsidePrChangeSet && (
-								<Tooltip title={hasError ? null : reviewTooltip} placement="bottom" delay={1}>
-									<Button
-										key="submit-review"
-										loading={this.state.isReviewLoading}
-										disabled={hasError}
-										onClick={e => {
-											this.setState({ isProviderReview: true }, () => {
-												this.handleClickSubmit(e);
-											});
-										}}
-										style={{
-											paddingLeft: "10px",
-											paddingRight: "10px",
-											// fixed width to handle the isReviewLoading case
-											width: "auto",
-											marginRight: 0,
-										}}
-										className="control-button"
-										type="submit"
-									>
-										{hasExistingPullRequestReview && <>Add to review</>}
-										{!hasExistingPullRequestReview && <>Start a review</>}
-									</Button>
-								</Tooltip>
-							)}
+							{this.props.currentPullRequestSupportsReview &&
+								this.props.textEditorUriHasPullRequestContext &&
+								this.state.isInsidePrChangeSet && (
+									<Tooltip title={hasError ? null : reviewTooltip} placement="bottom" delay={1}>
+										<Button
+											key="submit-review"
+											loading={this.state.isReviewLoading}
+											disabled={hasError}
+											onClick={e => {
+												this.setState({ isProviderReview: true }, () => {
+													this.handleClickSubmit(e);
+												});
+											}}
+											style={{
+												paddingLeft: "10px",
+												paddingRight: "10px",
+												// fixed width to handle the isReviewLoading case
+												width: "auto",
+												marginRight: 0,
+											}}
+											className="control-button"
+											type="submit"
+										>
+											{hasExistingPullRequestReview && <>Add to review</>}
+											{!hasExistingPullRequestReview && <>Start a review</>}
+										</Button>
+									</Tooltip>
+								)}
 							{/*
 							<span className="hint">Styling with Markdown is supported</span>
 						*/}
@@ -2658,6 +2661,10 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		currentPullRequestId: state.context.currentPullRequest
 			? state.context.currentPullRequest.id
 			: undefined,
+		currentPullRequestSupportsReview:
+			state.context.currentPullRequest && state.context.currentPullRequest.providerId
+				? !state.context.currentPullRequest.providerId.includes("bitbucket")
+				: undefined,
 		providerInfo: (user.providerInfo && user.providerInfo[context.currentTeamId]) || EMPTY_OBJECT,
 		teamProvider: getCurrentTeamProvider(state),
 		currentUser: user,

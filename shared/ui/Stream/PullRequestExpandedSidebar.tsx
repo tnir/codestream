@@ -1,18 +1,14 @@
-import { useAppDispatch } from "@codestream/webview/utilities/hooks";
-import React, { useState, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { CodeStreamState } from "../store";
-import styled from "styled-components";
-import Icon from "./Icon";
-import { setCurrentPullRequest } from "../store/context/actions";
 import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
-import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
-import { getPreferences } from "../store/users/reducer";
-import { Row } from "./CrossPostIssueControls/IssuesPane";
-import { openModal } from "../store/context/actions";
+import { useAppDispatch } from "@codestream/webview/utilities/hooks";
+import React, { useMemo, useState } from "react";
+import styled from "styled-components";
 import { WebviewModals } from "../ipc/webview.protocol.common";
-import { HostApi } from "../webview-api";
+import { openModal, setCurrentPullRequest } from "../store/context/actions";
 import { api } from "../store/providerPullRequests/thunks";
+import { HostApi } from "../webview-api";
+import { Row } from "./CrossPostIssueControls/IssuesPane";
+import Icon from "./Icon";
+import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
 
 export const ReviewButton = styled.div`
 	color: white;
@@ -52,7 +48,8 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 		let prId;
 		if (
 			pullRequest?.providerId === "gitlab*com" ||
-			pullRequest?.providerId === "gitlab/enterprise"
+			pullRequest?.providerId === "gitlab/enterprise" ||
+			pullRequest?.providerId === "bitbucket*org"
 		) {
 			prId = pullRequest?.idComputed || pullRequest?.id;
 		} else {
@@ -100,37 +97,44 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 				<div>
 					{props?.thirdPartyPrObject && (
 						<>
-							{props?.thirdPartyPrObject?.providerId === "gitlab*com" ||
-							props?.thirdPartyPrObject?.providerId === "gitlab/enterprise" ? (
+							{props?.thirdPartyPrObject?.providerId !== "bitbucket*org" && (
 								<>
-									{reviewCount > 0 && !submittingReview && (
-										<ReviewButton style={{ width: "120px" }} onClick={e => handleSubmitReview(e)}>
-											<span className="wide-text">Submit Review ({reviewCount})</span>
-										</ReviewButton>
-									)}
-									{submittingReview && (
+									{props?.thirdPartyPrObject?.providerId === "gitlab*com" ||
+									props?.thirdPartyPrObject?.providerId === "gitlab/enterprise" ? (
+										<>
+											{reviewCount > 0 && !submittingReview && (
+												<ReviewButton
+													style={{ width: "120px" }}
+													onClick={e => handleSubmitReview(e)}
+												>
+													<span className="wide-text">Submit Review ({reviewCount})</span>
+												</ReviewButton>
+											)}
+											{submittingReview && (
+												<ReviewButton
+													onClick={e => {
+														e.preventDefault();
+														e.stopPropagation();
+													}}
+													style={{ width: "120px" }}
+												>
+													<span className="wide-text">
+														<Icon style={{ top: "-1px" }} className="spin" name="sync" />
+													</span>
+												</ReviewButton>
+											)}
+										</>
+									) : (
 										<ReviewButton
-											onClick={e => {
-												e.preventDefault();
-												e.stopPropagation();
-											}}
-											style={{ width: "120px" }}
+											style={{ width: reviewCount ? "70px" : "50px" }}
+											onClick={e => handleReviewClick(e)}
 										>
 											<span className="wide-text">
-												<Icon style={{ top: "-1px" }} className="spin" name="sync" />
+												Review {reviewCount > 0 && <> ({reviewCount})</>}
 											</span>
 										</ReviewButton>
 									)}
 								</>
-							) : (
-								<ReviewButton
-									style={{ width: reviewCount ? "70px" : "50px" }}
-									onClick={e => handleReviewClick(e)}
-								>
-									<span className="wide-text">
-										Review {reviewCount > 0 && <> ({reviewCount})</>}
-									</span>
-								</ReviewButton>
 							)}
 						</>
 					)}

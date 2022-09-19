@@ -848,6 +848,35 @@ export class ThirdPartyProviderRegistry {
 					hidden: false,
 				},
 			],
+			"bitbucket*org": [
+				//https://api.bitbucket.org//2.0/
+				// {
+				// 	providerId: "bitbucket*org",
+				// 	name: "Waiting on my Review",
+				// 	// TODO - @me @workspace @repo
+				// 	query: ``,
+				// 	hidden: false
+				// },
+				// {
+				// 	providerId: "bitbucket*org",
+				// 	name: "Assigned to Me",
+				// 	// TODO - how should this be formatted?
+				// 	query: `repositories/<foo>>/<bar>/pullrequests/<number>?fields=reviewers`, //this is per pullrequest
+				// 	hidden: false
+				// },
+				{
+					providerId: "bitbucket*org",
+					name: "Created by Me",
+					query: `state=OPEN`,
+					hidden: false,
+				},
+				{
+					providerId: "bitbucket*org",
+					name: "Recent",
+					query: `sort=updated_on&state=OPEN&state=MERGED&state=DECLINED&state=SUPERSEDED&pagelen=5`,
+					hidden: false,
+				},
+			],
 		};
 		try {
 			const user = await SessionContainer.instance().users.getMe();

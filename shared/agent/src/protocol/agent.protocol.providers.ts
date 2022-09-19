@@ -473,7 +473,9 @@ export interface StatusContext {
 
 export interface FetchThirdPartyPullRequestPullRequest {
 	id: string;
+	/** used by some other providers like GitLab  */
 	iid?: string;
+	idComputed?: string;
 	providerId: string; // e.g. "github*com"
 	// this is the parent repo
 	repository: {
@@ -514,6 +516,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 			};
 		};
 	};
+	comments?: any[]; //TODO: Fix this!
 	files: {
 		pageInfo: {
 			endCursor?: string;
@@ -698,7 +701,7 @@ export interface FetchThirdPartyPullRequestRepository {
 	providerId: string;
 	viewerDefaultMergeMethod?: "MERGE" | "REBASE" | "SQUASH";
 	viewerPermission: "ADMIN" | "MAINTAIN" | "READ" | "TRIAGE" | "WRITE";
-	branchProtectionRules: BranchProtectionRules;
+	branchProtectionRules?: BranchProtectionRules | undefined;
 }
 
 interface RateLimit {
@@ -708,11 +711,13 @@ interface RateLimit {
 	resetAt: any;
 }
 
+export interface ThirdPartyPullRequestComments<T> extends Array<T> {}
+
 export interface FetchThirdPartyPullRequestResponse {
 	error?: {
 		message: string;
 	};
-	rateLimit: RateLimit;
+	rateLimit?: RateLimit;
 	repository: FetchThirdPartyPullRequestRepository;
 	viewer: {
 		id: string;
@@ -746,6 +751,7 @@ export interface FetchThirdPartyPullRequestCommitsResponse {
 		avatarUrl: string;
 		user?: {
 			login: string;
+			avatarUrl?: string;
 		};
 	};
 	committer: {
@@ -844,6 +850,7 @@ export interface Labels {
 
 export interface GetMyPullRequestsResponse {
 	id: string;
+	idComputed?: string;
 	providerId: string;
 	url: string;
 	title: string;

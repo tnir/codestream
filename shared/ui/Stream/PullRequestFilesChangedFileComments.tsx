@@ -113,6 +113,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const [iconName, setIconName] = React.useState("sync");
 	const [currentRepoRoot, setCurrentRepoRoot] = React.useState("");
 	const isGitLab = pullRequest?.providerId?.includes("gitlab");
+	const isBitbucket = pullRequest?.providerId?.includes("bitbucket");
 
 	const derivedState = useAppSelector((state: CodeStreamState) => {
 		return {
@@ -126,8 +127,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		  currentPullRequest?.conversations?.project?.mergeRequest
 		: currentPullRequest?.conversations?.repository?.pullRequest;
 	// For GHE, can only check files in version greater than 3.0.0
-	const supportsViewerViewedState = currentPr
-		? semver.gt(currentPr?.supports?.version?.version, "3.0.0")
+	const supportsViewerViewedState = currentPr?.supports?.version?.version
+		? semver.gt(currentPr.supports.version.version, "3.0.0")
 		: false;
 
 	useEffect(() => {
@@ -261,7 +262,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		event.preventDefault();
 		event.stopPropagation();
 
-		let prId = isGitLab ? pullRequest?.idComputed : pullRequest?.id;
+		let prId = isGitLab || isBitbucket ? pullRequest?.idComputed : pullRequest?.id;
 
 		dispatch(
 			setCurrentPullRequest(
@@ -527,7 +528,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 										>
 											<Icon name="comment" className="type-icon" />{" "}
 											{lineNumber(c) && <span>Line {lineNumber(c)}: </span>}
-											{c.comment.bodyText || c.comment.body}
+											{c.comment.bodyText || c.comment.body || c.comment.content.raw}
 										</div>
 										{isPending && (
 											<PendingCircle onClick={e => handlePendingClick(e)}>P</PendingCircle>

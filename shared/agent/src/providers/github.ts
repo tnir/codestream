@@ -1981,7 +1981,7 @@ export class GitHubProvider
 	 * Returns the reviewId (if it exists) for the specificed pull request (there can only be 1 review per pull request per user)
 	 * @param request
 	 */
-	async getPullRequestReviewId(request: { pullRequestId: string }) {
+	async getPullRequestReviewId(request: { pullRequestId: string }): Promise<string | undefined> {
 		const cachedPR = this._pullRequestCache.get(request.pullRequestId);
 		if (cachedPR?.repository?.pullRequest) {
 			return cachedPR.repository.pullRequest.pendingReview?.id;
@@ -5585,7 +5585,7 @@ export class GitHubProvider
 
 	async getPullRequestCommits(
 		request: FetchThirdPartyPullRequestCommitsRequest
-	): Promise<FetchThirdPartyPullRequestCommitsResponse> {
+	): Promise<FetchThirdPartyPullRequestCommitsResponse[]> {
 		const data = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
 		const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
 

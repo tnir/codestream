@@ -99,7 +99,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 				: "";
 		const parsedDiffUri = parseCodeStreamDiffUri(matchFile || "");
 
-		return {
+		const result = {
 			currentPullRequestProviderId: state.context.currentPullRequest
 				? state.context.currentPullRequest.providerId
 				: undefined,
@@ -114,6 +114,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 			pullRequestId: getPullRequestId(state),
 			collaborators: getProviderPullRequestCollaborators(state),
 		};
+		return result;
 	});
 
 	const { visitedFiles, visitFile, unVisitFile } = props;
@@ -191,7 +192,8 @@ export const PullRequestFilesChanged = (props: Props) => {
 			} else if (derivedState.currentPullRequestProviderId.indexOf("gitlab") > -1) {
 				return `merge-requests/${props.pr.iid}/head`;
 			} else if (derivedState.currentPullRequestProviderId.indexOf("bitbucket") > -1) {
-				return "";
+				//TODO: figure this out  FETCH_HEAD???
+				return `refs/pull/${props.pr.number}/head`;
 			}
 		}
 		return "";

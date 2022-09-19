@@ -1,31 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { PRSelectorButtons, PRSubmitReviewButton } from "./PullRequestComponents";
-import styled from "styled-components";
-import { useAppDispatch, useAppSelector, useDidMount } from "../utilities/hooks";
-import { useSelector, useDispatch } from "react-redux";
-import { CodeStreamState } from "../store";
-import { PullRequestFilesChanged } from "./PullRequestFilesChanged";
-import { FileStatus } from "@codestream/protocols/api";
-import { LoadingMessage } from "../src/components/LoadingMessage";
-import { setUserPreference } from "./actions";
-import { PRPatchRoot, PullRequestPatch } from "./PullRequestPatch";
-import copy from "copy-to-clipboard";
 import {
 	FetchThirdPartyPullRequestPullRequest,
 	GetReposScmRequestType,
 	ReadTextFileRequestType,
 	WriteTextFileRequestType,
 } from "@codestream/protocols/agent";
-import Icon from "./Icon";
-import { Button } from "../src/components/Button";
-import { PullRequestFinishReview } from "./PullRequestFinishReview";
-import { Checkbox } from "../src/components/Checkbox";
-import { HostApi } from "../webview-api";
-import { Link } from "./Link";
-import { getProviderPullRequestRepo } from "../store/providerPullRequests/slice";
+import { FileStatus } from "@codestream/protocols/api";
 import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
+import copy from "copy-to-clipboard";
 import * as path from "path-browserify";
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 import { Range } from "vscode-languageserver-types";
+import { Button } from "../src/components/Button";
+import { Checkbox } from "../src/components/Checkbox";
+import { LoadingMessage } from "../src/components/LoadingMessage";
+import { CodeStreamState } from "../store";
+import { getProviderPullRequestRepo } from "../store/providerPullRequests/slice";
+import { useAppDispatch, useAppSelector } from "../utilities/hooks";
+import { HostApi } from "../webview-api";
+import { setUserPreference } from "./actions";
+import Icon from "./Icon";
+import { Link } from "./Link";
+import { PRSelectorButtons, PRSubmitReviewButton } from "./PullRequestComponents";
+import { PullRequestFilesChanged } from "./PullRequestFilesChanged";
+import { PullRequestFinishReview } from "./PullRequestFinishReview";
+import { PRPatchRoot, PullRequestPatch } from "./PullRequestPatch";
 import Tooltip from "./Tooltip";
 
 export const PRDiffHunks = styled.div`
@@ -272,6 +271,25 @@ export const PullRequestFilesChangedList = (props: Props) => {
 						});
 					}
 				});
+		} else if (pr && derivedState.currentPullRequestProviderId === "bitbucket*org") {
+			// TODO
+			(pr as any).comments.forEach(comment => {
+				//check for deleted flag in comment object / comment.deleted
+				if (comment.deleted === true) {
+					return;
+				}
+				if (comment && comment.inline && comment.inline.path) {
+					if (!map[comment.inline.path]) map[comment.inline.path] = [];
+					map[comment.inline.path].push({
+						review: {
+							// TODO??
+							state: comment.state,
+						},
+						// TODO? what shape is this
+						comment: comment,
+					});
+				}
+			});
 		}
 		return map;
 	}, [pr?.updatedAt, derivedState.currentPullRequestProviderId]);

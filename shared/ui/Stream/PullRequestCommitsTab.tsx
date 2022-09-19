@@ -1,3 +1,8 @@
+import {
+	ChangeDataType,
+	DidChangeDataNotificationType,
+	FetchThirdPartyPullRequestCommitsResponse,
+} from "@codestream/protocols/agent";
 import { LoadingMessage } from "@codestream/webview/src/components/LoadingMessage";
 import { CodeStreamState } from "@codestream/webview/store";
 import {
@@ -5,22 +10,16 @@ import {
 	getPullRequestCommitsFromProvider,
 } from "@codestream/webview/store/providerPullRequests/thunks";
 import { useAppDispatch, useAppSelector, useDidMount } from "@codestream/webview/utilities/hooks";
-import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import Icon from "./Icon";
-import Timestamp from "./Timestamp";
-import Tooltip from "./Tooltip";
-import { PRHeadshotName } from "../src/components/HeadshotName";
-import styled from "styled-components";
 import copy from "copy-to-clipboard";
 import { groupBy, orderBy } from "lodash-es";
-import { Link } from "./Link";
+import React, { useState } from "react";
+import styled from "styled-components";
+import { PRHeadshotName } from "../src/components/HeadshotName";
 import { HostApi } from "../webview-api";
-import {
-	ChangeDataType,
-	DidChangeDataNotificationType,
-	FetchThirdPartyPullRequestCommitsResponse,
-} from "@codestream/protocols/agent";
+import Icon from "./Icon";
+import { Link } from "./Link";
+import Timestamp from "./Timestamp";
+import Tooltip from "./Tooltip";
 
 const PRCommitContent = styled.div`
 	margin: 0 20px 20px 20px;
