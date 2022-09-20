@@ -1655,7 +1655,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					<PaneBody key={"openpullrequests"}>
 						{!derivedState.isPRSupportedCodeHostConnected && (
 							<>
-								<NoContent>Connect to GitHub, GitLab, or Bitbucket to see your PRs</NoContent>
+								{/* eventually need for Bitbucket*/}
+								<NoContent>Connect to GitHub or GitLab to see your PRs</NoContent>
 								<IntegrationButtons noBorder>
 									{derivedState.PRSupportedProviders.map(provider => {
 										if (!provider) return null;
