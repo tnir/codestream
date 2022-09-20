@@ -16,6 +16,7 @@ import { Strings } from "../system";
 import { Logger } from "../logger";
 import { InstrumentableSymbol, ISymbolLocator } from "./symbolLocator";
 import { Container } from "../container";
+import { configuration } from "../configuration";
 
 function allEmpty(arrays: (any[] | undefined)[]) {
 	for (const arr of arrays) {
@@ -62,6 +63,34 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 			document: document,
 			tracked: false
 		};
+		if (document.uri.scheme === "codestream-diff") {
+			this.promptToEnableCodeLens();
+		}
+	}
+
+	private _isShowingPromptToEnableCodeLens = false;
+	private promptToEnableCodeLens() {
+		if (this._isShowingPromptToEnableCodeLens) return;
+		const promptToEnableCodeLensInDiffsSection = configuration.name("promptToEnableCodeLensInDiffs").value
+		const promptToEnableCodeLensInDiffs = configuration.get<boolean>(promptToEnableCodeLensInDiffsSection);
+		const config = vscode.workspace.getConfiguration();
+		if (promptToEnableCodeLensInDiffs && !config.get("diffEditor.codeLens")) {
+			const actions: vscode.MessageItem[] = [
+				{ title: "Yes" },
+				{ title: "No", isCloseAffordance: true },
+				{ title: "Don't ask me again" }
+			];
+	
+			this._isShowingPromptToEnableCodeLens = true;
+			vscode.window.showInformationMessage("Enable Code Lens in diffs to view code level metrics", ...actions).then(result => {				
+				if (result?.title === "Yes") {
+					config.update("diffEditor.codeLens", true, true);
+				} else if (result?.title === "Don't ask me again") {
+					configuration.update(promptToEnableCodeLensInDiffsSection, false, vscode.ConfigurationTarget.Global)
+				}
+				this._isShowingPromptToEnableCodeLens = false;
+			});
+		}
 	}
 
 	documentClosed(document: TextDocument) {
