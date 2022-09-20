@@ -250,14 +250,15 @@ export class CodeStreamAgent implements Disposable {
 				return this._connection.onRequest(type, function () {
 					const args = arguments;
 					let addition = "";
+					const arg = args[0] || {};
 					if (type?.method === "codestream/provider/generic") {
-						const arg = args[0] || {};
-						addition = `/${arg.providerId?.replace(/\*/g, "-")}/${arg.method}`;
+						addition = `/${arg.method}`;
 					}
 
 					return NewRelic.startWebTransaction(type.method + addition, () => {
 						NewRelic.addCustomAttributes({
 							...(that.createNewRelicCustomAttributes() as any),
+							providerId: arg?.providerId,
 							messageType: "request",
 						});
 						return handler.apply(null, args);
@@ -285,6 +286,7 @@ export class CodeStreamAgent implements Disposable {
 			return NewRelic.startWebTransaction(type.method, function () {
 				NewRelic.addCustomAttributes({
 					...(that.createNewRelicCustomAttributes() as any),
+					providerId: params?.providerId,
 					messageType: "notification",
 				});
 				return that._connection.sendNotification(type, params);
@@ -314,6 +316,7 @@ export class CodeStreamAgent implements Disposable {
 			return NewRelic.startWebTransaction(type.method, function () {
 				NewRelic.addCustomAttributes({
 					...(that.createNewRelicCustomAttributes() as any),
+					providerId: params?.providerId,
 					messageType: "request",
 				});
 				return that._connection.sendRequest(type, params, token);
