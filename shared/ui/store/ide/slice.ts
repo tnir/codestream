@@ -8,6 +8,9 @@ const slice = createSlice({
 	initialState,
 	reducers: {
 		setIde: (state, action: PayloadAction<IdeState>) => {
+			if (action.payload.name) {
+				action.payload.name = action.payload.name.toUpperCase();
+			}
 			return action.payload;
 		},
 	},
