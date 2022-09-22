@@ -80,7 +80,7 @@ const MISSING_REF_MESSAGE =
 const MISSING_REF_HELP_URL =
 	"https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring/#sha";
 const CONFIGURE_ERROR_REF_HELP_URL =
-	"http://docs.newrelic.com/docs/codestream/start-here/codestream-new-relic/#apm";
+	"https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring/#buildsha";
 
 @lsp
 export class NRManager {
