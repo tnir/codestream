@@ -48,8 +48,10 @@ export class SymbolLocator implements ISymbolLocator {
 
 		let localUri;
 		if (document.uri.scheme === "codestream-diff") {
-			const { uri: localUriString } = await Container.agent.urls.resolveLocalUri(document.uri.toString(true));
-			localUri = localUriString && vscode.Uri.parse(localUriString);			
+			const { uri: localUriString } = await Container.agent.urls.resolveLocalUri(
+				document.uri.toString(true)
+			);
+			localUri = localUriString && vscode.Uri.parse(localUriString);
 		}
 
 		for (const timeout of [0, 750, 1000, 1500, 2000]) {

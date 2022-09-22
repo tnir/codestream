@@ -206,9 +206,8 @@ export class CodeStreamAgentConnection implements Disposable {
 		return this._onDidChangeConnectionStatus.event;
 	}
 
-	private _onDidEncounterMaintenanceMode = new EventEmitter<
-		DidEncounterMaintenanceModeNotification
-	>();
+	private _onDidEncounterMaintenanceMode =
+		new EventEmitter<DidEncounterMaintenanceModeNotification>();
 	get onDidEncounterMaintenanceMode(): Event<DidEncounterMaintenanceModeNotification> {
 		return this._onDidEncounterMaintenanceMode.event;
 	}
@@ -223,9 +222,8 @@ export class CodeStreamAgentConnection implements Disposable {
 		return this._onDidChangeDocumentMarkers.event;
 	}
 
-	private _onDidChangePullRequestComments = new EventEmitter<
-		DidChangePullRequestCommentsNotification
-	>();
+	private _onDidChangePullRequestComments =
+		new EventEmitter<DidChangePullRequestCommentsNotification>();
 	get onDidChangePullRequestComments(): Event<DidChangePullRequestCommentsNotification> {
 		return this._onDidChangePullRequestComments.event;
 	}
@@ -235,16 +233,14 @@ export class CodeStreamAgentConnection implements Disposable {
 		return this._onUserDidCommit.event;
 	}
 
-	private _onDidDetectUnreviewedCommits = new EventEmitter<
-		DidDetectUnreviewedCommitsNotification
-	>();
+	private _onDidDetectUnreviewedCommits =
+		new EventEmitter<DidDetectUnreviewedCommitsNotification>();
 	get onDidDetectUnreviewedCommits(): Event<DidDetectUnreviewedCommitsNotification> {
 		return this._onDidDetectUnreviewedCommits.event;
 	}
 
-	private _onDidChangeRepositoryCommitHash = new EventEmitter<
-		DidChangeRepositoryCommitHashNotification
-	>();
+	private _onDidChangeRepositoryCommitHash =
+		new EventEmitter<DidChangeRepositoryCommitHashNotification>();
 	get onDidChangeRepositoryCommitHash(): Event<DidChangeRepositoryCommitHashNotification> {
 		return this._onDidChangeRepositoryCommitHash.event;
 	}
@@ -1159,9 +1155,8 @@ export class CodeStreamAgentConnection implements Disposable {
 		}
 		this._clientReadyCancellation = new CancellationTokenSource();
 
-		this._clientOptions.outputChannel = this._outputChannel = window.createOutputChannel(
-			"CodeStream (Agent)"
-		);
+		this._clientOptions.outputChannel = this._outputChannel =
+			window.createOutputChannel("CodeStream (Agent)");
 		this._clientOptions.revealOutputChannelOn = RevealOutputChannelOn.Never;
 
 		const initializationOptions = getInitializationOptions({
@@ -1406,13 +1401,13 @@ export class CodeStreamAgentConnection implements Disposable {
 function started(target: CodeStreamAgentConnection, propertyName: string, descriptor: any) {
 	if (typeof descriptor.value === "function") {
 		const method = descriptor.value;
-		descriptor.value = function(this: CodeStreamAgentConnection, ...args: any[]) {
+		descriptor.value = function (this: CodeStreamAgentConnection, ...args: any[]) {
 			if (!this.started) throw new Error("CodeStream Agent has not been started");
 			return method!.apply(this, args);
 		};
 	} else if (typeof descriptor.get === "function") {
 		const get = descriptor.get;
-		descriptor.get = function(this: CodeStreamAgentConnection, ...args: any[]) {
+		descriptor.get = function (this: CodeStreamAgentConnection, ...args: any[]) {
 			if (!this.started) throw new Error("CodeStream Agent has not been started");
 			return get!.apply(this, args);
 		};
