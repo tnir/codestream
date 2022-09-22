@@ -10,7 +10,7 @@ const slice = createSlice({
 	initialState,
 	reducers: {
 		updateCapabilities: (state, action: PayloadAction<CapabilitiesState>) => {
-			return action.payload;
+			return { ...state, ...action.payload };
 		},
 	},
 });

@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import * as url from "url";
 import { ConfigsState } from "./types";
 
@@ -11,12 +11,18 @@ const initialState: ConfigsState = {
 	isProductionCloud: false,
 };
 
+type UpdateConfig = Partial<ConfigsState>;
+
 const slice = createSlice({
 	name: "configs",
 	initialState,
 	reducers: {
-		updateConfigs: (state, action) => {
-			return action.payload;
+		updateConfigs: (state, action: PayloadAction<UpdateConfig>) => {
+			// Payload is incomplete - can just be 1 field
+			return {
+				...state,
+				...action.payload,
+			};
 		},
 	},
 });
