@@ -1,11 +1,11 @@
 import { authenticate } from "@codestream/webview/Authentication/actions";
 import { Middleware } from "redux";
-import { CodeStreamState } from "..";
+import { AppDispatch, CodeStreamState } from "..";
 import { setMaintenanceMode } from "./actions";
 import { SessionActionType } from "./types";
 
 export const sessionMiddleware: Middleware =
-	({ dispatch, getState }: { dispatch: any; getState: () => CodeStreamState }) =>
+	({ dispatch, getState }: { dispatch: AppDispatch; getState: () => CodeStreamState }) =>
 	next => {
 		let pollingTask: Poller | undefined;
 

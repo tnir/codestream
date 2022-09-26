@@ -1,3 +1,4 @@
+import middleware from "@codestream/webview/store/middleware";
 import { Action, configureStore } from "@reduxjs/toolkit";
 import { batchedSubscribe } from "redux-batched-subscribe";
 import { ThunkAction } from "redux-thunk";
@@ -70,6 +71,7 @@ export const store = configureStore({
 		codeErrors: reduceCodeErrors,
 		dynamicLogging: reduceDynamicLogging,
 	},
+	middleware: getDefaultMiddleware => getDefaultMiddleware().concat(middleware),
 	enhancers: [batchedSubscribe(debounceToAnimationFrame((notify: Function) => notify()))],
 });
 

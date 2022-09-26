@@ -9,11 +9,7 @@ import { getPost } from "../posts/reducer";
 import { PostsActionsType } from "../posts/types";
 import { addNewActivity } from "./actions";
 
-export const activityFeedMiddleware: Middleware<
-	{},
-	CodeStreamState,
-	ThunkDispatch<CodeStreamState, unknown, AnyAction>
-> = store => next => async action => {
+export const activityFeedMiddleware: Middleware = store => next => async action => {
 	const { bootstrapped } = store.getState();
 
 	if (bootstrapped && action.type === PostsActionsType.Add) {
@@ -25,6 +21,7 @@ export const activityFeedMiddleware: Middleware<
 			if (post.version === 1) {
 				if (post.parentPostId != null) {
 					// ensure we have the parent post
+					// @ts-ignore
 					store.dispatch(fetchPostForActivity(post.parentPostId, post.streamId));
 				} else if (post.codemark != null && post.codemark.reviewId == null) {
 					store.dispatch(addNewActivity("codemark", [post.codemark]));
