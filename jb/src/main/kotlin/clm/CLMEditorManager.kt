@@ -312,6 +312,7 @@ abstract class CLMEditorManager(
                         }
                     }
                 })
+
             val renderer = CLMCustomRenderer(referenceOnHoverPresentation)
             val inlay = editor.inlayModel.addBlockElement(range.startOffset, false, true, 1, renderer)
 
