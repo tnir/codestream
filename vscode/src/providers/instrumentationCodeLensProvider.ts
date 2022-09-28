@@ -101,7 +101,7 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 				this._isShowingPromptToEnableCodeLens = true;
 				vscode.window
 					.showInformationMessage(
-						"Enable Code Lens in diffs to view code level metrics",
+						"Enable CodeLens in diffs to view code-level metrics",
 						...actions
 					)
 					.then(result => {
