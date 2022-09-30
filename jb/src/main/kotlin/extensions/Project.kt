@@ -14,7 +14,7 @@ import java.net.URL
 val Project.workspaceFolders: Set<WorkspaceFolder>
     get() {
         var folders = mutableSetOf(baseWorkspaceFolder)
-        val moduleManager = getComponent(ModuleManager::class.java)
+        val moduleManager = ModuleManager.getInstance(this)
         for (module in moduleManager.modules) {
             val moduleFolders = module.rootManager.contentRoots
                 .filter { it.isDirectory && it.uri != null }
