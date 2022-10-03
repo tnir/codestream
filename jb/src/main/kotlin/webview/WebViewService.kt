@@ -103,8 +103,8 @@ class WebViewService(val project: Project) : Disposable {
         tempDir.deleteOnExit()
         extractedHtmlFile = File(tempDir, WEBVIEW_TEMPLATE_HTML)
 
-        FileUtils.copyToFile(javaClass.getResourceAsStream("/webview/webview.js"), File(tempDir, "webview.js"))
-        FileUtils.copyToFile(javaClass.getResourceAsStream("/webview/webview.js.map"), File(tempDir, "webview.js.map"))
+        FileUtils.copyToFile(javaClass.getResourceAsStream("/webview/index.js"), File(tempDir, "index.js"))
+        FileUtils.copyToFile(javaClass.getResourceAsStream("/webview/index.js.map"), File(tempDir, "index.js.map"))
         FileUtils.copyToFile(
             javaClass.getResourceAsStream("/webview/styles/webview.css"),
             File(tempDir.resolve("styles"), "webview.css")
