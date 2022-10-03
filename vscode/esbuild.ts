@@ -31,7 +31,7 @@ async function webBuild(args: Args) {
 			path.resolve(context, "./index.ts"),
 			path.resolve(context, "styles", "webview.less")
 		],
-		sourcemap: args.mode === "production" ?  "linked" : "inline",
+		sourcemap: args.mode === "production" ?  "linked" : "both",
 		outdir: target
 	};
 
