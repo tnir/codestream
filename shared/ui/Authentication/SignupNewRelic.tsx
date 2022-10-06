@@ -1,29 +1,24 @@
-import {
-	RegisterNrUserRequestType,
-	GetNewRelicSignupJwtTokenRequestType,
-} from "@codestream/protocols/agent";
-import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import { RegisterNrUserRequestType } from "@codestream/protocols/agent";
+import { LoginResult } from "@codestream/protocols/api";
+import { CodeStreamState } from "@codestream/webview/store";
 import { handleSelectedRegion, setSelectedRegion } from "@codestream/webview/store/session/thunks";
 import React, { useEffect } from "react";
-import { HostApi } from "../webview-api";
-import Icon from "../Stream/Icon";
-import Button from "../Stream/Button";
-import { Link } from "../Stream/Link";
-import styled from "styled-components";
-import { useAppDispatch, useAppSelector, useDidMount } from "../utilities/hooks";
 import { FormattedMessage } from "react-intl";
-import { useDispatch, useSelector } from "react-redux";
+import styled from "styled-components";
 import { logError } from "../logger";
-import { CodeStreamState } from "@codestream/webview/store";
-import { LoginResult } from "@codestream/protocols/api";
-import { goToNewUserEntry, goToCompanyCreation, goToLogin } from "../store/context/actions";
+import { goToCompanyCreation, goToLogin, goToNewUserEntry } from "../store/context/actions";
+import Button from "../Stream/Button";
+import Icon from "../Stream/Icon";
+import { Link } from "../Stream/Link";
+import { useAppDispatch, useAppSelector, useDidMount } from "../utilities/hooks";
+import { HostApi } from "../webview-api";
 import { completeSignup } from "./actions";
 // TODO: BRIAN FIX (remove this dependency)...
+import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { Dropdown } from "../Stream/Dropdown";
 import { ModalRoot } from "../Stream/Modal"; // HACK ALERT: including this component is NOT the right way
 import Tooltip from "../Stream/Tooltip";
 import { TooltipIconWrapper } from "./Signup";
-import { Dropdown } from "../Stream/Dropdown";
-import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 
 const FooterWrapper = styled.div`
 	text-align: center;
@@ -135,6 +130,15 @@ export const SignupNewRelic = () => {
 			switch (status) {
 				// CompanyCreation should handle routing on success
 				case LoginResult.Success:
+					if (email && token && teamId) {
+						sendTelemetry();
+						dispatch(
+							completeSignup(email, token!, teamId!, {
+								createdTeam: false,
+							})
+						);
+					}
+					break;
 				case LoginResult.NotInCompany:
 				case LoginResult.NotOnTeam: {
 					sendTelemetry();
@@ -158,13 +162,6 @@ export const SignupNewRelic = () => {
 						setShowEmailErrorMessage(true);
 						setShowGenericErrorMessage(false);
 						setExistingEmail(email);
-					}
-					// invited @TODO: this could be handled cleaner
-					if (email && token && teamId) {
-						sendTelemetry();
-						completeSignup(email, token!, teamId!, {
-							createdTeam: false,
-						});
 					}
 					break;
 				}

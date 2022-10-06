@@ -1288,7 +1288,7 @@ export class CodeStreamSession {
 				}
 				this._teamId = response.teams.find(_ => _.isEveryoneTeam)!.id;
 				return {
-					status: LoginResult.AlreadyConfirmed,
+					status: LoginResult.Success,
 					token: response.accessToken,
 					email: response.user?.email,
 					teamId: this._teamId,
@@ -1298,17 +1298,7 @@ export class CodeStreamSession {
 					accountIsConnected: response.accountIsConnected,
 				};
 			} else {
-				// @TODO: This specific logical path could use some QA
-				return {
-					status: LoginResult.Success,
-					token: response.token,
-					email: response.email,
-					teamId: this._teamId,
-					companies: response.companies,
-					eligibleJoinCompanies: response.eligibleJoinCompanies,
-					isWebmail: response.isWebmail,
-					accountIsConnected: response.accountIsConnected,
-				};
+				throw new Error("no access token in response"); // there's really no reason we should get here
 			}
 		} catch (error) {
 			if (error instanceof ServerError) {
