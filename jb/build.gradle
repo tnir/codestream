@@ -68,7 +68,7 @@ intellij {
     type = "IU"
     // the version parameter dictates which jars will be used at compilation time
 
-    version = "2021.2.1" // earliest version we support
+    version = "2021.3.1" // earliest version we support
     // version = "2022.1.1" // Rider version
 
     // version "201.5616-EAP-CANDIDATE-SNAPSHOT"
@@ -84,11 +84,11 @@ intellij {
     // sandboxDir = "$System.env.HOME/ide-sandbox" // It is sometimes useful to not have IDE config inside source control
 
     // 2021.2.1
-    plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:212.5080.55', 'Pythonid:212.5080.64', 'org.jetbrains.plugins.ruby:212.5080.8']
+    // plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:212.5080.55', 'Pythonid:212.5080.64', 'org.jetbrains.plugins.ruby:212.5080.8']
     // 2022.1.4
     // plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:221.6008.13', 'Pythonid:221.6008.17', 'org.jetbrains.plugins.ruby:221.6008.13']
-    // 2021.3
-    // plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:213.6461.48', 'Pythonid:213.7172.26', 'org.jetbrains.plugins.ruby:213.7172.6']
+    // 2021.3.1
+    plugins = ['java', 'git4idea', 'org.jetbrains.plugins.go:213.6461.48', 'Pythonid:213.6461.79', 'org.jetbrains.plugins.ruby:213.6461.79']
 }
 
 runIde {
