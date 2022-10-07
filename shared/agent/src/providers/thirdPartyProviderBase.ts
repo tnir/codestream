@@ -273,7 +273,6 @@ export abstract class ThirdPartyProviderBase<
 		await this._ensuringConnection;
 	}
 
-	@log({ timed: true, singleLine: true })
 	async refreshToken(request?: { providerTeamId?: string }): Promise<void> {
 		await this._refreshLock.runExclusive(async () => {
 			if (this._providerInfo === undefined || !isRefreshable(this._providerInfo)) {

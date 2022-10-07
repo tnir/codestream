@@ -330,7 +330,7 @@ export class GitHubProvider
 								.match(/GitHub[Enterprise]?Provider\.(\w+)/)![1];
 						} catch (err) {
 							functionName = "unknown";
-							Logger.warn(err);
+							Logger.warn(err.message);
 						}
 						this._queryLogger.graphQlApi.rateLimit.last = {
 							name: functionName,
