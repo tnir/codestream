@@ -6,24 +6,33 @@ import * as path from "path";
 
 export type Mode = "production" | "development";
 
+export type IdeType = "vs" | "vscode" | "jb";
+
 export interface Args {
 	watchMode: boolean;
 	reset: boolean;
 	mode: Mode;
 	onlySymlinks: boolean;
+	ide?: IdeType;
 }
 
 export function processArgs(): Args {
-	const watchMode = process.argv.findIndex(arg => arg === "--watch") !== -1;
-	const reset = process.argv.findIndex(arg => arg === "--reset") !== -1;
-	const onlySymlinks = process.argv.findIndex(arg => arg === "--only-symlinks") !== -1;
+	const watchMode = process.argv.findIndex((arg) => arg === "--watch") !== -1;
+	const reset = process.argv.findIndex((arg) => arg === "--reset") !== -1;
+	const onlySymlinks = process.argv.findIndex((arg) => arg === "--only-symlinks") !== -1;
 	const mode =
-		process.argv.findIndex(arg => arg === "--prod") !== -1 ? "production" : "development";
+		process.argv.findIndex((arg) => arg === "--prod") !== -1 ? "production" : "development";
+	const ideIndex = process.argv.findIndex((arg) => arg === "--ide");
+	const ide =
+		ideIndex !== -1 && process.argv.length >= ideIndex + 1
+			? (process.argv[ideIndex + 1] as IdeType)
+			: undefined;
 	const args: Args = {
 		watchMode,
 		reset,
 		mode,
-		onlySymlinks
+		onlySymlinks,
+		ide,
 	};
 	console.info(JSON.stringify(args));
 	return args;
@@ -46,6 +55,6 @@ export function commonEsbuildOptions(
 		keepNames: true,
 		plugins,
 		sourcemap: "linked",
-		watch: args.watchMode
+		watch: args.watchMode,
 	};
 }

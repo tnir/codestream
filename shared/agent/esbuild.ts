@@ -63,6 +63,7 @@ const postBuildCopy: CopyStuff[] = [
 		platform: "node",
 		target: "node16.13",
 		outdir: outputDir,
+		sourceRoot: args.ide === "vscode" ? path.resolve(__dirname, "../agent/dist") : undefined,
 		sourcesContent: args.mode === "development",
 	};
 
