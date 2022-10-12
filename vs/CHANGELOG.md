@@ -1,5 +1,22 @@
 # Change Log
 
+## [14.3.0] - 2022-10-13
+
+### Added
+
+- Adds a new CI/CD section with a CircleCI integration to show your build status in the IDE
+
+### Changed
+
+- Improved drop-down selector when making repository <> service associations in New Relics organizations with a large number of entities
+
+### Fixed
+
+- Fixes an issue that was preventing signup via New Relic api key for users that had been invited
+- Fixes an issue that would cause the list of pull requests to disappear on transient network errors
+- Fixes an issue where closed violations were being displayed in the Observability section 
+- Addresses [#1198](https://github.com/TeamCodeStream/CodeStream/issues/1198) &mdash; java.lang.Throwable: class com.intellij.openapi.module.ModuleManager it is a service, use getService instead of getComponent
+
 ## [14.2.0] - 2022-9-29
 
 ### Added
