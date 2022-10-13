@@ -1002,7 +1002,10 @@ class NewRelicProviderStubBase extends NewRelicProvider {
 		return {
 			actor: {
 				account: {
-					nrql: {
+					metrics: {
+						results: [],
+					},
+					extrapolations: {
 						results: [],
 					},
 				},
@@ -1014,7 +1017,10 @@ class NewRelicProviderStubBase extends NewRelicProvider {
 		return {
 			actor: {
 				account: {
-					nrql: {
+					metrics: {
+						results: [],
+					},
+					extrapolations: {
 						results: [],
 					},
 				},
@@ -1584,7 +1590,21 @@ class NewRelicProviderStub extends NewRelicProviderStubBase {
 		return {
 			actor: {
 				account: {
-					nrql: {
+					metrics: {
+						results: [
+							{
+								facet: "Function/routes.app:error",
+								metricTimesliceName: "Function/routes.app:error",
+								requestsPerMinute: 0.2,
+							},
+							{
+								facet: "Function/routes.app:hello_world",
+								metricTimesliceName: "Function/routes.app:hello_world",
+								requestsPerMinute: 0.06666666666666667,
+							},
+						],
+					},
+					extrapolations: {
 						results: [
 							{
 								facet: "Function/routes.app:error",
@@ -1607,7 +1627,21 @@ class NewRelicProviderStub extends NewRelicProviderStubBase {
 		return {
 			actor: {
 				account: {
-					nrql: {
+					metrics: {
+						results: [
+							{
+								facet: "WebTransaction/Function/routes.app:error",
+								averageDuration: 0.0025880090121565193,
+								metricTimesliceName: "WebTransaction/Function/routes.app:error",
+							},
+							{
+								facet: "WebTransaction/Function/routes.app:hello_world",
+								averageDuration: 0.0015958845615386963,
+								metricTimesliceName: "WebTransaction/Function/routes.app:hello_world",
+							},
+						],
+					},
+					extrapolations: {
 						results: [
 							{
 								facet: "WebTransaction/Function/routes.app:error",
@@ -1630,7 +1664,16 @@ class NewRelicProviderStub extends NewRelicProviderStubBase {
 		return {
 			actor: {
 				account: {
-					nrql: {
+					metrics: {
+						results: [
+							{
+								facet: "Errors/WebTransaction/Function/routes.app:error",
+								errorsPerMinute: 0.48333333333333334,
+								metricTimesliceName: "Errors/WebTransaction/Function/routes.app:error",
+							},
+						],
+					},
+					extrapolations: {
 						results: [
 							{
 								facet: "Errors/WebTransaction/Function/routes.app:error",
@@ -1662,7 +1705,18 @@ class NewRelicProviderStub2 extends NewRelicProviderStubBase {
 		return {
 			actor: {
 				account: {
-					nrql: {
+					metrics: {
+						results: [
+							{
+								facet:
+									"OtherTransaction/Carrot/foo_bar.bills.tasks.create_bill_credit_payment_thing",
+								metricTimesliceName:
+									"OtherTransaction/Carrot/foo_bar.bills.tasks.create_bill_credit_payment_thing",
+								requestsPerMinute: 0.35,
+							},
+						],
+					},
+					extrapolations: {
 						results: [
 							{
 								facet:
