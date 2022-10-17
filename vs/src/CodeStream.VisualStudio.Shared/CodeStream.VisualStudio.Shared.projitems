@@ -120,6 +120,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Services\IEditorService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\IHttpClientService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\IIdeService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\IMessageInterceptorService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\ISessionService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\ISettingsServiceFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\ISolutionEventsListener.cs" />

@@ -16,13 +16,16 @@ namespace CodeStream.VisualStudio.UnitTests.Services {
 			var serviceProviderMock = new Mock<IServiceProvider>();
 			var httpServiceMock = new Mock<IHttpClientService>();
 			var ideServiceMock = new Mock<IIdeService>();
+			var messageInterceptorMock = new Mock<IMessageInterceptorService>();
+
 			var eventAggregator = new EventAggregator();
 
 			var browserService = new DotNetBrowserServiceStub(
 				serviceProviderMock.Object,
 				eventAggregator,
 				httpServiceMock.Object,
-				ideServiceMock.Object
+				ideServiceMock.Object,
+				messageInterceptorMock.Object
 			);
 
 			browserService.PostMessage("lsp1", true);
@@ -66,13 +69,15 @@ namespace CodeStream.VisualStudio.UnitTests.Services {
 			var serviceProviderMock = new Mock<IServiceProvider>();
 			var httpServiceMock = new Mock<IHttpClientService>();
 			var ideServiceMock = new Mock<IIdeService>();
+			var messageInterceptorMock = new Mock<IMessageInterceptorService>();
 			var eventAggregator = new EventAggregator();
 
 			var browserService = new DotNetBrowserServiceStub(
 				serviceProviderMock.Object,
 				eventAggregator,
 				httpServiceMock.Object,
-				ideServiceMock.Object
+				ideServiceMock.Object,
+				messageInterceptorMock.Object
 			);
 
 			browserService.PostMessage("bootstrap1");
@@ -104,13 +109,15 @@ namespace CodeStream.VisualStudio.UnitTests.Services {
 			var serviceProviderMock = new Mock<IServiceProvider>();
 			var httpServiceMock = new Mock<IHttpClientService>();
 			var ideServiceMock = new Mock<IIdeService>();
+			var messageInterceptorMock = new Mock<IMessageInterceptorService>();
 			var eventAggregator = new EventAggregator();
 
 			var browserService = new DotNetBrowserServiceStub(
 				serviceProviderMock.Object,
 				eventAggregator,
 				httpServiceMock.Object,
-				ideServiceMock.Object
+				ideServiceMock.Object,
+				messageInterceptorMock.Object
 			);
 
 			browserService.PostMessage("bootstrap1");
@@ -138,13 +145,15 @@ namespace CodeStream.VisualStudio.UnitTests.Services {
 			var serviceProviderMock = new Mock<IServiceProvider>();
 			var httpServiceMock = new Mock<IHttpClientService>();
 			var ideServiceMock = new Mock<IIdeService>();
+			var messageInterceptorMock = new Mock<IMessageInterceptorService>();
 			var eventAggregator = new EventAggregator();
 
 			var browserService = new DotNetBrowserServiceStub(
 				serviceProviderMock.Object,
 				eventAggregator,
 				httpServiceMock.Object,
-				ideServiceMock.Object
+				ideServiceMock.Object,
+				messageInterceptorMock.Object
 			);
 
 			browserService.PostMessage("bootstrap1");
@@ -166,8 +175,9 @@ namespace CodeStream.VisualStudio.UnitTests.Services {
 			IServiceProvider serviceProvider,
 			IEventAggregator eventAggregator,
 			IHttpClientService httpClientService,
-			IIdeService ideService
-			) : base(serviceProvider, eventAggregator, httpClientService, ideService) {
+			IIdeService ideService,
+			IMessageInterceptorService messageInterceptor
+			) : base(serviceProvider, eventAggregator, httpClientService, ideService, messageInterceptor) {
 			
 			Items = new List<string>();
 		}
