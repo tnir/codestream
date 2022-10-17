@@ -15,6 +15,7 @@ import com.codestream.protocols.agent.MethodLevelTelemetryErrorRate
 import com.codestream.protocols.agent.MethodLevelTelemetrySymbolIdentifier
 import com.codestream.protocols.agent.MethodLevelTelemetryThroughput
 import com.codestream.protocols.agent.NOT_ASSOCIATED
+import com.codestream.protocols.agent.NOT_CONNECTED
 import com.codestream.protocols.agent.TelemetryParams
 import com.codestream.protocols.webview.MethodLevelTelemetryNotifications
 import com.codestream.review.LOCAL_PATH
@@ -141,6 +142,9 @@ abstract class CLMEditorManager(
                 GlobalScope.launch {
                     try {
                         lastFetchAttempt = System.currentTimeMillis()
+                        if (project.sessionService?.userLoggedIn?.user == null) {
+                            return@launch
+                        }
                         // logger.info("=== Calling fileLevelTelemetry for ${editor.document.uri} resetCache: $resetCache")
                         val result = project.agentService?.fileLevelTelemetry(
                             FileLevelTelemetryParams(
@@ -156,7 +160,7 @@ abstract class CLMEditorManager(
                         // result guaranteed to be non-null, don't overwrite previous result if we get a NR timeout
                         if (result.error != null) {
                             currentError = result.error
-                            if (result.error?.type == NOT_ASSOCIATED) {
+                            if (result.error?.type == NOT_ASSOCIATED || result.error?.type == NOT_CONNECTED) {
                                 metricsBySymbol.clear()
                                 ApplicationManager.getApplication().invokeLater {
                                     // invokeLater required since we're in coroutine
