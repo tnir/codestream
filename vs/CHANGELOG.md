@@ -1,5 +1,16 @@
 # Change Log
 
+## [14.4.0] - 2022-10-20
+
+### Added
+
+- Adds support for code-level metrics for PHP
+
+### Fixed
+
+- Addresses [#1205](https://github.com/TeamCodeStream/CodeStream/issues/1205) &mdash; Can't toggle off auto-prompt for feedback requests
+- Fixes an issue that was preventing the display of code-level metrics
+
 ## [14.3.0] - 2022-10-13
 
 ### Added
