@@ -1,5 +1,4 @@
 ﻿namespace CodeStream.VisualStudio.Core {
-
 	public static class Constants {
 		public static class CodeLevelMetrics {
 			public static class Provider {
@@ -13,7 +12,7 @@
 				public const string Since = "${since}";
 			}
 		}
-		
+
 		public static string CodeStreamCodeStream = "codestream.codestream";
 	}
 }

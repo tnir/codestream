@@ -65,11 +65,10 @@ namespace CodeStream.VisualStudio.Shared.LanguageServer {
 			IEventAggregator eventAggregator,
 			IBrowserServiceFactory browserServiceFactory,
 			ISettingsServiceFactory settingsServiceFactory,
-			IHttpClientService httpClientService,
-			IMessageInterceptorService messageInterceptorService)
+			IHttpClientService httpClientService)
 			: base(serviceProvider, sessionService, eventAggregator, browserServiceFactory, settingsServiceFactory, httpClientService, Log) {
 
-			_middleLayerProvider = new MiddleLayerProvider(Log, messageInterceptorService);
+			_middleLayerProvider = new MiddleLayerProvider(Log);
 		}
 
 #if X64

@@ -22,7 +22,6 @@ using CodeStream.VisualStudio.Shared.Events;
 using CodeStream.VisualStudio.Shared.Models;
 using Process = System.Diagnostics.Process;
 using CSConstants = CodeStream.VisualStudio.Core.Constants;
-using Microsoft;
 
 namespace CodeStream.VisualStudio.Shared.Services {
 
@@ -67,7 +66,6 @@ namespace CodeStream.VisualStudio.Shared.Services {
 				});
 
 			_vsSolution = serviceProvider.GetService(typeof(SVsSolution)) as IVsSolution;
-			Assumes.Present(_vsSolution);
 		}
 
 		public string GetEditorFormat() {
@@ -102,11 +100,6 @@ namespace CodeStream.VisualStudio.Shared.Services {
 					includeErrorRate
 				);
 
-				if (metrics is null)
-				{
-					return new CodeLevelMetricsTelemetry();
-				}
-
 				return new CodeLevelMetricsTelemetry(
 					metrics.AverageDuration,
 					metrics.Throughput,
@@ -123,6 +116,8 @@ namespace CodeStream.VisualStudio.Shared.Services {
 		}
 
 		public CodeLevelMetricStatus GetClmStatus() {
+			var settings = _settingsServiceFactory.GetOrCreate(nameof(CodeLevelMetricsCallbackService));
+
 			if (!_sessionService.IsAgentReady || _sessionService.SessionState == SessionState.UserSigningIn) {
 				return CodeLevelMetricStatus.Loading;
 			}

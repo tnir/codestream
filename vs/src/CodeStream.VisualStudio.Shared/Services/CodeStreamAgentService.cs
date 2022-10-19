@@ -33,7 +33,6 @@ namespace CodeStream.VisualStudio.Shared.Services {
 		private readonly ISettingsServiceFactory _settingsServiceFactory;
 		private readonly IHttpClientService _httpClientService;
 		private readonly IVisualStudioSettingsManager _vsSettingsManager;
-		private readonly IMessageInterceptorService _messageInterceptorService;
 
 		[ImportingConstructor]
 		public CodeStreamAgentService(
@@ -41,15 +40,13 @@ namespace CodeStream.VisualStudio.Shared.Services {
 			ISessionService sessionService,
 			ISettingsServiceFactory settingsServiceFactory,
 			IHttpClientService httpClientService,
-			IVisualStudioSettingsManager vsSettingsManager,
-			IMessageInterceptorService messageInterceptorService) {
+			IVisualStudioSettingsManager vsSettingsManager) {
 
 			_eventAggregator = eventAggregator;
 			_sessionService = sessionService;
 			_settingsServiceFactory = settingsServiceFactory;
 			_httpClientService = httpClientService;
 			_vsSettingsManager = vsSettingsManager;
-			_messageInterceptorService = messageInterceptorService;
 
 			try {
 				if (_eventAggregator == null || _sessionService == null || settingsServiceFactory == null) {
@@ -89,20 +86,15 @@ namespace CodeStream.VisualStudio.Shared.Services {
 			cancellationToken = cancellationToken ?? CancellationToken.None;
 			try {
 				// the arguments might have sensitive data in it -- don't include arguments here
-				using (Log.CriticalOperation($"name=REQ,Method={name}"))
-				{
-					var uriTokens = _messageInterceptorService.GetUriTokens(arguments?.ToJToken());
-					var hasTempFiles = _messageInterceptorService.DoesMessageContainTempFiles(uriTokens);
-					
-					return hasTempFiles
-						? Task.FromResult(default(T))
-						: _rpc.InvokeWithParameterObjectAsync<T>(name, arguments, cancellationToken.Value);
+				using (Log.CriticalOperation($"name=REQ,Method={name}")) {
+
+					return _rpc.InvokeWithParameterObjectAsync<T>(name, arguments, cancellationToken.Value);
 				}
 			}
 			catch (ObjectDisposedException ex) {
 				Log.Fatal(ex, "SendName={Name}", name);
 #if DEBUG
-				Log.Verbose($"Arguments={arguments?.ToJson(true)}");
+				Log.Verbose($"Arguments={(arguments != null ? arguments.ToJson(true) : null)}");
 #endif
 				throw;
 			}
@@ -137,10 +129,7 @@ namespace CodeStream.VisualStudio.Shared.Services {
 			var isAgentReady = _sessionService.IsAgentReady;
 			Log.Debug($"{nameof(ReinitializeAsync)} IsAgentReady={isAgentReady}");
 
-			if (!isAgentReady)
-			{
-				return Task.FromResult((JToken)null);
-			}
+			if (!isAgentReady) return Task.FromResult((JToken)null);
 
 			return InitializeAsync(newServerUrl);
 		}
@@ -355,11 +344,7 @@ namespace CodeStream.VisualStudio.Shared.Services {
 				}
 				else {
 
-					if (state == null)
-					{
-						throw new ArgumentNullException(nameof(state));
-					}
-
+					if (state == null) throw new ArgumentNullException(nameof(state));
 					var bootstrapAuthenticated = await _rpc
 						.InvokeWithParameterObjectAsync<JToken>(BootstrapRequestType.MethodName)
 						.ConfigureAwait(false) as JObject;
@@ -426,9 +411,7 @@ namespace CodeStream.VisualStudio.Shared.Services {
 
 		private void Dispose(bool disposing) {
 			if (_disposed)
-			{
 				return;
-			}
 
 
 			_disposed = true;
@@ -445,19 +428,6 @@ namespace CodeStream.VisualStudio.Shared.Services {
 				RepoId = repoId,
 				Path = path
 			});
-		}
-
-		public Task<GetFileContentsAtRevisionResponse> GetFileContentsAtRevisionAsync(
-			string repoId,
-			string path,
-			string sha)
-		{
-			return SendCoreAsync<GetFileContentsAtRevisionResponse>(GetFileContentsAtRevisionRequestType.MethodName,
-				new GetFileContentsAtRevisionRequest {
-					RepoId = repoId,
-					Path = path,
-					Sha = sha
-				});
 		}
 
 		public Task<GetReviewContentsLocalResponse> GetReviewContentsLocalAsync(

@@ -1,27 +1,21 @@
 ﻿using CodeStream.VisualStudio.Core.Logging;
-
+using CodeStream.VisualStudio.Core.Models;
 using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
 using Microsoft.VisualStudio.LanguageServer.Client;
-
-using CodeStream.VisualStudio.Shared.Services;
 
 namespace CodeStream.VisualStudio.Shared.LanguageServer {
 	public class MiddleLayerProvider : ILanguageClientMiddleLayer {
-		private readonly ILogger _log;
-		private readonly IMessageInterceptorService _messageInterceptorService;
+		private ILogger Log;
 
-		public MiddleLayerProvider(ILogger log, IMessageInterceptorService messageInterceptorService)
-		{
-			_log = log;
-			_messageInterceptorService = messageInterceptorService;
+		public MiddleLayerProvider(ILogger log) {
+			Log = log;
 		}
 
-		private static readonly HashSet<string> IgnoredMethods = new HashSet<string> {
+		private static HashSet<string> IgnoredMethods = new HashSet<string> {
 			// this throws some bizarro internal exception -- we don't use it anyway
 			// (most likely a versioning issue [aka we're too old])
 			"textDocument/completion",
@@ -36,37 +30,34 @@ namespace CodeStream.VisualStudio.Shared.LanguageServer {
 		/// <returns></returns>
 		public bool CanHandle(string methodName) {
 			var isIgnored = IgnoredMethods.Contains(methodName);
-			if (_log.IsVerboseEnabled()) {
-				_log.Verbose($"{nameof(MiddleLayerProvider)} {methodName} Ignored={isIgnored}");
+			if (Log.IsVerboseEnabled()) {
+				Log.Verbose($"{nameof(MiddleLayerProvider)} {methodName} Ignored={isIgnored}");
 			}
 			return !isIgnored;
 		}
 
 		public Task HandleNotificationAsync(string methodName, JToken methodParam, Func<JToken, Task> sendNotification) {
 			try {
-				// intercept any Temp or Diff-Schemed file paths and
-				// do not send them along to the agent
-				var uriTokens = _messageInterceptorService.GetUriTokens(methodParam);
-				var hasTempFiles = _messageInterceptorService.DoesMessageContainTempFiles(uriTokens);
-					
-				if (hasTempFiles)
-				{
+				// intercept any "temp" file paths that contain codestream-diff info
+				// and do not send them along to the agent
+				if (methodParam != null && methodParam["textDocument"] != null &&
+					methodParam["textDocument"]["uri"] != null &&
+					CodeStreamDiffUri.IsTempFile(methodParam["textDocument"]["uri"].Value<string>())) {
 					return Task.CompletedTask;
 				}
-
-				if (_log.IsVerboseEnabled()) {
+				if (Log.IsVerboseEnabled()) {
 					LogHandler(methodName, methodParam);
 				}
 			}
 			catch (Exception ex) {
-				_log.Error(ex, nameof(HandleNotificationAsync));
+				Log.Error(ex, nameof(HandleNotificationAsync));
 			}
 
 			return sendNotification(methodParam);
 		}
 
 		public Task<JToken> HandleRequestAsync(string methodName, JToken methodParam, Func<JToken, Task<JToken>> sendRequest) {
-			if (_log.IsVerboseEnabled()) {
+			if (Log.IsVerboseEnabled()) {
 				LogHandler(methodName, methodParam);
 			}
 
@@ -74,7 +65,7 @@ namespace CodeStream.VisualStudio.Shared.LanguageServer {
 		}
 
 		private void LogHandler(string methodName, JToken methodParam) {
-			var value = "";
+			string value = "";
 			try {
 				if (methodParam != null) {
 					var textDocument = methodParam.SelectToken("textDocument");
@@ -86,7 +77,7 @@ namespace CodeStream.VisualStudio.Shared.LanguageServer {
 			catch {
 				// ignore
 			}
-			_log.Verbose("lsp: " + methodName + " = " + value);
+			Log.Verbose("lsp: " + methodName + " = " + value);
 		}
 	}
 }

@@ -79,15 +79,10 @@ namespace CodeStream.VisualStudio.Shared.Models {
 		public bool SelectRange(EditorSelection selection, bool? focus) {
 			ThreadHelper.ThrowIfNotOnUIThread();
 			try {
-				if (WpfTextView == null || selection == null)
-				{
-					return false;
-				}
-
+				if (WpfTextView == null || selection == null) return false;
 				var range = new Range() { Start = selection.Start, End = selection.End };
-				var log = "";
+				string log = "";
 				var rangeLines = WpfTextView.GetLinesFromRange(range.Start.Line, range.End.Line);
-
 				if (rangeLines != null) {
 					WpfTextView.Selection.Clear();
 					VirtualSnapshotPoint anchorPoint;

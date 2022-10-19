@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace CodeStream.VisualStudio.Core.Models {
@@ -31,11 +30,10 @@ namespace CodeStream.VisualStudio.Core.Models {
 			string sinceDateFormatted,
 			RepoInfo repo,
 			string newRelicEntityGuid) {
-
-			AverageDuration = averageDuration ?? new List<AverageDurationResponse>();
-			Throughput = throughput ?? new List<ThroughputResponse>();
-			ErrorRate = errorRate ?? new List<ErrorRateResponse>();
-			Repo = repo ?? new RepoInfo();
+			AverageDuration = averageDuration;
+			Throughput = throughput;
+			ErrorRate = errorRate;
+			Repo = repo;
 			Properties = new CodeLevelMetricsProperties {
 				NewRelicEntityGuid = newRelicEntityGuid,
 				SinceDateFormatted = sinceDateFormatted
