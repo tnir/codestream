@@ -512,6 +512,11 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 					const parts = data.className.split("\\");
 					simpleClassName = parts[parts.length - 1];
 				}
+				let simpleFunctionName;
+				if (data.functionName != undefined) {
+					const parts = data.functionName.split("\\");
+					simpleFunctionName = parts[parts.length - 1];
+				}
 				if (symbol.parent) {
 					result =
 						(data.className === symbol.parent.name && data.functionName === simpleSymbolName) ||
@@ -519,7 +524,7 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 						(simpleClassName === symbol.parent.name && data.functionName === simpleSymbolName);
 				} else {
 					// if no parent (aka class) ensure we find a function that doesn't have a parent
-					result = !symbol.parent && data.functionName === simpleSymbolName;
+					result = !symbol.parent && (data.functionName === simpleSymbolName || simpleFunctionName === simpleSymbolName);
 				}
 				if (!result) {
 					// Since nothing matched, relax criteria and base just on function name
