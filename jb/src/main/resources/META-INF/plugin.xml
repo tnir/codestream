@@ -8,7 +8,8 @@
     <change-notes>DO NOT EDIT: Generated from docs/change-notes.html</change-notes>
 
     <depends>com.intellij.modules.platform</depends>
-    <depends optional="true" config-file="com.codestream.jetbrains-codestream-withGo.xml">org.jetbrains.plugins.go
+    <depends optional="true" config-file="com.codestream.jetbrains-codestream-withGo.xml">
+        org.jetbrains.plugins.go
     </depends>
     <depends optional="true" config-file="com.codestream.jetbrains-codestream-withPython.xml">
         com.intellij.modules.python
@@ -19,9 +20,14 @@
     <depends optional="true" config-file="com.codestream.jetbrains-codestream-withCSharp.xml">
         com.intellij.modules.rider
     </depends>
-    <depends optional="true" config-file="com.codestream.jetbrains-codestream-withRuby.xml">org.jetbrains.plugins.ruby
+    <depends optional="true" config-file="com.codestream.jetbrains-codestream-withRuby.xml">
+        org.jetbrains.plugins.ruby
     </depends>
-    <depends optional="true" config-file="com.codestream.jetbrains-codestream-withPhp.xml">com.jetbrains.php
+    <depends optional="true" config-file="com.codestream.jetbrains-codestream-withPhp.xml">
+        com.jetbrains.php
+    </depends>
+    <depends optional="true" config-file="com.codestream.jetbrains-codestream-withKotlin.xml">
+        org.jetbrains.kotlin
     </depends>
 
     <extensions defaultExtensionNs="com.intellij">
