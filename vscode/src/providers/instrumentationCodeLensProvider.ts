@@ -508,7 +508,7 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 				// Strip off any trailing () for function (csharp and java) - undo this if we get types in agent
 				const simpleSymbolName = symbol.symbol.name.replace(/\(.*?\)$/, "");
 				let simpleClassName;
-				if (data.className !== undefined) {
+				if (data.className != undefined) {
 					const parts = data.className.split("\\");
 					simpleClassName = parts[parts.length - 1];
 				}
