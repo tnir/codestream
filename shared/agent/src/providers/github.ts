@@ -317,19 +317,22 @@ export class GitHubProvider
 					};
 					const e = new Error();
 					if (e.stack) {
-						let functionName;
+						let functionName = "unknown";
 						try {
-							functionName = e.stack
+							const filtered = e.stack
 								.split("\n")
 								.filter(
 									_ =>
-										(_.indexOf("GitHubProvider") > -1 ||
-											_.indexOf("GitHubEnterpriseProvider") > -1) &&
-										_.indexOf(".query") === -1
-								)![0]
-								.match(/GitHub[Enterprise]?Provider\.(\w+)/)![1];
+										(_.includes("GitHubProvider") || _.includes("GitHubEnterpriseProvider")) &&
+										!_.includes(".query")
+								);
+							if (!_isEmpty(filtered)) {
+								const match = filtered[0].match(/GitHub(Enterprise)?Provider\.(\w+)/);
+								if (match && match.length > 2) {
+									functionName = match[2];
+								}
+							}
 						} catch (err) {
-							functionName = "unknown";
 							Logger.warn(err.message);
 						}
 						this._queryLogger.graphQlApi.rateLimit.last = {
