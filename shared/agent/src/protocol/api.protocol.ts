@@ -90,12 +90,14 @@ export interface CSCodeLoginRequest {
 }
 
 export interface CSEligibleJoinCompany {
+	accessToken?: string;
 	codeHostJoining?: string[];
 	domainJoining?: string[];
 	id: string;
 	memberCount?: number;
 	name: string;
 	host?: EnvironmentHost;
+	byInvite?: boolean;
 }
 
 export interface CSLoginResponse {
@@ -113,7 +115,7 @@ export interface CSLoginResponse {
 	repos: CSRepository[];
 	provider?: "codestream" | "slack" | "msteams" | string;
 	providerAccess?: "strict";
-	teamId?: string;
+	teamId: string;
 	capabilities?: CSApiCapabilities;
 	features?: CSApiFeatures;
 	environmentInfo: CodeStreamEnvironmentInfo;

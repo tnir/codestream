@@ -51,6 +51,8 @@ import {
 	CreateTeamRequest,
 	CreateTeamRequestType,
 	CreateTeamTagRequestType,
+	DeclineInviteRequest,
+	DeclineInviteResponse,
 	DeleteBlameMapRequest,
 	DeleteBlameMapRequestType,
 	DeleteCodeErrorRequest,
@@ -483,6 +485,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 		if (response.companies.length === 0 || response.teams.length === 0) {
 			// save the accessToken for the call to create a team
 			this._token = response.accessToken;
+
 			throw {
 				error: LoginResult.NotInCompany,
 				extra: {
@@ -1942,7 +1945,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	async joinCompany(request: JoinCompanyRequest): Promise<JoinCompanyResponse> {
-		return this.put(`/companies/join/${request.companyId}`, {}, this._token);
+		return this.put(`/join-company/${request.companyId}`, {}, this._token);
+	}
+
+	async declineInvite(request: DeclineInviteRequest): Promise<DeclineInviteResponse> {
+		return this.put(`/decline-invite/${request.companyId}`, {}, this._token);
 	}
 
 	async joinCompanyFromEnvironment(request: JoinCompanyRequest): Promise<JoinCompanyResponse> {
@@ -1960,6 +1967,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 			serverUrl,
 			userId,
 		};
+
 		return this.put(`/xenv/join-company/${request.companyId}`, xenvRequest, this._token);
 	}
 
