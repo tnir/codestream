@@ -135,19 +135,37 @@ export function GlobalNav() {
 							className="no-padding"
 						/>
 						<Icon name="chevron-down" className="smaller" style={{ verticalAlign: "-2px" }} />
+
 						{hasInvites && (
-							<Icon
-								style={{
-									background: "var(--text-color-info-muted)",
-									color: "var(--text-color-highlight)",
-									borderRadius: "50%",
-									padding: "2px 4px 3px 4px",
-									height: "21px",
-									width: "21px",
-								}}
-								name="mail"
-							/>
+							<ul style={{ listStyle: "none", margin: "0", padding: "0", display: "inline-block" }}>
+								<li
+									style={{
+										display: "inline-block",
+										backgroundColor: "var(--text-color-info-muted)",
+										margin: "0",
+										borderRadius: "50%",
+										verticalAlign: "-5px",
+									}}
+								>
+									<a
+										style={{
+											color: "var(--text-color-highlight)",
+											display: "table-cell",
+											verticalAlign: "middle",
+											textAlign: "center",
+											textDecoration: "none",
+											height: "20px",
+											width: "20px",
+											paddingTop: "1px",
+										}}
+										href="#"
+									>
+										<Icon name="mail" />
+									</a>
+								</li>
+							</ul>
 						)}
+
 						{ellipsisMenuOpen && (
 							<EllipsisMenu
 								closeMenu={() => setEllipsisMenuOpen(undefined)}
