@@ -5,7 +5,7 @@ import {
 	JoinCompanyRequestType,
 	JoinCompanyResponse,
 } from "@codestream/protocols/agent";
-import { CSCompany, CSEligibleJoinCompany } from "@codestream/protocols/api";
+import { CSCompany, CSEligibleJoinCompany, CSUser } from "@codestream/protocols/api";
 import { CodeStreamState } from "@codestream/webview/store";
 import { updateConfigs } from "@codestream/webview/store/configs/slice";
 import { changeRegistrationEmail, setEnvironment } from "@codestream/webview/store/session/thunks";
@@ -63,6 +63,7 @@ interface EnhancedCSCompany {
 
 export function CompanyCreation(props: {
 	userId?: string;
+	user?: CSUser;
 	email?: string;
 	token?: string;
 	domain?: string;
@@ -75,8 +76,9 @@ export function CompanyCreation(props: {
 }) {
 	const dispatch = useAppDispatch();
 	const derivedState = useAppSelector((state: CodeStreamState) => {
+		const { configs } = state;
 		return {
-			serverUrl: state.configs.serverUrl,
+			serverUrl: configs.serverUrl,
 		};
 	});
 	const providerName = props.provider
