@@ -3042,6 +3042,15 @@ export class GitHubProvider
 		request: GetMyPullRequestsRequest
 	): Promise<GetMyPullRequestsResponse[][] | undefined> {
 		void (await this.ensureConnected());
+		if (!(await this.isPRApiCompatible())) {
+			const currentVersion = await this.getVersion();
+			// InternalErrors don't get sent to sentry
+			throw new InternalError(
+				`Pull requests are not available for ${this.displayName} ${
+					currentVersion.version
+				}. Please upgrade to ${this.minPRApiVersion()} or later.`
+			);
+		}
 		Logger.log(`github getMyPullRequests ${JSON.stringify(request)}`);
 		if (!this.isValidGetMyPullRequest(request)) {
 			Logger.warn(`Invalid GetMyPullRequestsRequest`);
@@ -3168,12 +3177,7 @@ export class GitHubProvider
 								.reverse()
 								.find(review => review.state !== "COMMENTED")?.state;
 
-							if (
-								!isDefaultQuery ||
-								pullRequest.closed ||
-								pullRequest.isDraft ||
-								pullRequest.viewerDidAuthor
-							) {
+							if (!isDefaultQuery || pullRequest.closed || pullRequest.viewerDidAuthor) {
 								return false;
 							}
 
