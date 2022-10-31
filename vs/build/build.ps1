@@ -102,7 +102,7 @@ function Build-Extension {
 	if ($CI) {
 		Write-Host "Running UnitTests..."
 
-		& $msbuild './src/CodeStream.VisualStudio.sln' /t:restore,$target /p:Configuration=Debug /p:AllowUnsafeBlocks=true /verbosity:$Verbosity /p:Platform='x86'
+		& $msbuild './src/CodeStream.VisualStudio.sln' /t:restore,$target /p:Configuration=Debug /p:AllowUnsafeBlocks=true /verbosity:$Verbosity /p:Platform='x86' /p:DeployExtension=false
 
 		if((Test-Path -Path "./src/CodeStream.VisualStudio.UnitTests/bin/x86/Debug/.codestream-out") -eq $True) {
 			Remove-Item -Path "./src/CodeStream.VisualStudio.UnitTests/bin/x86/Debug/.codestream-out" -Force -Recurse
