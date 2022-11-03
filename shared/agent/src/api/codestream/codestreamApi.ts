@@ -2853,6 +2853,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 				response.ok = false;
 				response.error = {
 					message: resp.status.toString() + resp.statusText,
+					maintenanceMode: !!resp.headers.get("x-cs-api-maintenance-mode"),
 				};
 			} else {
 				const json = await resp.json();

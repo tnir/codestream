@@ -149,7 +149,12 @@ export async function initialize(selector: string) {
 	// we get the api server's capabilities and our environment
 	const resp = await HostApi.instance.send(VerifyConnectivityRequestType, void {});
 	if (resp.error) {
-		store.dispatch(errorOccurred(resp.error.message, resp.error.details));
+		if (resp.error.maintenanceMode) {
+			await store.dispatch(setMaintenanceMode(true));
+		}
+		store.dispatch(
+			errorOccurred(resp.error.message, resp.error.details, resp.error.maintenanceMode)
+		);
 	} else {
 		if (resp.capabilities) {
 			store.dispatch(apiCapabilities.actions.updateCapabilities(resp.capabilities));

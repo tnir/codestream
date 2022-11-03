@@ -178,6 +178,7 @@ export interface VerifyConnectivityResponse {
 	error?: {
 		message: string;
 		details?: string;
+		maintenanceMode?: boolean;
 	};
 	capabilities?: {
 		[key: string]: any;
