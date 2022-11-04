@@ -44,6 +44,7 @@ import {
 	CreateExternalPostRequest,
 	CreateForeignCompanyRequest,
 	CreateForeignCompanyRequestType,
+	CreateForeignCompanyResponse,
 	CreateMarkerLocationRequest,
 	CreateMarkerRequest,
 	CreatePostRequest,
@@ -2038,12 +2039,24 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@log()
 	@lspHandler(CreateForeignCompanyRequestType)
-	createForeignCompany(request: CreateForeignCompanyRequest) {
+	async createForeignCompany(request: CreateForeignCompanyRequest) {
 		const body = {
 			...request.request,
 			serverUrl: request.host.publicApiUrl,
 		};
-		return this.post("/create-xenv-company", body, this._token);
+
+		const response: CreateForeignCompanyResponse = await this.post(
+			"/create-xenv-company",
+			body,
+			this._token
+		);
+
+		await SessionContainer.instance().users.resolve({
+			type: MessageType.Users,
+			data: [response.user],
+		});
+
+		return response;
 	}
 
 	@lspHandler(CreateTeamTagRequestType)
