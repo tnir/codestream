@@ -1189,18 +1189,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 				if (errorGroupResponse.eventsQuery) {
 					const timestampRange = this.generateTimestampRange(request.timestamp);
-					const nrql =
-						errorGroupResponse.eventsQuery +
-						`since ${timestampRange?.startTime}` +
-						`until ${timestampRange?.endTime}` +
-						"LIMIT 1";
-					const result = await this.runNrql<{
-						"tags.releaseTag": string;
-						"tags.commit": string;
-					}>(accountId, nrql);
-					if (result.length) {
-						errorGroup.releaseTag = result[0]["tags.releaseTag"];
-						errorGroup.commit = result[0]["tags.commit"];
+					if (timestampRange) {
+						const nrql = `${errorGroupResponse.eventsQuery} since ${timestampRange?.startTime} until ${timestampRange?.endTime} LIMIT 1`;
+						const result = await this.runNrql<{
+							"tags.releaseTag": string;
+							"tags.commit": string;
+						}>(accountId, nrql);
+						if (result.length) {
+							errorGroup.releaseTag = result[0]["tags.releaseTag"];
+							errorGroup.commit = result[0]["tags.commit"];
+						}
 					}
 				}
 
@@ -3001,13 +2999,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return "Unknown Time Window";
 		}
 
-		let lowerUnit = unit?.toLocaleLowerCase();
-
-		if (count === 0 || count >= 2) {
-			lowerUnit += "s";
-		}
-
-		return `${count} ${lowerUnit}`;
+		return `${count}${unit
+			?.toLocaleLowerCase()
+			.replace("day", "d")
+			.replace("month", "m")
+			.replace("year", "y")}`;
 	}
 
 	@log()

@@ -18,20 +18,21 @@ import {
 	ObservabilityRepoError,
 	ServiceLevelObjectiveResult,
 } from "@codestream/protocols/agent";
-import {
-	HostDidChangeWorkspaceFoldersNotificationType,
-	OpenUrlRequestType,
-} from "@codestream/protocols/webview";
-import { RefreshEditorsCodeLensRequestType } from "@codestream/webview/ipc/host.protocol";
-import { CurrentMethodLevelTelemetry } from "@codestream/webview/store/context/types";
 import cx from "classnames";
 import { head as _head, isEmpty, isEmpty as _isEmpty, isNil as _isNil } from "lodash-es";
 import React, { useEffect, useState } from "react";
 import { shallowEqual } from "react-redux";
 import styled from "styled-components";
 
-import { ObservabilityServiceLevelObjectives } from "@codestream/webview/Stream/ObservabilityServiceLevelObjectives";
+import {
+	HostDidChangeWorkspaceFoldersNotificationType,
+	OpenUrlRequestType,
+} from "@codestream/protocols/webview";
+import { RefreshEditorsCodeLensRequestType } from "@codestream/webview/ipc/host.protocol";
 import { HealthIcon } from "@codestream/webview/src/components/HealthIcon";
+import { CurrentMethodLevelTelemetry } from "@codestream/webview/store/context/types";
+import { ObservabilityRelatedWrapper } from "@codestream/webview/Stream/ObservabilityRelatedWrapper";
+import { ObservabilityServiceLevelObjectives } from "@codestream/webview/Stream/ObservabilityServiceLevelObjectives";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { Button } from "../src/components/Button";
 import {
@@ -682,14 +683,24 @@ export const Observability = React.memo((props: Props) => {
 			Object.keys(loadingErrors).some(k => !loadingErrors[k]) &&
 			!loadingAssigments
 		) {
-			let currentRepoErrors = observabilityErrors.find(_ => _.repoId === currentRepoId)?.errors;
-			let filteredCurrentRepoErrors = currentRepoErrors?.filter(_ => _.entityId === expandedEntity);
-			let filteredAssigments = observabilityAssignments?.filter(_ => _.entityId === expandedEntity);
+			try {
+				let currentRepoErrors = observabilityErrors?.find(
+					_ => _ && _.repoId === currentRepoId
+				)?.errors;
+				let filteredCurrentRepoErrors = currentRepoErrors?.filter(
+					_ => _.entityId === expandedEntity
+				);
+				let filteredAssigments = observabilityAssignments?.filter(
+					_ => _.entityId === expandedEntity
+				);
 
-			HostApi.instance.track("NR Service Clicked", {
-				"Errors Listed": !_isEmpty(filteredCurrentRepoErrors) || !_isEmpty(filteredAssigments),
-			});
-			setPendingTelemetryCall(false);
+				HostApi.instance.track("NR Service Clicked", {
+					"Errors Listed": !_isEmpty(filteredCurrentRepoErrors) || !_isEmpty(filteredAssigments),
+				});
+				setPendingTelemetryCall(false);
+			} catch (ex) {
+				console.error(ex);
+			}
 		}
 	}, [loadingErrors, loadingAssigments]);
 
@@ -1113,6 +1124,14 @@ export const Observability = React.memo((props: Props) => {
 																									/>
 																								</>
 																							)}
+																							{
+																								<>
+																									<ObservabilityRelatedWrapper
+																										currentRepoId={currentRepoId}
+																										entityGuid={ea.entityGuid}
+																									/>
+																								</>
+																							}
 																							{
 																								<>
 																									{observabilityErrors?.find(
