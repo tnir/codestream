@@ -3770,6 +3770,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							id
 							name
 						}
+						domain
 						alertSeverity
 						name
 						guid
