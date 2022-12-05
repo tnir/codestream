@@ -535,7 +535,29 @@ export const Observability = React.memo((props: Props) => {
 					State: telemetryStateValue,
 				});
 			}
+
+			if (expandedEntity) {
+				callServiceClickedTelemetry();
+			}
 		}, 1000);
+	};
+
+	const callServiceClickedTelemetry = () => {
+		try {
+			let currentRepoErrors = observabilityErrors?.find(
+				_ => _ && _.repoId === currentRepoId
+			)?.errors;
+			let filteredCurrentRepoErrors = currentRepoErrors?.filter(_ => _.entityId === expandedEntity);
+			let filteredAssigments = observabilityAssignments?.filter(_ => _.entityId === expandedEntity);
+
+			HostApi.instance.track("NR Service Clicked", {
+				"Errors Listed": !_isEmpty(filteredCurrentRepoErrors) || !_isEmpty(filteredAssigments),
+				"SLOs Listed": hasServiceLevelObjectives,
+			});
+			setPendingTelemetryCall(false);
+		} catch (ex) {
+			console.error(ex);
+		}
 	};
 
 	const fetchObservabilityRepos = (entityGuid?: string, repoId?, force = false) => {
@@ -677,25 +699,7 @@ export const Observability = React.memo((props: Props) => {
 			Object.keys(loadingErrors).some(k => !loadingErrors[k]) &&
 			!loadingAssigments
 		) {
-			try {
-				let currentRepoErrors = observabilityErrors?.find(
-					_ => _ && _.repoId === currentRepoId
-				)?.errors;
-				let filteredCurrentRepoErrors = currentRepoErrors?.filter(
-					_ => _.entityId === expandedEntity
-				);
-				let filteredAssigments = observabilityAssignments?.filter(
-					_ => _.entityId === expandedEntity
-				);
-
-				HostApi.instance.track("NR Service Clicked", {
-					"Errors Listed": !_isEmpty(filteredCurrentRepoErrors) || !_isEmpty(filteredAssigments),
-					"SLOs Listed": hasServiceLevelObjectives,
-				});
-				setPendingTelemetryCall(false);
-			} catch (ex) {
-				console.error(ex);
-			}
+			callServiceClickedTelemetry();
 		}
 	}, [loadingErrors, loadingAssigments]);
 
