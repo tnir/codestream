@@ -1324,7 +1324,7 @@ export class CodeStreamSession {
 						status: LoginResult.NotInCompany,
 						token: response.accessToken,
 						email: response.user?.email,
-						eligibleJoinCompanies: response.user.eligibleJoinCompanies,
+						eligibleJoinCompanies: response.user?.eligibleJoinCompanies,
 						isWebmail: response.isWebmail,
 						accountIsConnected: response.accountIsConnected,
 					};
@@ -1336,7 +1336,7 @@ export class CodeStreamSession {
 					email: response.user?.email,
 					teamId: this._teamId,
 					companies: response.companies,
-					eligibleJoinCompanies: response.user.eligibleJoinCompanies,
+					eligibleJoinCompanies: response.user?.eligibleJoinCompanies,
 					isWebmail: response.isWebmail,
 					accountIsConnected: response.accountIsConnected,
 				};
