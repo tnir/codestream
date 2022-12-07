@@ -422,7 +422,8 @@ namespace CodeStream.VisualStudio.Shared.Services {
 						EditorContext = editorContext,
 						Session = new UserSession
 						{
-							UserId = state["userId"].ToString()
+							UserId = state["userId"].ToString(),
+							EligibleJoinCompanies = state["eligibleJoinCompanies"]
 						},
 						EnvironmentInfo = settingsManager.GetCodeStreamEnvironmentInfo,
 						Version = settingsManager.GetEnvironmentVersionFormatted(),

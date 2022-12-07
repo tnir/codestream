@@ -4,6 +4,7 @@ using CodeStream.VisualStudio.Core;
 using CodeStream.VisualStudio.Core.Logging;
 using CodeStream.VisualStudio.Core.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 namespace CodeStream.VisualStudio.Shared.Models {
@@ -202,6 +203,8 @@ namespace CodeStream.VisualStudio.Shared.Models {
 	public class UserSession {
 		[JsonProperty("userId", NullValueHandling = NullValueHandling.Ignore)]
 		public string UserId { get; set; }
+		[JsonProperty("eligibleJoinCompanies", NullValueHandling = NullValueHandling.Ignore)]
+		public JToken EligibleJoinCompanies { get; set; }
 	}
 
 	public class Services {
