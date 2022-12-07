@@ -4,6 +4,12 @@
 
 ### Fixed
 
+- Fixes an issue that didn't expose organizations you can join via domain or invitation when signing up using a New Relic user api key
+
+## [14.9.1] - 2022-12-2
+
+### Fixed
+
 - Fixes an issue preventing recent errors from being displayed in the Observability section
 
 ## [14.9.0] - 2022-12-1
