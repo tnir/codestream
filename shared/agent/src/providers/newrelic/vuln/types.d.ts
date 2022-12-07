@@ -1,5 +1,5 @@
 export type VersionDetails = {
-	version: string;
+	version?: string;
 	criticalVulnerabilities: number;
 	highVulnerabilities: number;
 	otherVulnerabilities: number;
@@ -9,7 +9,7 @@ export type VulnerableLibrary = {
 	name: string;
 	language?: string;
 	includedVersions: Array<VersionDetails>;
-	suggestedVersion: VersionDetails;
+	suggestedVersion?: VersionDetails;
 };
 
 export type EntityLibraries = {
