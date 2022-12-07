@@ -56,7 +56,7 @@ class LoginResult(
         } ?: throw IllegalStateException("LoginResult has no loginResponse")
 
     val eligibleJoinCompanies: List<JsonObject>?
-        get() = loginResponse?.user.eligibleJoinCompanies
+        get() = loginResponse?.user?.eligibleJoinCompanies
 }
 
 class LoginResponse(
