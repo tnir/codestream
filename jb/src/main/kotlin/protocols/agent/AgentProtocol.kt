@@ -121,7 +121,8 @@ class CSUser(
     val username: String,
     val email: String,
     val fullName: String,
-    var preferences: CSPreferences?
+    var preferences: CSPreferences?,
+    var eligibleJoinCompanies: List<JsonObject>?
 ) {
     fun wantsToastNotifications(): Boolean = when (preferences?.notificationDelivery) {
         null -> true
