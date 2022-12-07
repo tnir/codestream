@@ -14,6 +14,7 @@ import {
 	TokenLoginRequestType,
 } from "@codestream/protocols/agent";
 import { CodemarkType, LoginResult } from "@codestream/protocols/api";
+
 import { LogoutRequestType } from "@codestream/protocols/webview";
 import { setBootstrapped } from "@codestream/webview/store/bootstrapped/actions";
 import { withExponentialConnectionRetry } from "@codestream/webview/store/common";
@@ -280,7 +281,7 @@ export const onLogin =
 				session: {
 					...bootstrapCore.session,
 					userId: response.state.userId,
-					eligibleJoinCompanies: response.loginResponse.eligibleJoinCompanies || [],
+					eligibleJoinCompanies: response.loginResponse.user.eligibleJoinCompanies || [],
 				},
 				capabilities: response.state.capabilities,
 				context: {

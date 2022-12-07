@@ -1,6 +1,7 @@
 import { EnvironmentHost, GetFileScmInfoResponse } from "@codestream/protocols/agent";
 import { CSEligibleJoinCompany } from "@codestream/protocols/api";
 import { Position, Range } from "vscode-languageserver-types";
+
 import { NewPullRequestBranch } from "./webview.protocol";
 
 export const MaxRangeValue = 2147483647;
@@ -192,7 +193,6 @@ export interface WebviewContext {
 	hasFocus: boolean;
 	/** the first page seen after registration */
 	isFirstPageview?: boolean;
-	eligibleJoinCompanies?: CSEligibleJoinCompany[];
 	panelStack?: (WebviewPanels | string)[];
 	activePanel?: WebviewPanels;
 	startWorkCard?: any; // TODO figure out how to type CardView which include JSX.Element

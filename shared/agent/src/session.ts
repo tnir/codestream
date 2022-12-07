@@ -1241,7 +1241,7 @@ export class CodeStreamSession {
 				capabilities: this.api.capabilities,
 				email: this._email!,
 				environmentInfo: this._environmentInfo,
-				eligibleJoinCompanies: response.eligibleJoinCompanies,
+				eligibleJoinCompanies: response.user.eligibleJoinCompanies,
 				serverUrl: this._options.serverUrl!,
 				teamId: this._teamId!,
 				userId: response.user.id,
@@ -1324,7 +1324,7 @@ export class CodeStreamSession {
 						status: LoginResult.NotInCompany,
 						token: response.accessToken,
 						email: response.user?.email,
-						eligibleJoinCompanies: response.eligibleJoinCompanies,
+						eligibleJoinCompanies: response.user.eligibleJoinCompanies,
 						isWebmail: response.isWebmail,
 						accountIsConnected: response.accountIsConnected,
 					};
@@ -1336,7 +1336,7 @@ export class CodeStreamSession {
 					email: response.user?.email,
 					teamId: this._teamId,
 					companies: response.companies,
-					eligibleJoinCompanies: response.eligibleJoinCompanies,
+					eligibleJoinCompanies: response.user.eligibleJoinCompanies,
 					isWebmail: response.isWebmail,
 					accountIsConnected: response.accountIsConnected,
 				};

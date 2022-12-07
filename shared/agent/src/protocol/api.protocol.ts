@@ -120,7 +120,6 @@ export interface CSLoginResponse {
 	capabilities?: CSApiCapabilities;
 	features?: CSApiFeatures;
 	environmentInfo: CodeStreamEnvironmentInfo;
-	eligibleJoinCompanies?: CSEligibleJoinCompany[];
 	accountIsConnected?: boolean;
 	isWebmail?: boolean;
 	setEnvironment?: {
@@ -152,7 +151,6 @@ export interface CSNRRegisterResponse {
 	accessToken?: string;
 	teamId?: string;
 	companies?: CSCompany[];
-	eligibleJoinCompanies?: CSEligibleJoinCompany[];
 	isWebmail?: boolean;
 	accountIsConnected?: boolean;
 }

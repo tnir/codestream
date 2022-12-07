@@ -667,7 +667,7 @@ export class CodeStreamSession implements Disposable {
 		this._email = email;
 		this._teamId = teamId;
 		this._agentCapabilities = response.state.capabilities;
-		this._eligibleJoinCompanies = response.loginResponse.eligibleJoinCompanies || [];
+		this._eligibleJoinCompanies = response.loginResponse.user.eligibleJoinCompanies || [];
 
 		// Create an id for this session
 		this._id = Strings.sha1(`${instanceId}|${this.serverUrl}|${email}|${teamId}`.toLowerCase());
