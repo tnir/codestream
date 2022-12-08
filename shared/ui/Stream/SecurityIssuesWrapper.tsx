@@ -40,20 +40,24 @@ function isResponseError<T>(obj: unknown): obj is ResponseError<T> {
 	);
 }
 
-const CardTitle = styled.span`
+const CardTitle = styled.div`
 	font-size: 16px;
-	position: relative;
-	padding-left: 28px;
-	padding-right: 28px;
 	line-height: 20px;
-	display: inline-block;
+	display: flex;
+	justify-content: flex-start;
 	width: 100%;
+	margin-left: -28px;
+
+	.title {
+		flex-grow: 3;
+	}
 
 	.icon,
+	.stream .icon,
 	.ticket-icon {
-		margin-left: -56px;
-		display: inline-block;
+		display: block;
 		transform: scale(1.25);
+		margin-top: 2px;
 		padding: 0 8px 0 3px;
 		vertical-align: -2px;
 	}
@@ -63,12 +67,8 @@ const CardTitle = styled.span`
 	}
 
 	.link-to-ticket {
-		position: absolute;
-		top: 0;
-		right: 0;
-
 		.icon {
-			padding-right: 0;
+			padding: 0 8px;
 			margin-left: 0;
 		}
 	}
@@ -138,7 +138,7 @@ function VulnView(props: { vuln: Vuln; onClose: () => void }) {
 					<div className="contents">
 						<CardTitle>
 							<Icon name="lock" className="ticket-icon" />
-							{vuln.title}
+							<div className="title">{vuln.title}</div>
 							<div
 								className="link-to-ticket"
 								onClick={() => {
