@@ -17,6 +17,34 @@ export type EntityLibraries = {
 	libraries: Array<VulnerableLibrary>;
 };
 
+export type VulnerabililityDetails = {
+	cve: string;
+	artifact: string;
+	url: string;
+	title: string;
+	description: string;
+	score: number;
+	vector: string;
+	coordinate: string;
+	source?: string;
+	cveJson: string;
+	language: string;
+	criticality: string;
+	packages: {
+		remediation: string;
+		artifact: string;
+		language: string;
+		severity: string; // TODO use same enum?
+		versions: string;
+	}[];
+	versions: Array<Array<string>>;
+	remediation: Array<string>;
+};
+
+export type Vulnerabilities = {
+	[key: string]: Array<VulnerabililityDetails>;
+};
+
 export type LibraryUsage = {
 	inventoryType: string;
 	versions: Array<string>;
@@ -25,30 +53,6 @@ export type LibraryUsage = {
 	inventoryChecksumMetadata: {
 		[key: string]: { checksum: string; language: string; version: string };
 	};
-	vulnerabilities: {
-		[key: string]: {
-			cve: string;
-			artifact: string;
-			url: string;
-			title: string;
-			description: string;
-			score: number;
-			vector: string;
-			coordinate: string;
-			source?: string;
-			cveJson: string;
-			language: string;
-			criticality: string;
-			packages: {
-				remediation: string;
-				artifact: string;
-				language: string;
-				severity: string; // TODO use same enum?
-				versions: string;
-			}[];
-			versions: [Array<string>];
-			remediation: Array<string>;
-		}[];
-	};
+	vulnerabilities: Vulnerabilities;
 	entityGuids: Array<string>;
 };
