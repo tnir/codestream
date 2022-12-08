@@ -57,6 +57,9 @@ import {
 	GetNewRelicUrlRequest,
 	GetNewRelicUrlRequestType,
 	GetNewRelicUrlResponse,
+	GetObservabilityAnomaliesRequest,
+	GetObservabilityAnomaliesRequestType,
+	GetObservabilityAnomaliesResponse,
 	GetObservabilityEntitiesRequest,
 	GetObservabilityEntitiesRequestType,
 	GetObservabilityEntitiesResponse,
@@ -117,6 +120,7 @@ import {
 	NRErrorType,
 	RepoEntitiesByRemotesResponse,
 } from "./newrelic.types";
+import { AnomalyDetector } from "./newrelic/anomalyDetection";
 import { generateMethodAverageDurationQuery } from "./newrelic/methodAverageDurationQuery";
 import { generateMethodErrorRateQuery } from "./newrelic/methodErrorRateQuery";
 import { generateMethodThroughputQuery } from "./newrelic/methodThroughputQuery";
@@ -1009,6 +1013,43 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			throw ex;
 		}
 		return response;
+	}
+
+	@lspHandler(GetObservabilityAnomaliesRequestType)
+	@log({
+		timed: true,
+	})
+	async getObservabilityAnomalies(
+		request: GetObservabilityAnomaliesRequest
+	): Promise<GetObservabilityAnomaliesResponse> {
+		try {
+			const { entityGuid } = request;
+			const { accountId } = NewRelicProvider.parseId(entityGuid)!;
+			const anomalyDetector = new AnomalyDetector(entityGuid, accountId, this.runNrql.bind(this));
+			void (await anomalyDetector.init());
+			const responseTimePromise = anomalyDetector.getResponseTimeAnomalies();
+			const errorRatePromise = anomalyDetector.getErrorRateAnomalies();
+			const throughputPromise = anomalyDetector.getObservabilityAnomaliesThroughput();
+
+			const [responseTime, errorRate, throughput] = await Promise.all([
+				responseTimePromise,
+				errorRatePromise,
+				throughputPromise,
+			]);
+
+			return {
+				responseTime: responseTime.map(_ => ({ text: _ })),
+				errorRate: errorRate.map(_ => ({ text: _ })),
+				throughput: throughput.map(_ => ({ text: _ })),
+			};
+		} catch (ex) {
+			Logger.warn(ex.message);
+			return {
+				responseTime: [],
+				errorRate: [],
+				throughput: [],
+			};
+		}
 	}
 
 	@log()
@@ -4297,11 +4338,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return bestMatch?.codeFilePath;
 	}
 
-	private async runNrql<T>(accountId: number, nrql: string): Promise<T[]> {
+	private async runNrql<T>(accountId: number, nrql: string, timeout: number = 5): Promise<T[]> {
 		const query = `query Nrql($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
-					nrql(query: "${nrql}") {
+					nrql(query: "${nrql}", timeout: ${timeout}) {
 						results
 					}
 				}

@@ -336,6 +336,21 @@ export const ResolveStackTracePathsRequestType = new RequestType<
 	void
 >("codestream/stackTrace/resolvePaths");
 
+export interface AgentFilterNamespacesRequest {
+	namespaces: string[];
+}
+
+export interface AgentFilterNamespacesResponse {
+	filteredNamespaces: string[];
+}
+
+export const AgentFilterNamespacesRequestType = new RequestType<
+	AgentFilterNamespacesRequest,
+	AgentFilterNamespacesResponse,
+	void,
+	void
+>("codestream/namespaces/filter");
+
 export interface UIStateRequest {
 	context?: {
 		panelStack?: string[];

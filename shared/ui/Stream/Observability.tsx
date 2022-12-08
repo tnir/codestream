@@ -6,6 +6,7 @@ import {
 	ERROR_NR_INSUFFICIENT_API_KEY,
 	GetAlertViolationsResponse,
 	GetEntityCountRequestType,
+	GetObservabilityAnomaliesRequestType,
 	GetObservabilityErrorAssignmentsRequestType,
 	GetObservabilityErrorAssignmentsResponse,
 	GetObservabilityErrorsRequestType,
@@ -15,6 +16,7 @@ import {
 	GetServiceLevelTelemetryRequestType,
 	ObservabilityErrorCore,
 	ObservabilityRepo,
+	GetObservabilityAnomaliesResponse,
 	ObservabilityRepoError,
 	ServiceLevelObjectiveResult,
 } from "@codestream/protocols/agent";
@@ -34,6 +36,7 @@ import {
 	RefreshEditorsCodeLensRequestType,
 } from "@codestream/protocols/webview";
 import { SecurityIssuesWrapper } from "@codestream/webview/Stream/SecurityIssuesWrapper";
+import { ObservabilityAnomaliesWrapper } from "./ObservabilityAnomaliesWrapper";
 import { ObservabilityServiceLevelObjectives } from "@codestream/webview/Stream/ObservabilityServiceLevelObjectives";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { Button } from "../src/components/Button";
@@ -253,6 +256,12 @@ export const Observability = React.memo((props: Props) => {
 	const [hasEntities, setHasEntities] = useState<boolean>(false);
 	const [repoForEntityAssociator, setRepoForEntityAssociator] = useState<any>({});
 	const [loadingEntities, setLoadingEntities] = useState<boolean>(false);
+	const [observabilityAnomalies, setObservabilityAnomalies] =
+		useState<GetObservabilityAnomaliesResponse>({
+			responseTime: [],
+			errorRate: [],
+			throughput: [],
+		});
 	const [observabilityAssignments, setObservabilityAssignments] = useState<
 		ObservabilityErrorCore[]
 	>([]);
@@ -429,6 +438,7 @@ export const Observability = React.memo((props: Props) => {
 						fetchObservabilityErrors(e.data.entityGuid, e.data.repoId);
 						fetchGoldenMetrics(e.data.entityGuid);
 						fetchServiceLevelObjectives(e.data.entityGuid);
+						// fetchAnomalies(e.data.entityGuid, e.data.repoId);
 					}, 2500);
 				}
 			}
@@ -460,6 +470,7 @@ export const Observability = React.memo((props: Props) => {
 	useInterval(() => {
 		fetchGoldenMetrics(expandedEntity, true);
 		fetchServiceLevelObjectives(expandedEntity);
+		// fetchAnomalies(e.data.entityGuid, e.data.repoId);
 	}, 300000);
 
 	/*
@@ -590,6 +601,31 @@ export const Observability = React.memo((props: Props) => {
 			});
 	};
 
+	const fetchAnomalies = (entityGuid: string, repoId) => {
+		loading(repoId, true);
+		setLoadingPane(expandedEntity);
+
+		HostApi.instance
+			.send(GetObservabilityAnomaliesRequestType, {
+				entityGuid,
+			})
+			.then(response => {
+				setObservabilityAnomalies(response);
+				// if (response?.repos) {
+				// 	const existingObservabilityErrors = observabilityErrors.filter(_ => _?.repoId !== repoId);
+				// 	existingObservabilityErrors.push(response.repos[0]);
+				// 	setObservabilityErrors(existingObservabilityErrors!);
+				// }
+				loading(repoId, false);
+				setLoadingPane(null);
+			})
+			.catch(_ => {
+				console.warn(_);
+				loading(repoId, false);
+				setLoadingPane(null);
+			});
+	};
+
 	const fetchGoldenMetrics = async (
 		entityGuid?: string,
 		noLoadingSpinner?: boolean,
@@ -711,6 +747,7 @@ export const Observability = React.memo((props: Props) => {
 			fetchGoldenMetrics(expandedEntity, true);
 			fetchServiceLevelObjectives(expandedEntity);
 			fetchObservabilityErrors(expandedEntity, currentRepoId);
+			// fetchAnomalies(e.data.entityGuid, e.data.repoId);
 		}
 	}, [expandedEntity]);
 
@@ -1097,6 +1134,12 @@ export const Observability = React.memo((props: Props) => {
 																								)}
 																							</>
 																						)}
+																						{/*<ObservabilityAnomaliesWrapper*/}
+																						{/*	observabilityAnomalies={observabilityAnomalies}*/}
+																						{/*	observabilityRepo={_observabilityRepo}*/}
+																						{/*	entityGuid={ea.entityGuid}*/}
+																						{/*	noAccess={noErrorsAccess}*/}
+																						{/*/>*/}
 																					</>
 																				</>
 																			)}
