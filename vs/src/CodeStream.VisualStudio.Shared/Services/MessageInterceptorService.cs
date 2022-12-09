@@ -80,7 +80,7 @@ namespace CodeStream.VisualStudio.Shared.Services
 					uri.IsTempFile() 
 					&& (diffViewer.Properties?.TryGetProperty(PropertyNames.OverrideFileUri, out string codeStreamDiffUri) ?? false)
 					&& (diffViewer.Properties?.TryGetProperty(PropertyNames.OriginalTempFileUri, out string tempFileUri) ?? false)
-					&& tempFileUri.EqualsIgnoreCase(uri))
+					&& tempFileUri.ToUri().EqualsIgnoreCase(uri.ToUri()))
 				{
 					message?.SelectToken(uriToken.Path)?.Replace(new JValue(codeStreamDiffUri));
 				}
