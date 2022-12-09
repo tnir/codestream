@@ -63,6 +63,8 @@ class WebViewTheme(val name: String, val stylesheet: String) {
             val buttonBg = JBColor.namedColor("Button.default.startBackground",
                 JBUI.CurrentTheme.Focus.defaultButtonColor())
 
+            val isHighContrast = UIUtil.isUnderDarcula() && buttonBg.rgba == "rgba(26, 235, 255, 1.0)";
+
             val scrollBarTrack = UIManager.getColor("ScrollBar.background")
             val scrollBarThumb: Color
             val scrollBarThumbHighlight: Color
@@ -91,7 +93,8 @@ class WebViewTheme(val name: String, val stylesheet: String) {
 
             if (ColorUtil.isDark(bg)) {
                 appBgColorDarker = bg.darken(4)
-                appBgColorHover = bg.lighten(3)
+                appBgColorHover =
+                    if (isHighContrast) JBColor.namedColor("TextArea.selectionBackground") else bg.lighten(3)
 
                 baseBgColor = bg.lighten(4)
                 baseBorderColor = border.opacity(50).lighten(20)
@@ -136,7 +139,7 @@ class WebViewTheme(val name: String, val stylesheet: String) {
             }
 
             val toolWindowHeaderBackground = JBColor.namedColor("ToolWindow.Header.background", baseBgColor)
-            val toolWindowHeaderInactiveBackground = Color(0, 0, 0 ,0)
+            val toolWindowHeaderInactiveBackground = Color(0, 0, 0, 0)
             val toolWindowHeaderBorder = fg.opacity(20)
             val treeBackground = JBColor.namedColor("Tree.background", baseBgColor)
 
