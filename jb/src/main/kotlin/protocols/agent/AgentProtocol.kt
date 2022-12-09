@@ -56,15 +56,14 @@ class LoginResult(
         } ?: throw IllegalStateException("LoginResult has no loginResponse")
 
     val eligibleJoinCompanies: List<JsonObject>?
-        get() = loginResponse?.eligibleJoinCompanies
+        get() = loginResponse?.user?.eligibleJoinCompanies
 }
 
 class LoginResponse(
     val user: CSUser,
     val teams: List<CSTeam>,
     val companies: List<CSCompany>,
-    val accessToken: String,
-    val eligibleJoinCompanies: List<JsonObject>?
+    val accessToken: String
 )
 
 class LoginState(
@@ -122,7 +121,8 @@ class CSUser(
     val username: String,
     val email: String,
     val fullName: String,
-    var preferences: CSPreferences?
+    var preferences: CSPreferences?,
+    var eligibleJoinCompanies: List<JsonObject>?
 ) {
     fun wantsToastNotifications(): Boolean = when (preferences?.notificationDelivery) {
         null -> true
@@ -315,7 +315,7 @@ class TelemetryResult()
 class SetServerUrlParams(
     val serverUrl: String,
     val disableStrictSSL: Boolean = false,
-    val environment: String
+    val environment: String?
 )
 
 class SetServerUrlResult

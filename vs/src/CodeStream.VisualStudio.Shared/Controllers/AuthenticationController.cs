@@ -191,6 +191,7 @@ namespace CodeStream.VisualStudio.Shared.Controllers {
 				stateLite["teamId"] = state["teamId"];
 				stateLite["userId"] = state["userId"];
 				stateLite["email"] = state["email"];
+				stateLite["eligibleJoinCompanies"] = GetEligibleJoinCompanies(loginResponse);
 
 				_sessionService.SetUser(CreateUser(loginResponse), stateLite);
 				response.Success = true;
@@ -219,6 +220,9 @@ namespace CodeStream.VisualStudio.Shared.Controllers {
 
 		private static JToken GetState(JToken token) 
 			=> token?["state"];
+
+		private static JToken GetEligibleJoinCompanies(JToken token) 
+			=> token?["loginResponse"]?["user"]?["eligibleJoinCompanies"];
 
 		private static string GetEmail(JToken token) 
 			=> token?["loginResponse"]?["user"]?["email"]?.ToString();

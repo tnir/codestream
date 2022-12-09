@@ -24,14 +24,16 @@ import React, { useEffect, useState } from "react";
 import { shallowEqual } from "react-redux";
 import styled from "styled-components";
 
+import { isFeatureEnabled } from "@codestream/webview/store/apiVersioning/reducer";
+import { ObservabilityRelatedWrapper } from "@codestream/webview/Stream/ObservabilityRelatedWrapper";
+import { CurrentMethodLevelTelemetry } from "@codestream/webview/store/context/types";
+import { HealthIcon } from "@codestream/webview/src/components/HealthIcon";
 import {
 	HostDidChangeWorkspaceFoldersNotificationType,
 	OpenUrlRequestType,
+	RefreshEditorsCodeLensRequestType,
 } from "@codestream/protocols/webview";
-import { RefreshEditorsCodeLensRequestType } from "@codestream/webview/ipc/host.protocol";
-import { HealthIcon } from "@codestream/webview/src/components/HealthIcon";
-import { CurrentMethodLevelTelemetry } from "@codestream/webview/store/context/types";
-import { ObservabilityRelatedWrapper } from "@codestream/webview/Stream/ObservabilityRelatedWrapper";
+import { SecurityIssuesWrapper } from "@codestream/webview/Stream/SecurityIssuesWrapper";
 import { ObservabilityServiceLevelObjectives } from "@codestream/webview/Stream/ObservabilityServiceLevelObjectives";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { Button } from "../src/components/Button";
@@ -218,6 +220,7 @@ export const Observability = React.memo((props: Props) => {
 				{}) as CurrentMethodLevelTelemetry,
 			textEditorUri: state.editorContext.textEditorUri,
 			scmInfo: state.editorContext.scmInfo,
+			showVulnerabilityManagement: isFeatureEnabled(state, "showVulnerabilityManagement"),
 		};
 	}, shallowEqual);
 
@@ -535,7 +538,29 @@ export const Observability = React.memo((props: Props) => {
 					State: telemetryStateValue,
 				});
 			}
+
+			if (expandedEntity) {
+				callServiceClickedTelemetry();
+			}
 		}, 1000);
+	};
+
+	const callServiceClickedTelemetry = () => {
+		try {
+			let currentRepoErrors = observabilityErrors?.find(
+				_ => _ && _.repoId === currentRepoId
+			)?.errors;
+			let filteredCurrentRepoErrors = currentRepoErrors?.filter(_ => _.entityId === expandedEntity);
+			let filteredAssigments = observabilityAssignments?.filter(_ => _.entityId === expandedEntity);
+
+			HostApi.instance.track("NR Service Clicked", {
+				"Errors Listed": !_isEmpty(filteredCurrentRepoErrors) || !_isEmpty(filteredAssigments),
+				"SLOs Listed": hasServiceLevelObjectives,
+			});
+			setPendingTelemetryCall(false);
+		} catch (ex) {
+			console.error(ex);
+		}
 	};
 
 	const fetchObservabilityRepos = (entityGuid?: string, repoId?, force = false) => {
@@ -677,25 +702,7 @@ export const Observability = React.memo((props: Props) => {
 			Object.keys(loadingErrors).some(k => !loadingErrors[k]) &&
 			!loadingAssigments
 		) {
-			try {
-				let currentRepoErrors = observabilityErrors?.find(
-					_ => _ && _.repoId === currentRepoId
-				)?.errors;
-				let filteredCurrentRepoErrors = currentRepoErrors?.filter(
-					_ => _.entityId === expandedEntity
-				);
-				let filteredAssigments = observabilityAssignments?.filter(
-					_ => _.entityId === expandedEntity
-				);
-
-				HostApi.instance.track("NR Service Clicked", {
-					"Errors Listed": !_isEmpty(filteredCurrentRepoErrors) || !_isEmpty(filteredAssigments),
-					"SLOs Listed": hasServiceLevelObjectives,
-				});
-				setPendingTelemetryCall(false);
-			} catch (ex) {
-				console.error(ex);
-			}
+			callServiceClickedTelemetry();
 		}
 	}, [loadingErrors, loadingAssigments]);
 
@@ -1115,6 +1122,13 @@ export const Observability = React.memo((props: Props) => {
 																										serviceLevelObjectives={serviceLevelObjectives}
 																									/>
 																								</>
+																							)}
+																							{derivedState.showVulnerabilityManagement && (
+																								<SecurityIssuesWrapper
+																									currentRepoId={currentRepoId}
+																									entityGuid={ea.entityGuid}
+																									accountId={ea.accountId}
+																								/>
 																							)}
 																							{
 																								<>

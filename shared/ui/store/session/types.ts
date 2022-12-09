@@ -4,6 +4,5 @@ export type SessionState = _SessionState;
 export enum SessionActionType {
 	Set = "@session/SetSession",
 	SetMaintenanceMode = "@session/SetMaintenanceMode",
-	SetEligibleJoinCompanies = "@session/SetEligibleJoinCompanies",
 	SetTOS = "@session/SetTOS",
 }

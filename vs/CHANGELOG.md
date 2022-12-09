@@ -1,5 +1,26 @@
 # Change Log
 
+## [14.9.1] - 2022-12-2
+
+### Fixed
+
+- Fixes an issue that didn't expose organizations you can join via domain or invitation when signing up using a New Relic user api key
+- Fixes an issue where reloading the IDE with a pull request expanded would bring you into the PR Details view
+
+## [14.9.1] - 2022-12-2
+
+### Fixed
+
+- Fixes an issue preventing recent errors from being displayed in the Observability section
+
+## [14.9.0] - 2022-12-1
+
+### Changed
+
+- Updated the pull request integration to be based on a tree view, with full-file side-by-side diffs
+- Golden Metrics displayed in the Observability section now vary based on the type of service
+- Improved the display of charts in the code-level metrics detail view
+
 ## [14.8.1] - 2022-11-21
 
 ### Fixed
