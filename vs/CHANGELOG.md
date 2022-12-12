@@ -1,6 +1,13 @@
 # Change Log
 
-## [14.9.1] - 2022-12-2
+## [14.11.0] - 2022-12-12
+
+### Fixed
+
+- Addresses [#1283](https://github.com/TeamCodeStream/CodeStream/issues/1283) &mdash; Unable to start a review on any pending PR
+- Fixes an issue with the wrapping of vulnerability titles
+
+## [14.10.0] - 2022-12-7
 
 ### Fixed
 

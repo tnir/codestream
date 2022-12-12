@@ -1,6 +1,12 @@
 # Change Log
 
-## [14.9.1] - 2022-12-2
+## [14.11.0] - 2022-12-12
+
+### Fixed
+
+- Fixes an issue with the wrapping of vulnerability titles
+
+## [14.10.0] - 2022-12-7
 
 ### Fixed
 
