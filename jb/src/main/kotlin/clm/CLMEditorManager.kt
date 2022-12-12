@@ -335,7 +335,7 @@ abstract class CLMEditorManager(
         }
 
         ApplicationManager.getApplication().invokeLaterOnWriteThread {
-            if (!analyticsTracked) {
+            if (!analyticsTracked && toRender.isNotEmpty()) {
                 val params = TelemetryParams(
                     "MLT Codelenses Rendered", mapOf(
                         "NR Account ID" to (result.newRelicAccountId ?: 0),
