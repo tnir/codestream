@@ -19,11 +19,14 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 import java.net.URLDecoder
 import java.nio.charset.Charset
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 
 class CodeStreamCommand : JBProtocolCommand("codestream") {
     private val logger = Logger.getInstance(CodeStreamCommand::class.java)
 
-    override fun perform(target: String?, parameters: MutableMap<String, String>) {
+    override fun perform(target: String?, parameters: MutableMap<String, String>, fragment: String?): Future<String?> {
+        val future = CompletableFuture<String?>()
         WindowFocusWorkaround.bringToFront()
 
         ApplicationManager.getApplication().invokeLater {
@@ -59,7 +62,7 @@ class CodeStreamCommand : JBProtocolCommand("codestream") {
                 } else if (repoMapping != null) {
                     try {
                         logger.info("Attempting to open ${repoMapping.defaultPath}")
-                        project = ProjectUtil.openProject(repoMapping.defaultPath, null, true)
+                        project = ProjectUtil.openOrImport(repoMapping.defaultPath, null, true)
                     } catch (ex: Exception) {
                         logger.warn(ex)
                     }
@@ -77,14 +80,17 @@ class CodeStreamCommand : JBProtocolCommand("codestream") {
                             if (!posted) {
                                 project.handleUrlWhenReady(project, target, parameters)
                                 posted = true
+                                future.complete(null)
                             }
                         }
                     })
             } else {
                 project.ensureOpened()
                 project.handleUrlWhenReady(project, target, parameters)
+                future.complete(null)
             }
         }
+        return future
     }
 
     private fun findOpenProject(repoMapping: RepoMapping, filePath: String): Project? {
@@ -109,7 +115,7 @@ class CodeStreamCommand : JBProtocolCommand("codestream") {
             for (projectPath in recentPaths) {
                 if (file.startsWith(projectPath)) {
                     logger.info("Opening recent project $projectPath")
-                    return ProjectUtil.openProject(projectPath, null, true)
+                    return ProjectUtil.openOrImport(projectPath, null, true)
                 }
             }
         }
