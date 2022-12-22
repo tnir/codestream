@@ -1,7 +1,9 @@
 "use strict";
 import { promises as fsPromises } from "fs";
-import { uniq as _uniq } from "lodash";
 import path from "path";
+
+import { uniq as _uniq } from "lodash";
+
 import {
 	AddNewRelicIncludeResponse,
 	CreateNewRelicConfigFileResponse,
@@ -82,11 +84,6 @@ export class NodeJSInstrumentation {
 		try {
 			await execAsync("npm install --save newrelic", {
 				cwd,
-				// /* This is what Colin needs to run this as a demo locally
-				env: {
-					PATH: `${process.env.PATH}:/Users/cstryker/dev/sandboxes/csbe/node/bin`,
-				},
-				// */
 			});
 			return {};
 		} catch (error) {
