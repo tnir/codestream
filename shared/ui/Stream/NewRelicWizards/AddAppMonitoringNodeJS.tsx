@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { FormattedMessage } from "react-intl";
 import { useDispatch, useSelector } from "react-redux";
 import { Position, Range } from "vscode-languageserver-types";
+
+import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { TextInput } from "../../Authentication/TextInput";
 import { logError } from "../../logger";
 import {
@@ -49,6 +51,7 @@ export const AddAppMonitoringNodeJS = (props: {
 	const [insertingRequire, setInsertingRequire] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [unexpectedError, setUnexpectedError] = useState(false);
+	const [specificError, setSpecificError] = useState("");
 	const [step, setStep] = useState(1);
 
 	const { repo, repoPath } = derivedState;
@@ -62,6 +65,8 @@ export const AddAppMonitoringNodeJS = (props: {
 				})) as FindCandidateMainFilesResponse;
 				if (!response.error) {
 					setFiles(response.files);
+					setSpecificError("");
+					setStep(1);
 				}
 			}
 		})();
@@ -73,6 +78,13 @@ export const AddAppMonitoringNodeJS = (props: {
 			dispatch(closeModal());
 		}
 	}, [repo]);
+
+	useDidMount(() => {
+		if (!repoPath) {
+			setSpecificError("Please ensure you have a git repository open and try again.");
+			setStep(0);
+		}
+	});
 
 	const onInstallLibrary = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
@@ -162,6 +174,7 @@ export const AddAppMonitoringNodeJS = (props: {
 						<fieldset className="form-body">
 							<div id="controls">
 								<div className="small-spacer" />
+								{specificError && <div className="error-message form-error">{specificError}</div>}
 								{unexpectedError && (
 									<div className="error-message form-error">
 										<FormattedMessage
