@@ -320,6 +320,22 @@ export const AgentFileSearchRequestType = new RequestType<
 	void
 >("codestream/files/search");
 
+export interface ResolveStackTracePathsRequest {
+	paths: (string | undefined)[];
+}
+
+export interface ResolveStackTracePathsResponse {
+	resolvedPaths: (string | undefined)[];
+	notImplemented: boolean | undefined;
+}
+
+export const ResolveStackTracePathsRequestType = new RequestType<
+	ResolveStackTracePathsRequest,
+	ResolveStackTracePathsResponse,
+	void,
+	void
+>("codestream/stackTrace/resolvePaths");
+
 export interface UIStateRequest {
 	context?: {
 		panelStack?: string[];

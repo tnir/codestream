@@ -110,10 +110,15 @@ export class ScmManager {
 		revision,
 		repoPath,
 		repoId,
+		filePath,
 	}: GetCommitScmInfoRequest): Promise<GetCommitScmInfoResponse> {
 		const cc = Logger.getCorrelationContext();
 
 		const { git } = SessionContainer.instance();
+		if (filePath && !repoPath) {
+			const repo = await git.getRepositoryByFilePath(filePath);
+			repoPath = repo?.path;
+		}
 
 		if (!repoPath) {
 			if (!repoId) {

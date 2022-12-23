@@ -63,6 +63,7 @@ export interface GetCommitScmInfoRequest {
 	revision: string;
 	repoPath?: string;
 	repoId?: string;
+	filePath?: string;
 }
 export interface GetCommitScmInfoResponse {
 	scm?: {

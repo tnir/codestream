@@ -1,7 +1,9 @@
 "use strict";
 
-import { structuredPatch } from "diff";
 import path from "path";
+
+import { structuredPatch } from "diff";
+
 import { Container, SessionContainer } from "../container";
 import { isWindows } from "../git/shell";
 import { Logger } from "../logger";
@@ -23,6 +25,7 @@ import {
 	ParseStackTraceRequest,
 	ParseStackTraceRequestType,
 	ParseStackTraceResponse,
+	ResolveStackTracePathsRequestType,
 	ResolveStackTracePositionRequest,
 	ResolveStackTracePositionRequestType,
 	ResolveStackTracePositionResponse,
@@ -164,7 +167,7 @@ export class NRManager {
 		occurrenceId,
 		codeErrorId,
 	}: ResolveStackTraceRequest): Promise<ResolveStackTraceResponse> {
-		const { git, repos, session } = SessionContainer.instance();
+		const { git, repos } = SessionContainer.instance();
 		const matchingRepo = await git.getRepositoryById(repoId);
 		const matchingRepoPath = matchingRepo?.path;
 		let firstWarning: WarningOrError | undefined = undefined;
@@ -250,31 +253,14 @@ export class NRManager {
 		};
 
 		if (parsedStackInfo.lines) {
-			for (let i = 0; i < parsedStackInfo.lines.length; i++) {
-				const line = parsedStackInfo.lines[i];
-				const resolvedLine = { ...line };
-				resolvedStackInfo.lines.push(resolvedLine);
-				line.fileRelativePath = resolvedLine.fileRelativePath;
-
-				if (!line.error && matchingRepoPath && parsedStackInfo.language) {
-					this.resolveStackTraceLine(line, ref, matchingRepoPath, parsedStackInfo.language).then(
-						resolvedLine => {
-							if (resolvedLine.error) {
-								Logger.log(`Stack trace line failed to resolve: ${resolvedLine.error}`);
-							} else {
-								const loggableLine = `${resolvedLine.fileRelativePath}:${resolvedLine.line}:${resolvedLine.column}`;
-								Logger.log(`Stack trace line resolved: ${loggableLine}`);
-							}
-							session.agent.sendNotification(DidResolveStackTraceLineNotificationType, {
-								occurrenceId,
-								resolvedLine,
-								index: i,
-								codeErrorId,
-							});
-						}
-					);
-				}
-			}
+			void this.resolveStackTraceLines(
+				parsedStackInfo,
+				resolvedStackInfo,
+				matchingRepoPath,
+				ref,
+				occurrenceId,
+				codeErrorId
+			);
 		}
 
 		return {
@@ -282,6 +268,78 @@ export class NRManager {
 			resolvedStackInfo,
 			parsedStackInfo,
 		};
+	}
+
+	private async resolveStackTraceLines(
+		parsedStackInfo: ParseStackTraceResponse,
+		resolvedStackInfo: CSStackTraceInfo,
+		matchingRepoPath: string | undefined,
+		ref: string,
+		occurrenceId: string,
+		codeErrorId: string
+	) {
+		const { session, git } = SessionContainer.instance();
+
+		const paths = parsedStackInfo.lines.map(_ => _.fileFullPath);
+		const commitSha = matchingRepoPath && (await git.getCommit(matchingRepoPath, ref));
+		const resolveStackTracePathsResponse = await session.agent.sendRequest(
+			ResolveStackTracePathsRequestType,
+			{ paths }
+		);
+
+		for (let i = 0; i < parsedStackInfo.lines.length; i++) {
+			try {
+				const line = parsedStackInfo.lines[i];
+				const resolvedLine = { ...line };
+				resolvedStackInfo.lines.push(resolvedLine);
+				line.fileRelativePath = resolvedLine.fileRelativePath;
+
+				if (!line.error && matchingRepoPath && parsedStackInfo.language) {
+					let resolvedLine: CSStackTraceLine;
+					if (resolveStackTracePathsResponse.notImplemented) {
+						// TODO remove if block once ResolveStackTracePathsRequestType is implemented in VS
+						resolvedLine = await this.resolveStackTraceLine(
+							line,
+							ref,
+							matchingRepoPath,
+							parsedStackInfo.language
+						);
+					} else {
+						const resolvedPath = resolveStackTracePathsResponse.resolvedPaths[i];
+						if (resolvedPath) {
+							resolvedLine = {
+								fileFullPath: resolvedPath,
+								fileRelativePath: path.relative(matchingRepoPath, resolvedPath),
+								line: line.line,
+								column: line.column,
+								resolved: true,
+								warning: commitSha ? undefined : "Missing sha",
+							};
+						} else {
+							resolvedLine = {
+								error: `Unable to find matching file for path ${line.fileFullPath}`,
+							};
+						}
+
+						if (resolvedLine.error) {
+							Logger.log(`Stack trace line failed to resolve: ${resolvedLine.error}`);
+						} else {
+							const loggableLine = `${resolvedLine.fileRelativePath}:${resolvedLine.line}:${resolvedLine.column}`;
+							Logger.log(`Stack trace line resolved: ${loggableLine}`);
+						}
+					}
+
+					session.agent.sendNotification(DidResolveStackTraceLineNotificationType, {
+						occurrenceId,
+						resolvedLine,
+						index: i,
+						codeErrorId,
+					});
+				}
+			} catch (e) {
+				Logger.warn("Error resolving stack trace line", { error: e });
+			}
+		}
 	}
 
 	@lspHandler(ResolveStackTracePositionRequestType)
@@ -317,9 +375,9 @@ export class NRManager {
 				column: column,
 			};
 		}
-		const position = await this.getCurrentStackTracePosition(ref, fullPath, line, column);
 		return {
-			...position,
+			line,
+			column,
 			path: uri,
 		};
 	}
@@ -494,21 +552,11 @@ export class NRManager {
 			};
 		}
 
-		const position = await this.getCurrentStackTracePosition(
-			ref,
-			bestMatchingFilePath,
-			line.line!,
-			line.column!
-		);
-		if (position.error) {
-			return { error: position.error };
-		}
-
 		return {
 			fileFullPath: bestMatchingFilePath,
 			fileRelativePath: path.relative(matchingRepoPath, bestMatchingFilePath),
-			line: position.line,
-			column: position.column,
+			line: line.line,
+			column: line.column,
 			resolved: true,
 		};
 	}
