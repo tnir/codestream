@@ -171,6 +171,7 @@ export class NRManager {
 		const matchingRepo = await git.getRepositoryById(repoId);
 		const matchingRepoPath = matchingRepo?.path;
 		let firstWarning: WarningOrError | undefined = undefined;
+		let resolvedRef: string | undefined = ref;
 
 		// NOTE: the warnings should not prevent a stack trace from being displayed
 		const setWarning = (warning: WarningOrError) => {
@@ -207,6 +208,7 @@ export class NRManager {
 							message: Strings.interpolate(MISSING_REF_MESSAGE, { ref: ref }),
 							helpUrl: MISSING_REF_HELP_URL,
 						});
+						resolvedRef = undefined;
 					}
 				}
 			} catch (ex) {
@@ -219,6 +221,7 @@ export class NRManager {
 					message: Strings.interpolate(MISSING_REF_MESSAGE, { ref: ref }),
 					helpUrl: MISSING_REF_HELP_URL,
 				});
+				resolvedRef = undefined;
 			}
 		}
 
@@ -234,13 +237,14 @@ export class NRManager {
 				message: Strings.interpolate(MISSING_REF_MESSAGE, { sha: ref }),
 				helpUrl: MISSING_REF_HELP_URL,
 			});
+			resolvedRef = undefined;
 		}
 		if (parsedStackInfo.warning) {
 			// if there was a warning parsing, use that first
 			firstWarning = parsedStackInfo.warning;
 		}
 		parsedStackInfo.repoId = repoId;
-		parsedStackInfo.sha = ref;
+		parsedStackInfo.sha = resolvedRef;
 		parsedStackInfo.occurrenceId = occurrenceId;
 
 		const stackTraceText = stackTrace ? stackTrace.join("\n") : "";
