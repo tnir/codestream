@@ -1,4 +1,8 @@
-.idea
+.idea/dictionaries
+.idea/libraries
+.idea/shelf
+.idea/workspace.xml
+.idea/codestream.xml
 *~
 .env
 .DS_Store

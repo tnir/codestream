@@ -23,23 +23,6 @@ module.exports = {
 			"warn",
 			{ vars: "all", varsIgnorePattern: "^_", args: "after-used", argsIgnorePattern: "^_" },
 		],
-		"import/order": [
-			"warn",
-			{
-				"newlines-between": "always",
-				groups: [
-					"builtin",
-					"external",
-					["internal", "parent", "sibling", "index"],
-					"object",
-					"type",
-				],
-				alphabetize: {
-					order: "asc" /* sort in ascending order. Options: ['ignore', 'asc', 'desc'] */,
-					caseInsensitive: true /* ignore case. Options: [true, false] */,
-				},
-			},
-		],
 		// // "import/no-unresolved": [2, {commonjs: true, amd: true}],
 		// "import/no-unresolved": "error",
 		// // "import/named": 2,

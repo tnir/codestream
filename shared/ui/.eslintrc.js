@@ -24,23 +24,6 @@ module.exports = {
 			"warn",
 			{ vars: "all", varsIgnorePattern: "^_", args: "after-used", argsIgnorePattern: "^_" },
 		],
-		"import/order": [
-			"warn",
-			{
-				"newlines-between": "always",
-				groups: [
-					"builtin",
-					"external",
-					["internal", "parent", "sibling", "index"],
-					"object",
-					"type",
-				],
-				alphabetize: {
-					order: "asc" /* sort in ascending order. Options: ['ignore', 'asc', 'desc'] */,
-					caseInsensitive: true /* ignore case. Options: [true, false] */,
-				},
-			},
-		],
 		// TODO Goal: Resolve all of these and remove so they go back to being errors
 		"no-var": "warn",
 		"no-useless-escape": "warn",

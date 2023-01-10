@@ -110,7 +110,7 @@
 	"lint-staged": {
 		"*": [
 			"prettier --ignore-unknown --write",
-			"eslint-filtered-fix --rule 'unused-imports/no-unused-imports' --rule 'unused-imports/no-unused-vars' --rule 'import/order'"
+			"eslint-filtered-fix --rule 'unused-imports/no-unused-imports' --rule 'unused-imports/no-unused-vars'"
 		],
 		"*.{js,jsx,ts,tsx}": "eslint"
 	}
