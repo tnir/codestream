@@ -16,6 +16,7 @@ import com.codestream.protocols.agent.MethodLevelTelemetrySymbolIdentifier
 import com.codestream.protocols.agent.MethodLevelTelemetryThroughput
 import com.codestream.protocols.agent.NOT_ASSOCIATED
 import com.codestream.protocols.agent.NOT_CONNECTED
+import com.codestream.protocols.agent.ResponseTimesParams
 import com.codestream.protocols.agent.TelemetryParams
 import com.codestream.protocols.webview.MethodLevelTelemetryNotifications
 import com.codestream.review.LOCAL_PATH
@@ -153,6 +154,12 @@ abstract class CLMEditorManager(
                     null
                 }
 
+                // GlobalScope.launch {
+                //     val fileUri = editor.document.uri ?: return@launch
+                //     val result = project.agentService?.responseTimes(ResponseTimesParams(fileUri)) ?: return@launch
+                //     val symbols = findSymbols(psiFile, result.responseTimes.map { it.name })
+                // }
+
                 GlobalScope.launch {
                     try {
                         lastFetchAttempt = System.currentTimeMillis()
@@ -260,6 +267,10 @@ abstract class CLMEditorManager(
         if (project.sessionService?.userLoggedIn?.user == null) return null
         if (path == null) return null
         return DisplayDeps(result, project, path, editor)
+    }
+
+    open suspend fun findSymbols(psiFile: PsiFile, names: List<String>): Map<String, String> {
+        return mapOf<String, String>()
     }
 
     abstract fun findClassFunctionFromFile(

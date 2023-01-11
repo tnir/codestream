@@ -48,6 +48,8 @@ import com.codestream.protocols.agent.ReportMessageParams
 import com.codestream.protocols.agent.ReportMessageRequestError
 import com.codestream.protocols.agent.ResolveStackTraceLineParams
 import com.codestream.protocols.agent.ResolveStackTraceLineResult
+import com.codestream.protocols.agent.ResponseTimesParams
+import com.codestream.protocols.agent.ResponseTimesResult
 import com.codestream.protocols.agent.Review
 import com.codestream.protocols.agent.ReviewCoverageParams
 import com.codestream.protocols.agent.ReviewCoverageResult
@@ -605,6 +607,13 @@ class AgentService(private val project: Project) : Disposable {
     suspend fun fileLevelTelemetry(params: FileLevelTelemetryParams): FileLevelTelemetryResult? {
         val json: JsonObject = remoteEndpoint
             .request("codestream/newrelic/fileLevelTelemetry", params)
+            .await() as JsonObject? ?: return null
+        return gson.fromJson(json)
+    }
+
+    suspend fun responseTimes(params: ResponseTimesParams): ResponseTimesResult? {
+        val json: JsonObject = remoteEndpoint
+            .request("codestream/newrelic/responseTimes", params)
             .await() as JsonObject? ?: return null
         return gson.fromJson(json)
     }

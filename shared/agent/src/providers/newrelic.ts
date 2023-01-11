@@ -100,6 +100,9 @@ import {
 	EntityGoldenMetricsResults,
 	EntityGoldenMetrics,
 	GoldenMetricUnitMappings,
+	GetObservabilityResponseTimesRequest,
+	GetObservabilityResponseTimesResponse,
+	GetObservabilityResponseTimesRequestType,
 } from "@codestream/protocols/agent";
 import { CSMe, CSNewRelicProviderInfo } from "@codestream/protocols/api";
 
@@ -145,6 +148,7 @@ import {
 	spanQueryTypes,
 } from "./newrelic/spanQuery";
 import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
+import { GitRepository } from "../git/models/repository";
 
 const ignoredErrors = [GraphqlNrqlTimeoutError];
 
@@ -1015,6 +1019,49 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return response;
 	}
 
+	@lspHandler(GetObservabilityResponseTimesRequestType)
+	@log({
+		timed: true,
+	})
+	async getObservabilityResponseTimes(
+		request: GetObservabilityResponseTimesRequest
+	): Promise<GetObservabilityResponseTimesResponse> {
+		const parsedUri = URI.parse(request.fileUri);
+		const filePath = parsedUri.fsPath;
+		const { result, error } = await this.resolveEntityAccount(filePath);
+		if (!result)
+			return {
+				responseTimes: [],
+			};
+
+		// const query =
+		// 	`SELECT average(newrelic.timeslice.value) * 1000 AS 'value' ` +
+		// 	`FROM Metric WHERE \`entity.guid\` = '${result.entity.entityGuid}' ` +
+		// 	`AND (metricTimesliceName LIKE 'Java/%' OR metricTimesliceName LIKE 'Custom/%')` +
+		// 	`FACET metricTimesliceName AS name ` +
+		// 	`SINCE 7 days ago LIMIT MAX`;
+
+		const query =
+			`SELECT average(duration) * 1000 AS 'value' ` +
+			`FROM Span WHERE \`entity.guid\` = '${result.entity.entityGuid}' ` +
+			`AND (name LIKE 'Java/%' OR name LIKE 'Custom/%')` +
+			`FACET name ` +
+			`SINCE 7 days ago LIMIT MAX`;
+
+		const results = await this.runNrql<{ name: string; value: number }>(
+			result.entity.accountId,
+			query,
+			200
+		);
+		return {
+			responseTimes: results,
+		};
+	}
+
+	@lspHandler(GetObservabilityAnomaliesRequestType)
+	@log({
+		timed: true,
+	})
 	@lspHandler(GetObservabilityAnomaliesRequestType)
 	@log({
 		timed: true,
@@ -2133,7 +2180,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async getFileLevelTelemetry(
 		request: GetFileLevelTelemetryRequest
 	): Promise<GetFileLevelTelemetryResponse | NRErrorResponse | undefined> {
-		const { git, users } = this._sessionServiceContainer || SessionContainer.instance();
+		const { git } = this._sessionServiceContainer || SessionContainer.instance();
 		const languageId: LanguageId | undefined = isSupportedLanguage(request.languageId)
 			? request.languageId
 			: undefined;
@@ -2193,82 +2240,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				return cached ?? undefined;
 			}
 		}
-		const codeStreamUser = await users.getMe();
 
-		const isConnected = this.isConnected(codeStreamUser);
-		if (!isConnected) {
-			ContextLogger.warn("getFileLevelTelemetry: not connected", {
-				request,
-			});
-			return <NRErrorResponse>{
-				isConnected: isConnected,
-				error: {
-					message: "Not connected to New Relic",
-					type: "NOT_CONNECTED",
-				},
-			};
-		}
-
-		const repoForFile = await git.getRepositoryByFilePath(filePath);
-		if (!repoForFile?.id) {
-			ContextLogger.warn("getFileLevelTelemetry: no repo for file", {
-				request,
-			});
-			return undefined;
-		}
-
-		try {
-			const { entityCount } = await this.getEntityCount();
-			if (entityCount < 1) {
-				ContextLogger.log("getFileLevelTelemetry: no NR1 entities");
-				return undefined;
-			}
-		} catch (ex) {
-			if (ex instanceof GraphqlNrqlError) {
-				const type = this.errorTypeMapper(ex);
-				Logger.warn(`getFileLevelTelemetry error ${type}`, {
-					request,
-				});
-				return <NRErrorResponse>{
-					error: {
-						message: ex.message,
-						type,
-					},
-				};
-			}
-			return undefined;
-		}
-
-		const remotes = await repoForFile.getWeightedRemotesByStrategy("prioritizeUpstream", undefined);
-		const remote = remotes.map(_ => _.rawUrl)[0];
-
-		let relativeFilePath = relative(repoForFile.path, filePath);
-		if (relativeFilePath[0] !== sep) {
-			relativeFilePath = join(sep, relativeFilePath);
-		}
-
-		// See if the git repo is associated with NR1
-		const observabilityRepo = await this.getObservabilityEntityRepos(repoForFile.id);
-		if (!observabilityRepo) {
-			ContextLogger.warn("getFileLevelTelemetry: no observabilityRepo");
-			return undefined;
-		}
-		if (!observabilityRepo.entityAccounts?.length) {
-			ContextLogger.warn("getFileLevelTelemetry: no entityAccounts");
-			return <NRErrorResponse>{
-				repo: {
-					id: repoForFile.id,
-					name: this.getRepoName(repoForFile),
-					remote: remote,
-				},
-				error: {
-					message: "",
-					type: "NOT_ASSOCIATED",
-				},
-			};
-		}
-
-		const entity = this.getGoldenSignalsEntity(codeStreamUser!, observabilityRepo);
+		const { result, error } = await this.resolveEntityAccount(filePath);
+		if (error) return error;
+		if (!result) return undefined;
+		const { entity, relativeFilePath, observabilityRepo, repoForFile, remote } = result;
 
 		const newRelicAccountId = entity.accountId;
 		const newRelicEntityGuid = entity.entityGuid;
@@ -2348,7 +2324,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				throughputResponseLength || averageDurationResponseLength || errorRateResponseLength;
 			const response: GetFileLevelTelemetryResponse = {
 				codeNamespace: request?.locator?.namespace,
-				isConnected: isConnected,
+				isConnected: true,
 				throughput: throughputResponse ? throughputResponse.actor.account.nrql.results : [],
 				averageDuration: averageDurationResponse
 					? averageDurationResponse.actor.account.nrql.results
@@ -2366,7 +2342,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				newRelicEntityName: entityName,
 				newRelicEntityAccounts: observabilityRepo.entityAccounts,
 				repo: {
-					id: repoForFile.id,
+					id: repoForFile.id!,
 					name: this.getRepoName(repoForFile),
 					remote: remote,
 				},
@@ -2427,6 +2403,110 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		});
 
 		return undefined;
+	}
+
+	private async resolveEntityAccount(filePath: string): Promise<{
+		result?: {
+			entity: EntityAccount;
+			relativeFilePath: string;
+			observabilityRepo: ObservabilityRepo;
+			repoForFile: GitRepository;
+			remote: string;
+		};
+		error?: NRErrorResponse;
+	}> {
+		const { git, users } = this._sessionServiceContainer || SessionContainer.instance();
+		const codeStreamUser = await users.getMe();
+
+		const isConnected = this.isConnected(codeStreamUser);
+		if (!isConnected) {
+			ContextLogger.warn("getFileLevelTelemetry: not connected", {
+				filePath,
+			});
+			return {
+				error: <NRErrorResponse>{
+					isConnected: isConnected,
+					error: {
+						message: "Not connected to New Relic",
+						type: "NOT_CONNECTED",
+					},
+				},
+			};
+		}
+
+		const repoForFile = await git.getRepositoryByFilePath(filePath);
+		if (!repoForFile?.id) {
+			ContextLogger.warn("getFileLevelTelemetry: no repo for file", {
+				filePath,
+			});
+			return {};
+		}
+
+		try {
+			const { entityCount } = await this.getEntityCount();
+			if (entityCount < 1) {
+				ContextLogger.log("getFileLevelTelemetry: no NR1 entities");
+				return {};
+			}
+		} catch (ex) {
+			if (ex instanceof GraphqlNrqlError) {
+				const type = this.errorTypeMapper(ex);
+				Logger.warn(`getFileLevelTelemetry error ${type}`, {
+					filePath,
+				});
+				return {
+					error: <NRErrorResponse>{
+						error: {
+							message: ex.message,
+							type,
+						},
+					},
+				};
+			}
+			return {};
+		}
+
+		const remotes = await repoForFile.getWeightedRemotesByStrategy("prioritizeUpstream", undefined);
+		const remote = remotes.map(_ => _.rawUrl)[0];
+
+		let relativeFilePath = relative(repoForFile.path, filePath);
+		if (relativeFilePath[0] !== sep) {
+			relativeFilePath = join(sep, relativeFilePath);
+		}
+
+		// See if the git repo is associated with NR1
+		const observabilityRepo = await this.getObservabilityEntityRepos(repoForFile.id);
+		if (!observabilityRepo) {
+			ContextLogger.warn("getFileLevelTelemetry: no observabilityRepo");
+			return {};
+		}
+		if (!observabilityRepo.entityAccounts?.length) {
+			ContextLogger.warn("getFileLevelTelemetry: no entityAccounts");
+			return {
+				error: <NRErrorResponse>{
+					repo: {
+						id: repoForFile.id,
+						name: this.getRepoName(repoForFile),
+						remote: remote,
+					},
+					error: {
+						message: "",
+						type: "NOT_ASSOCIATED",
+					},
+				},
+			};
+		}
+
+		const entity = this.getGoldenSignalsEntity(codeStreamUser!, observabilityRepo);
+		return {
+			result: {
+				entity,
+				relativeFilePath,
+				observabilityRepo,
+				repoForFile,
+				remote,
+			},
+		};
 	}
 
 	private errorTypeMapper(ex: Error): NRErrorType | undefined {

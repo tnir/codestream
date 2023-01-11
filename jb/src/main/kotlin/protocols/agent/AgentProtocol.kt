@@ -548,6 +548,18 @@ class FileLevelTelemetryParams(
     val options: FileLevelTelemetryOptions?
 )
 
+class ResponseTimesParams(
+    val fileUri: String
+)
+
+class ResponseTime(
+    val name: String,
+    val value: Float
+)
+class ResponseTimesResult(
+    val responseTimes: List<ResponseTime>
+)
+
 data class MethodLevelTelemetrySymbolIdentifier(
     val namespace: String?,
     val className: String?,

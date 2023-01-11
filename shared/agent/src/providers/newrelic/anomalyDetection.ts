@@ -1,6 +1,6 @@
 import { SessionContainer } from "../../container";
 import { Logger } from "../../logger";
-import { AgentFilterNamespacesRequestType } from "../../protocol/agent.protocol";
+import { AgentFilterNamespacesRequestType } from "@codestream/protocols/agent";
 
 interface NameValue {
 	name: string;

@@ -1230,6 +1230,21 @@ export const GetObservabilityAnomaliesRequestType = new RequestType<
 	void
 >("codestream/newrelic/anomalies");
 
+export interface GetObservabilityResponseTimesRequest {
+	fileUri: string;
+}
+
+export interface GetObservabilityResponseTimesResponse {
+	responseTimes: { name: string, value: number}[];
+}
+
+export const GetObservabilityResponseTimesRequestType = new RequestType<
+	GetObservabilityResponseTimesRequest,
+	GetObservabilityResponseTimesResponse,
+	void,
+	void
+>("codestream/newrelic/responseTimes");
+
 export interface GetObservabilityReposRequest {
 	filters?: { repoId: string; entityGuid?: string }[];
 	force?: boolean;

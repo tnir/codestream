@@ -36,7 +36,6 @@ import {
 	RefreshEditorsCodeLensRequestType,
 } from "@codestream/protocols/webview";
 import { SecurityIssuesWrapper } from "@codestream/webview/Stream/SecurityIssuesWrapper";
-import { ObservabilityAnomaliesWrapper } from "./ObservabilityAnomaliesWrapper";
 import { ObservabilityServiceLevelObjectives } from "@codestream/webview/Stream/ObservabilityServiceLevelObjectives";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { Button } from "../src/components/Button";
@@ -617,12 +616,12 @@ export const Observability = React.memo((props: Props) => {
 				// 	setObservabilityErrors(existingObservabilityErrors!);
 				// }
 				loading(repoId, false);
-				setLoadingPane(null);
+				setLoadingPane(undefined);
 			})
 			.catch(_ => {
 				console.warn(_);
 				loading(repoId, false);
-				setLoadingPane(null);
+				setLoadingPane(undefined);
 			});
 	};
 
@@ -904,16 +903,18 @@ export const Observability = React.memo((props: Props) => {
 												</Button>
 											</GenericWrapper>
 										)}
-										{_isEmpty(currentRepoId) && _isEmpty(repoForEntityAssociator) && !genericError && (
-											<NoContent>
-												<p>
-													Open a source file to see how your code is performing.{" "}
-													<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring#observability-in-IDE">
-														Learn more.
-													</a>
-												</p>
-											</NoContent>
-										)}
+										{_isEmpty(currentRepoId) &&
+											_isEmpty(repoForEntityAssociator) &&
+											!genericError && (
+												<NoContent>
+													<p>
+														Open a source file to see how your code is performing.{" "}
+														<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring#observability-in-IDE">
+															Learn more.
+														</a>
+													</p>
+												</NoContent>
+											)}
 										{!derivedState.hideCodeLevelMetricsInstructions &&
 											!derivedState.showGoldenSignalsInEditor &&
 											derivedState.isVS &&
@@ -953,218 +954,223 @@ export const Observability = React.memo((props: Props) => {
 											</>
 										)}
 
-										{currentEntityAccounts && currentEntityAccounts?.length !== 0 && hasEntities && (
-											<>
-												{currentEntityAccounts
-													.filter(_ => _)
-													.map((ea, index) => {
-														const _observabilityRepo = observabilityRepos.find(
-															_ => _.repoId === currentRepoId
-														);
-
-														if (_observabilityRepo) {
-															const _alertSeverity = ea?.alertSeverity || "";
-															const alertSeverityColor = ALERT_SEVERITY_COLORS[_alertSeverity];
-															const collapsed = expandedEntity !== ea.entityGuid;
-															const currentObservabilityRepoEntity =
-																derivedState.observabilityRepoEntities.find(ore => {
-																	return ore.repoId === currentRepoId;
-																});
-															const isSelectedCLM =
-																ea.entityGuid === currentObservabilityRepoEntity?.entityGuid;
-															return (
-																<>
-																	<PaneNodeName
-																		title={
-																			<div
-																				style={{
-																					display: "flex",
-																					alignItems: "center",
-																				}}
-																			>
-																				<HealthIcon color={alertSeverityColor} />
-																				<div>
-																					<span>{ea.entityName}</span>
-																					<span
-																						className="subtle"
-																						style={{
-																							fontSize: "11px",
-																							verticalAlign: "bottom",
-																						}}
-																					>
-																						{ea.accountName && ea.accountName.length > 25
-																							? ea.accountName.substr(0, 25) + "..."
-																							: ea.accountName}
-																						{ea?.domain ? ` (${ea?.domain})` : ""}
-																					</span>
-																				</div>
-																			</div>
-																		}
-																		id={ea.entityGuid}
-																		labelIsFlex={true}
-																		onClick={e => handleClickTopLevelService(e, ea.entityGuid)}
-																		collapsed={collapsed}
-																		showChildIconOnCollapse={true}
-																		actionsVisibleIfOpen={true}
-																	>
-																		{newRelicUrl && (
-																			<Icon
-																				name="globe"
-																				className={cx("clickable", {
-																					"icon-override-actions-visible": true,
-																				})}
-																				title="View on New Relic"
-																				placement="bottomLeft"
-																				delay={1}
-																				onClick={e => {
-																					e.preventDefault();
-																					e.stopPropagation();
-																					HostApi.instance.track("Open Service Summary on NR", {
-																						Section: "Golden Metrics",
-																					});
-																					HostApi.instance.send(OpenUrlRequestType, {
-																						url: newRelicUrl,
-																					});
-																				}}
-																			/>
-																		)}
-																		{showCodeLevelMetricsBroadcastIcon && (
-																			<Icon
-																				style={{
-																					display: "inlineBlock",
-																					color: isSelectedCLM
-																						? "var(--text-color-highlight)"
-																						: "inherit",
-																					opacity: isSelectedCLM ? "1" : "inherit",
-																				}}
-																				name="broadcast"
-																				className={cx("clickable", {
-																					"icon-override-actions-visible": !isSelectedCLM,
-																				})}
-																				title={
-																					isSelectedCLM ? (
-																						<span>
-																							Displaying{" "}
-																							<Link
-																								useStopPropagation={true}
-																								href="https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring#code-level"
-																							>
-																								code level metrics
-																							</Link>{" "}
-																							for this service
-																						</span>
-																					) : (
-																						<span>
-																							View{" "}
-																							<Link
-																								useStopPropagation={true}
-																								href="https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring#code-level"
-																							>
-																								code level metrics
-																							</Link>{" "}
-																							for this service
-																						</span>
-																					)
-																				}
-																				placement="bottomLeft"
-																				delay={1}
-																				onClick={e => {
-																					e.preventDefault();
-																					e.stopPropagation();
-																					handleClickCLMBroadcast(ea.entityGuid, e);
-																				}}
-																			/>
-																		)}
-																	</PaneNodeName>
-																	{!collapsed && (
-																		<>
-																			{ea.entityGuid === loadingPane ? (
-																				<>
-																					<ErrorRow isLoading={true} title="Loading..."></ErrorRow>
-																				</>
-																			) : (
-																				<>
-																					<>
-																						<ObservabilityGoldenMetricDropdown
-																							entityGoldenMetrics={entityGoldenMetrics}
-																							loadingGoldenMetrics={loadingGoldenMetrics}
-																							recentAlertViolations={
-																								recentAlertViolations ? recentAlertViolations : {}
-																							}
-																						/>
-																						{hasServiceLevelObjectives && (
-																							<>
-																								<ObservabilityServiceLevelObjectives
-																									serviceLevelObjectives={serviceLevelObjectives}
-																								/>
-																							</>
-																						)}
-																						{derivedState.showVulnerabilityManagement &&
-																							currentRepoId && (
-																								<SecurityIssuesWrapper
-																									currentRepoId={currentRepoId}
-																									entityGuid={ea.entityGuid}
-																									accountId={ea.accountId}
-																								/>
-																							)}
-																						{currentRepoId && (
-																							<>
-																								<ObservabilityRelatedWrapper
-																									currentRepoId={currentRepoId}
-																									entityGuid={ea.entityGuid}
-																								/>
-																							</>
-																						)}
-																						{ea.domain === "APM" && (
-																							<>
-																								{observabilityErrors?.find(
-																									oe => oe?.repoId === _observabilityRepo?.repoId
-																								) && (
-																									<>
-																										<ObservabilityErrorWrapper
-																											observabilityErrors={observabilityErrors}
-																											observabilityRepo={_observabilityRepo}
-																											observabilityAssignments={
-																												observabilityAssignments
-																											}
-																											entityGuid={ea.entityGuid}
-																											noAccess={noErrorsAccess}
-																										/>
-																									</>
-																								)}
-																							</>
-																						)}
-																						{/*<ObservabilityAnomaliesWrapper*/}
-																						{/*	observabilityAnomalies={observabilityAnomalies}*/}
-																						{/*	observabilityRepo={_observabilityRepo}*/}
-																						{/*	entityGuid={ea.entityGuid}*/}
-																						{/*	noAccess={noErrorsAccess}*/}
-																						{/*/>*/}
-																					</>
-																				</>
-																			)}
-																		</>
-																	)}
-																</>
-															);
-														} else {
-															return null;
-														}
-													})}
+										{currentEntityAccounts &&
+											currentEntityAccounts?.length !== 0 &&
+											hasEntities && (
 												<>
-													{currentObsRepo && (
-														<ObservabilityAddAdditionalService
-															onSuccess={async e => {
-																doRefresh(true);
-															}}
-															remote={currentObsRepo.repoRemote}
-															remoteName={currentObsRepo.repoName}
-															servicesToExcludeFromSearch={currentEntityAccounts}
-														/>
-													)}
+													{currentEntityAccounts
+														.filter(_ => _)
+														.map((ea, index) => {
+															const _observabilityRepo = observabilityRepos.find(
+																_ => _.repoId === currentRepoId
+															);
+
+															if (_observabilityRepo) {
+																const _alertSeverity = ea?.alertSeverity || "";
+																const alertSeverityColor = ALERT_SEVERITY_COLORS[_alertSeverity];
+																const collapsed = expandedEntity !== ea.entityGuid;
+																const currentObservabilityRepoEntity =
+																	derivedState.observabilityRepoEntities.find(ore => {
+																		return ore.repoId === currentRepoId;
+																	});
+																const isSelectedCLM =
+																	ea.entityGuid === currentObservabilityRepoEntity?.entityGuid;
+																return (
+																	<>
+																		<PaneNodeName
+																			title={
+																				<div
+																					style={{
+																						display: "flex",
+																						alignItems: "center",
+																					}}
+																				>
+																					<HealthIcon color={alertSeverityColor} />
+																					<div>
+																						<span>{ea.entityName}</span>
+																						<span
+																							className="subtle"
+																							style={{
+																								fontSize: "11px",
+																								verticalAlign: "bottom",
+																							}}
+																						>
+																							{ea.accountName && ea.accountName.length > 25
+																								? ea.accountName.substr(0, 25) + "..."
+																								: ea.accountName}
+																							{ea?.domain ? ` (${ea?.domain})` : ""}
+																						</span>
+																					</div>
+																				</div>
+																			}
+																			id={ea.entityGuid}
+																			labelIsFlex={true}
+																			onClick={e => handleClickTopLevelService(e, ea.entityGuid)}
+																			collapsed={collapsed}
+																			showChildIconOnCollapse={true}
+																			actionsVisibleIfOpen={true}
+																		>
+																			{newRelicUrl && (
+																				<Icon
+																					name="globe"
+																					className={cx("clickable", {
+																						"icon-override-actions-visible": true,
+																					})}
+																					title="View on New Relic"
+																					placement="bottomLeft"
+																					delay={1}
+																					onClick={e => {
+																						e.preventDefault();
+																						e.stopPropagation();
+																						HostApi.instance.track("Open Service Summary on NR", {
+																							Section: "Golden Metrics",
+																						});
+																						HostApi.instance.send(OpenUrlRequestType, {
+																							url: newRelicUrl,
+																						});
+																					}}
+																				/>
+																			)}
+																			{showCodeLevelMetricsBroadcastIcon && (
+																				<Icon
+																					style={{
+																						display: "inlineBlock",
+																						color: isSelectedCLM
+																							? "var(--text-color-highlight)"
+																							: "inherit",
+																						opacity: isSelectedCLM ? "1" : "inherit",
+																					}}
+																					name="broadcast"
+																					className={cx("clickable", {
+																						"icon-override-actions-visible": !isSelectedCLM,
+																					})}
+																					title={
+																						isSelectedCLM ? (
+																							<span>
+																								Displaying{" "}
+																								<Link
+																									useStopPropagation={true}
+																									href="https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring#code-level"
+																								>
+																									code level metrics
+																								</Link>{" "}
+																								for this service
+																							</span>
+																						) : (
+																							<span>
+																								View{" "}
+																								<Link
+																									useStopPropagation={true}
+																									href="https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring#code-level"
+																								>
+																									code level metrics
+																								</Link>{" "}
+																								for this service
+																							</span>
+																						)
+																					}
+																					placement="bottomLeft"
+																					delay={1}
+																					onClick={e => {
+																						e.preventDefault();
+																						e.stopPropagation();
+																						handleClickCLMBroadcast(ea.entityGuid, e);
+																					}}
+																				/>
+																			)}
+																		</PaneNodeName>
+																		{!collapsed && (
+																			<>
+																				{ea.entityGuid === loadingPane ? (
+																					<>
+																						<ErrorRow
+																							isLoading={true}
+																							title="Loading..."
+																						></ErrorRow>
+																					</>
+																				) : (
+																					<>
+																						<>
+																							<ObservabilityGoldenMetricDropdown
+																								entityGoldenMetrics={entityGoldenMetrics}
+																								loadingGoldenMetrics={loadingGoldenMetrics}
+																								recentAlertViolations={
+																									recentAlertViolations ? recentAlertViolations : {}
+																								}
+																							/>
+																							{hasServiceLevelObjectives && (
+																								<>
+																									<ObservabilityServiceLevelObjectives
+																										serviceLevelObjectives={serviceLevelObjectives}
+																									/>
+																								</>
+																							)}
+																							{derivedState.showVulnerabilityManagement &&
+																								currentRepoId && (
+																									<SecurityIssuesWrapper
+																										currentRepoId={currentRepoId}
+																										entityGuid={ea.entityGuid}
+																										accountId={ea.accountId}
+																									/>
+																								)}
+																							{currentRepoId && (
+																								<>
+																									<ObservabilityRelatedWrapper
+																										currentRepoId={currentRepoId}
+																										entityGuid={ea.entityGuid}
+																									/>
+																								</>
+																							)}
+																							{ea.domain === "APM" && (
+																								<>
+																									{observabilityErrors?.find(
+																										oe => oe?.repoId === _observabilityRepo?.repoId
+																									) && (
+																										<>
+																											<ObservabilityErrorWrapper
+																												observabilityErrors={observabilityErrors}
+																												observabilityRepo={_observabilityRepo}
+																												observabilityAssignments={
+																													observabilityAssignments
+																												}
+																												entityGuid={ea.entityGuid}
+																												noAccess={noErrorsAccess}
+																											/>
+																										</>
+																									)}
+																								</>
+																							)}
+																							{/*<ObservabilityAnomaliesWrapper*/}
+																							{/*	observabilityAnomalies={observabilityAnomalies}*/}
+																							{/*	observabilityRepo={_observabilityRepo}*/}
+																							{/*	entityGuid={ea.entityGuid}*/}
+																							{/*	noAccess={noErrorsAccess}*/}
+																							{/*/>*/}
+																						</>
+																					</>
+																				)}
+																			</>
+																		)}
+																	</>
+																);
+															} else {
+																return null;
+															}
+														})}
+													<>
+														{currentObsRepo && (
+															<ObservabilityAddAdditionalService
+																onSuccess={async e => {
+																	doRefresh(true);
+																}}
+																remote={currentObsRepo.repoRemote}
+																remoteName={currentObsRepo.repoName}
+																servicesToExcludeFromSearch={currentEntityAccounts}
+															/>
+														)}
+													</>
 												</>
-											</>
-										)}
+											)}
 										{hasEntities && (
 											<>
 												{!_isEmpty(repoForEntityAssociator) && (

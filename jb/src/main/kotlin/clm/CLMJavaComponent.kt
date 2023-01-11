@@ -8,6 +8,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiJavaFileImpl
+import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
 import com.intellij.psi.search.GlobalSearchScope
 
 class CLMJavaComponent(project: Project) :
@@ -54,5 +55,12 @@ class CLMJavaEditorManager(editor: Editor) : CLMEditorManager(editor, "java", tr
 
     override fun findTopLevelFunction(psiFile: PsiFile, functionName: String): NavigatablePsiElement? {
         return null
+    }
+
+    override suspend fun findSymbols(psiFile: PsiFile, names: List<String>): Map<String, String> {
+        if (psiFile !is PsiJavaFileImpl) return mapOf<String, String>()
+        val foo = psiFile.findChildrenByClass(PsiMethodCallExpressionImpl::class.java)
+        println(foo)
+        return super.findSymbols(psiFile, names)
     }
 }
