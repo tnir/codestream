@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.NonUrgentExecutor
 import git4idea.GitUtil
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
