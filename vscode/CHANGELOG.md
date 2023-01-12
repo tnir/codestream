@@ -1,5 +1,18 @@
 # Change Log
 
+## [14.12.0] - 2023-1-12
+
+### Changed
+
+- Adds a validation message when user attempts to instrument a project that isn't under source control
+
+### Fixed
+
+- Fixes a "The path argument must be of type string" error in the instrumentation wizard
+- Fixes an issue with stack traces lines that aren't part of the project being clickable when viewing an error
+- Fixes a parsing error when opening an error group
+- Fixes an issue with the expanded service in the Observability section not persisting
+
 ## [14.11.0] - 2022-12-12
 
 ### Fixed
