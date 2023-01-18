@@ -279,7 +279,6 @@ export const Observability = React.memo((props: Props) => {
 		ServiceLevelObjectiveResult[]
 	>([]);
 	const [hasServiceLevelObjectives, setHasServiceLevelObjectives] = useState<boolean>(false);
-	const [newRelicUrl, setNewRelicUrl] = useState<string | undefined>("");
 	const [expandedEntity, setExpandedEntity] = useState<string | undefined>();
 	const [pendingTelemetryCall, setPendingTelemetryCall] = useState<boolean>(false);
 	const [currentRepoId, setCurrentRepoId] = useState<string>();
@@ -651,7 +650,6 @@ export const Observability = React.memo((props: Props) => {
 			if (response) {
 				setEntityGoldenMetrics(response.entityGoldenMetrics);
 				setRecentAlertViolations(response.recentAlertViolations);
-				setNewRelicUrl(response.newRelicUrl);
 			} else {
 				console.warn(`fetchGoldenMetrics no response`);
 				// TODO this is usually Missing entities error - do something
@@ -1017,7 +1015,7 @@ export const Observability = React.memo((props: Props) => {
 																			showChildIconOnCollapse={true}
 																			actionsVisibleIfOpen={true}
 																		>
-																			{newRelicUrl && (
+																			{ea.url && (
 																				<Icon
 																					name="globe"
 																					className={cx("clickable", {
@@ -1033,7 +1031,7 @@ export const Observability = React.memo((props: Props) => {
 																							Section: "Golden Metrics",
 																						});
 																						HostApi.instance.send(OpenUrlRequestType, {
-																							url: newRelicUrl,
+																							url: ea.url!,
 																						});
 																					}}
 																				/>
