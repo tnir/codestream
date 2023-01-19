@@ -123,6 +123,7 @@ import { Editor } from "../extensions";
 import { Logger } from "../logger";
 import { BuiltInCommands } from "../constants";
 import * as csUri from "../system/uri";
+import * as TokenManager from "../api/tokenManager";
 
 const emptyObj = {};
 
@@ -1026,6 +1027,24 @@ export class WebviewController implements Disposable {
 			case UpdateServerUrlRequestType.method: {
 				webview.onIpcRequest(UpdateServerUrlRequestType, e, async (_type, params) => {
 					Container.setPendingServerUrl(params.serverUrl);
+					if (params.copyToken && params.currentTeamId) {
+						// in the case of switching to a new server url, we need to copy the access token
+						// in our key store, which is indexed to serverUrl, email, and teamId
+						const token = await TokenManager.get(
+							Container.config.serverUrl,
+							Container.config.email,
+							params.currentTeamId
+						);
+						if (token) {
+							token.url = params.serverUrl;
+							await TokenManager.addOrUpdate(
+								params.serverUrl,
+								Container.config.email,
+								params.currentTeamId,
+								token
+							);
+						}
+					}
 					await configuration.update("serverUrl", params.serverUrl, ConfigurationTarget.Global);
 					if (params.disableStrictSSL !== undefined) {
 						await configuration.update(
