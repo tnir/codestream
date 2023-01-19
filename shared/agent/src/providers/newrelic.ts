@@ -2869,7 +2869,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 		const results = await Promise.all(
 			queries.metricQueries.map(_ => {
-				let _query = _.query;
+				let _query = _.query.replace(/\n/g, "");
+				const _extrapolationQuery = _.extrapolationQuery?.replace(/\n/g, "");
 
 				// if no metricTimesliceNames, then we don't need TIMESERIES in query
 				if (!metricTimesliceNames) {
@@ -2889,7 +2890,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							}
 						  }
 						}
-						extrapolations: nrql(query: "${escapeNrql(_.extrapolationQuery || "")}") {
+						extrapolations: nrql(query: "${escapeNrql(_extrapolationQuery || "")}") {
 						  results
 						  metadata {
 							timeWindow {
