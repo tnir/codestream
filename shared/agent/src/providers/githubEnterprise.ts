@@ -1,6 +1,6 @@
 "use strict";
 import { ProviderConfigurationData, ThirdPartyDisconnect } from "@codestream/protocols/agent";
-import { InternalError } from "agentError";
+import { InternalError } from "../agentError";
 import { GraphQLClient } from "graphql-request";
 import semver from "semver";
 import { URI } from "vscode-uri";
