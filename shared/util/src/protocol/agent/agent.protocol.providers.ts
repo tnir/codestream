@@ -1424,18 +1424,10 @@ export interface GetServiceLevelObjectivesRequest {
 export interface GetAlertViolationsRequest {}
 
 export type MetricTimesliceNameMapping = {
-	/**
-	 * duration
-	 */
-	d: string;
-	/**
-	 * throughput
-	 */
-	t: string;
-	/**
-	 * error
-	 */
-	e: string;
+	duration: string;
+	sampleSize: string;
+	errorRate: string;
+	source: string;
 };
 
 export interface GetFileLevelTelemetryResponse {
@@ -1445,12 +1437,13 @@ export interface GetFileLevelTelemetryResponse {
 		remote: string;
 	};
 	isConnected?: boolean;
-	throughput?: {
-		requestsPerMinute: any;
+	sampleSize?: {
+		sampleSize: any;
 		namespace?: string;
 		className?: string;
 		functionName: string;
 		metricTimesliceName: string;
+		source: string;
 	}[];
 	averageDuration?: {
 		averageDuration: any;
@@ -1460,7 +1453,7 @@ export interface GetFileLevelTelemetryResponse {
 		metricTimesliceName: string;
 	}[];
 	errorRate?: {
-		errorsPerMinute: any;
+		errorRate: any;
 		namespace?: string;
 		className?: string;
 		functionName: string;
@@ -1778,8 +1771,8 @@ export interface ProviderGetForkedReposResponse {
 
 export interface MethodLevelGoldenMetricQueryResult {
 	metricQueries: {
-		query: string;
-		extrapolationQuery?: string;
+		metricQuery: string;
+		spanQuery?: string;
 		title: string;
 		name: string;
 	}[];

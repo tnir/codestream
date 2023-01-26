@@ -764,8 +764,8 @@ describe("NewRelicProvider", () => {
 			throw Error(results?.error?.type);
 		}
 
-		expect(results?.throughput?.length).toEqual(2);
-		expect(results?.throughput?.map(_ => _.functionName)).toEqual(["error", "hello_world"]);
+		expect(results?.sampleSize?.length).toEqual(2);
+		expect(results?.sampleSize?.map(_ => _.functionName)).toEqual(["error", "hello_world"]);
 	});
 
 	it("getFileLevelTelemetry2", async () => {
@@ -819,8 +819,8 @@ describe("NewRelicProvider", () => {
 			throw Error(results?.error?.type);
 		}
 
-		expect(results?.throughput?.length).toEqual(1);
-		expect(results?.throughput?.map(_ => _.functionName)).toEqual([
+		expect(results?.sampleSize?.length).toEqual(1);
+		expect(results?.sampleSize?.map(_ => _.functionName)).toEqual([
 			"create_bill_credit_payment_thing",
 		]);
 	});
@@ -1018,7 +1018,7 @@ class NewRelicProviderStubBase extends NewRelicProvider {
 		};
 	}
 
-	async getMethodErrorRate(request: MetricQueryRequest): Promise<any> {
+	async getMethodErrorCount(request: MetricQueryRequest): Promise<any> {
 		return {
 			actor: {
 				account: {
@@ -1592,7 +1592,7 @@ class NewRelicProviderStub extends NewRelicProviderStubBase {
 		};
 	}
 
-	async getMethodThroughput(request: MetricQueryRequest) {
+	async getMethodSampleSize(request: MetricQueryRequest) {
 		return {
 			actor: {
 				account: {
@@ -1666,7 +1666,7 @@ class NewRelicProviderStub extends NewRelicProviderStubBase {
 		};
 	}
 
-	async getMethodErrorRate(request: MetricQueryRequest) {
+	async getMethodErrorCount(request: MetricQueryRequest) {
 		return {
 			actor: {
 				account: {
@@ -1707,7 +1707,7 @@ class NewRelicProviderStub2 extends NewRelicProviderStubBase {
 		];
 	}
 
-	async getMethodThroughput(request: MetricQueryRequest) {
+	async getMethodSampleSize(request: MetricQueryRequest) {
 		return {
 			actor: {
 				account: {
