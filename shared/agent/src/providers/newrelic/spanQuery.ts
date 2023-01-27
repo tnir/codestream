@@ -1,8 +1,9 @@
 import { FunctionLocator } from "@codestream/protocols/agent";
 
 import { Logger } from "../../logger";
-import { escapeNrql, LanguageId } from "../newrelic";
+import { escapeNrql } from "../newrelic";
 import { ResolutionMethod } from "./newrelic.types";
+import { LanguageId } from "./clm/clmProvider";
 
 export const spanQueryTypes = ["equals", "like", "fuzzy", "desperate"] as const;
 export type SpanQueryType = typeof spanQueryTypes[number];
