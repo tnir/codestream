@@ -21,7 +21,7 @@ export function generateMethodErrorRateQuery(
 	return `query GetMethodErrorRate($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
-					metrics: nrql(query: "${escapeNrql(metricsQuery)}") {
+					metrics: nrql(query: "${escapeNrql(metricsQuery)}", timeout: 20) {
 						results
 						metadata {
 							timeWindow {
@@ -30,7 +30,7 @@ export function generateMethodErrorRateQuery(
 							}
 						}
 					}
-					spans: nrql(query: "${escapeNrql(spansQuery)}") {
+					spans: nrql(query: "${escapeNrql(spansQuery)}", timeout: 20) {
 						results
 						metadata {
 							timeWindow {

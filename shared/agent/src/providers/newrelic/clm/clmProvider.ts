@@ -445,13 +445,13 @@ export class CLMProvider {
 		}
 
 		const durationsMetric = averageDurationResponse?.actor?.account?.metrics;
-		const durationsSpan = averageDurationResponse?.actor?.account?.extrapolations;
+		const durationsSpan = averageDurationResponse?.actor?.account?.spans;
 		const durationsConsolidated = [];
 		const errorCountsMetric = errorRateResponse?.actor?.account?.metrics;
-		const errorCountsSpan = errorRateResponse?.actor?.account?.extrapolations;
+		const errorCountsSpan = errorRateResponse?.actor?.account?.spans;
 		const errorRatesConsolidated = [];
 		const sampleSizesMetric = sampleSizeResponse?.actor?.account?.metrics;
-		const sampleSizesSpan = sampleSizeResponse?.actor?.account?.extrapolations;
+		const sampleSizesSpan = sampleSizeResponse?.actor?.account?.spans;
 		const sampleSizesConsolidated = [];
 		for (const methodName of sampleSizeMap.keys()) {
 			const sampleSizeInfo = sampleSizeMap.get(methodName);
