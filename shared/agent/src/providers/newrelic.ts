@@ -2233,7 +2233,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const q = `query getMetric($accountId: Int!) {
 					actor {
 					  account(id: $accountId) {
-							nrql(query: "${escapeNrql(_query || "")}") {
+							nrql(query: "${escapeNrql(_query || "")}", timeout: 30) {
 								results
 								metadata {
 									timeWindow {
@@ -2522,7 +2522,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const query = `{
 				actor {
 					account(id: ${accountId}) {
-						transactionTypeList: nrql(query: "SELECT rate(count(apm.service.transaction.duration), 1 minute) as 'transactionCount' FROM Metric WHERE (entity.guid = '${entityGuid}') LIMIT MAX SINCE 10 MINUTES AGO TIMESERIES facet transactionType") {
+						transactionTypeList: nrql(query: "SELECT rate(count(apm.service.transaction.duration), 1 minute) as 'transactionCount' FROM Metric WHERE (entity.guid = '${entityGuid}') LIMIT MAX SINCE 10 MINUTES AGO TIMESERIES facet transactionType", timeout: 30) {
 							results
 							metadata {
 								timeWindow {
@@ -3220,7 +3220,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				`query fetchErrorsInboxFacetedData($accountId:Int!) {
 						actor {
 						  account(id: $accountId) {
-							nrql(query: "${query}") { nrql results }
+							nrql(query: "${query}", timeout: 30) { nrql results }
 						  }
 						}
 					  }
@@ -3472,7 +3472,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				`query getErrorTrace($accountId: Int!) {
 						actor {
 						  account(id: $accountId) {
-							nrql(query: "${errorTraceQuery}") {
+							nrql(query: "${errorTraceQuery}", timeout: 30) {
 							  results
 							}
 						  }
@@ -3776,7 +3776,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		ContextLogger.warn(message, params);
 	}
 
-	private async runNrql<T>(accountId: number, nrql: string, timeout: number = 5): Promise<T[]> {
+	private async runNrql<T>(accountId: number, nrql: string, timeout: number = 30): Promise<T[]> {
 		const query = `query Nrql($accountId:Int!) {
 			actor {
 				account(id: $accountId) {

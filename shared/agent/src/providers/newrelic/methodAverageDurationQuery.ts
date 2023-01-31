@@ -39,7 +39,7 @@ export function generateMethodAverageDurationQuery(
 	return `query GetMethodAverageDuration($accountId:Int!) {
 	actor {
 		account(id: $accountId) {
-			metrics: nrql(query: "${escapeNrql(metricsQuery)}", timeout: 20) {
+			metrics: nrql(query: "${escapeNrql(metricsQuery)}", timeout: 30) {
 				results
 				metadata {
 					timeWindow {
@@ -48,7 +48,7 @@ export function generateMethodAverageDurationQuery(
 					}
 				}
 			}
-			spans: nrql(query: "${escapeNrql(spansQuery)}", timeout: 20) {
+			spans: nrql(query: "${escapeNrql(spansQuery)}", timeout: 30) {
 				results
 				metadata {
 					timeWindow {
