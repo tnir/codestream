@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Changed the implementation of code-level metrics to display error rate as a percentage, and removing throughput in favor of just showing the sample size
 - Adds clearer messaging when a PR can't be displayed because a password is required to do a fetch
 - Adds clearer messaging when CodeStream can't connect to an on-prem code host due to network/VPN issues
 
