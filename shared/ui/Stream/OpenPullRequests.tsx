@@ -308,16 +308,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		};
 	}, shallowEqual);
 
-	// const openReposWithName = props.openRepos.map(repo => {
-	// 	const id = repo.id || "";
-	// 	return { ...repo, name: derivedState.repos[id] ? derivedState.repos[id].name : "" };
-	// });
-
-	// Currently always showing, regardless of provider
-	// const hasPRSupportedRepos =
-	// 	openReposWithName.filter(r => r.providerGuess === "github" || r.providerGuess === "gitlab")
-	// 		.length > 0;
-
 	const { PRConnectedProviders, pullRequestProviderHidden, prLabel } = derivedState;
 	const [queries, setQueries] = React.useState<FetchProviderDefaultPullResponse>({});
 	const [defaultQueries, setDefaultQueries] = React.useState<FetchProviderDefaultPullResponse>({});
@@ -389,6 +379,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					if (!queriesByProvider) {
 						continue;
 					}
+
 					activePrListedIndex = queriesByProvider?.findIndex(
 						_ => _?.name === "Waiting on my Review"
 					);
