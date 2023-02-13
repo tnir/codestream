@@ -1,5 +1,5 @@
 import { escapeNrql } from "../newrelic";
-import { LanguageId } from "./clm/clmProvider";
+import { LanguageId } from "./clm/clmManager";
 
 export function generateMethodErrorRateQuery(
 	languageId: LanguageId,

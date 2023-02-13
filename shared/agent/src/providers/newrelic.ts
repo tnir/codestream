@@ -139,7 +139,7 @@ import {
 } from "./newrelic/newrelic.types";
 import { generateClmSpanDataExistsQuery } from "./newrelic/spanQuery";
 import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
-import { CLMProvider, EnhancedMetricTimeslice, LanguageId } from "./newrelic/clm/clmProvider";
+import { ClmManager, EnhancedMetricTimeslice, LanguageId } from "./newrelic/clm/clmManager";
 import { Index } from "@codestream/utils/types";
 
 const ignoredErrors = [GraphqlNrqlTimeoutError];
@@ -169,7 +169,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		defaultTtl: 30 * 1000,
 	});
 
-	private _clmProvider = new CLMProvider(
+	private _clmProvider = new ClmManager(
 		this.getProductUrl.bind(this),
 		this.query.bind(this),
 		this.runNrql.bind(this),
@@ -1081,7 +1081,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			void (await anomalyDetector.init());
 			const responseTimePromise = anomalyDetector.getResponseTimeAnomalies();
 			const errorRatePromise = anomalyDetector.getErrorRateAnomalies();
-			const throughputPromise = anomalyDetector.getObservabilityAnomaliesThroughput();
+			const throughputPromise = anomalyDetector.getThroughputAnomalies();
 
 			const [responseTime, errorRate, throughput] = await Promise.all([
 				responseTimePromise,

@@ -1,5 +1,5 @@
 import { escapeNrql } from "../newrelic";
-import { LanguageId } from "./clm/clmProvider";
+import { LanguageId } from "./clm/clmManager";
 
 function mapRubyTimesliceName(name: string): string {
 	if (name.startsWith("Nested/Controller")) {
