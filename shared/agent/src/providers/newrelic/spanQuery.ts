@@ -58,7 +58,7 @@ function functionLocatorQuery(
 	return `query GetSpans($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
-					nrql(query: "${escapeNrql(query)}", timeout: 30) {
+					nrql(query: "${escapeNrql(query)}", timeout: 60) {
 						results
 					}
 				}
@@ -117,7 +117,7 @@ function hybridQuery(
 	return `query GetSpans($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
-					nrql(query: "${escapeNrql(query)}", timeout: 30) {
+					nrql(query: "${escapeNrql(query)}", timeout: 60) {
 						results
 					}
 				}
@@ -200,7 +200,7 @@ export function generateSpanQuery(
 	return `query GetSpans($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
-					nrql(query: "${query}", timeout: 30) {
+					nrql(query: "${query}", timeout: 60) {
 						results
 					}
 				}
@@ -212,7 +212,7 @@ export function generateClmSpanDataExistsQuery(newRelicEntityGuid: string) {
 	const query = `query GetSpans($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
-					nrql(query: "SELECT name,code.function,\`entity.guid\` from Span WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND code.function is not NULL SINCE 30 minutes AGO LIMIT 1", timeout: 30) {
+					nrql(query: "SELECT name,code.function,\`entity.guid\` from Span WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND code.function is not NULL SINCE 30 minutes AGO LIMIT 1", timeout: 60) {
 						results
 					}				 
 				}

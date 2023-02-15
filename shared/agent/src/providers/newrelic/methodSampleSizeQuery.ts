@@ -24,7 +24,7 @@ export function generateMethodSampleSizeQuery(
 	return `query GetMethodThroughput($accountId:Int!) {
 	actor {
 		account(id: $accountId) {
-			metrics: nrql(query: "${escapeNrql(metricsQuery)}", timeout: 30) {
+			metrics: nrql(query: "${escapeNrql(metricsQuery)}", timeout: 60) {
 				results
 				metadata {
 					timeWindow {
@@ -33,7 +33,7 @@ export function generateMethodSampleSizeQuery(
 					}
 				}
 			}
-			spans: nrql(query: "${escapeNrql(spansQuery)}", timeout: 30) {
+			spans: nrql(query: "${escapeNrql(spansQuery)}", timeout: 60) {
 				results
 				metadata {
 					timeWindow {
