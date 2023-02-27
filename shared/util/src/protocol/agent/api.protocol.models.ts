@@ -860,6 +860,7 @@ export interface CSApiCapability {
 	url?: string;
 	version?: string;
 	restricted?: boolean;
+	userRestricted?: boolean;
 	supportedIdes?: string[];
 }
 

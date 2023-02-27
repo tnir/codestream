@@ -169,7 +169,11 @@ export async function initialize(selector: string) {
 			errorOccurred(resp.error.message, resp.error.details, resp.error.maintenanceMode)
 		);
 	} else {
-		if (resp.capabilities) {
+		// NOTE: only update api capabilities here if we don't have a logged in user,
+		// the reason is that api capabilities will get updated in the bootstrap, and they are user-specific,
+		// the api capabilities returned by the verify connectivity call are generic and don't have
+		// the user-specific capabilities attached
+		if (resp.capabilities && !store.getState().session.userId) {
 			store.dispatch(apiCapabilities.actions.updateCapabilities(resp.capabilities));
 			store.dispatch(apiCapabilitiesUpdated(resp.capabilities));
 		}

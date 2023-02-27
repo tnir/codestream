@@ -716,9 +716,12 @@ export class CodeStreamSession {
 		) {
 			const oldCapabilities = SessionContainer.instance().session.apiCapabilities;
 			const newCapabilities = await this.api.getApiCapabilities();
-			const currentTeam = await SessionContainer.instance().teams.getByIdFromCache(this.teamId);
+			const { teams, users } = SessionContainer.instance();
+			const currentTeam = await teams.getByIdFromCache(this.teamId);
+			const me = await users.getMe();
+
 			if (!isEqual(oldCapabilities, newCapabilities)) {
-				this.registerApiCapabilities(newCapabilities, currentTeam);
+				this.registerApiCapabilities(newCapabilities, currentTeam, me);
 				this.agent.sendNotification(DidChangeDataNotificationType, {
 					type: ChangeDataType.ApiCapabilities,
 					data: this._apiCapabilities, // Use filtered apiCapabilities
@@ -1162,7 +1165,11 @@ export class CodeStreamSession {
 		this._email = response.user.email;
 
 		const currentTeam = response.teams.find(t => t.id === this._teamId)!;
-		this.registerApiCapabilities(response.capabilities || {}, currentTeam);
+		this.registerApiCapabilities(response.capabilities || {}, currentTeam, response.user);
+		this.agent.sendNotification(DidChangeDataNotificationType, {
+			type: ChangeDataType.ApiCapabilities,
+			data: this._apiCapabilities,
+		});
 
 		if (response.provider === "codestream") {
 			if (
@@ -1682,10 +1689,16 @@ export class CodeStreamSession {
 		}
 	}
 
-	registerApiCapabilities(apiCapabilities: CSApiCapabilities, team?: CSTeam): void {
+	registerApiCapabilities(apiCapabilities: CSApiCapabilities, team?: CSTeam, user?: CSMe): void {
 		const teamSettings = (team && team.settings) || {};
 		const teamFeatures = teamSettings.features || {};
-		Logger.log(`registerApiCapabilities for teamId ${team?.id}`, teamFeatures);
+		const userPreferences = (user && user.preferences) || {};
+		const userFeatures = userPreferences.features || {};
+		Logger.log(
+			`registerApiCapabilities for teamId ${team?.id}, userId ${user?.id}`,
+			teamFeatures,
+			userFeatures
+		);
 		this._apiCapabilities = {};
 		if (this.versionInfo.ide.name == null || this.versionInfo.ide.name === "") {
 			Logger.warn("IDE name not set - IDE-specific capabilities can't be identified");
@@ -1694,6 +1707,7 @@ export class CodeStreamSession {
 			const capability = apiCapabilities[key];
 			if (
 				(!capability.restricted || teamFeatures[key]) &&
+				(!capability.userRestricted || userFeatures[key]) &&
 				(!capability.supportedIdes || capability.supportedIdes.includes(this.versionInfo.ide.name))
 			) {
 				this._apiCapabilities[key] = capability;
