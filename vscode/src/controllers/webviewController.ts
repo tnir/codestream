@@ -19,6 +19,7 @@ import {
 	DidChangeVersionCompatibilityNotification,
 	DidChangeVersionCompatibilityNotificationType,
 	DidEncounterMaintenanceModeNotificationType,
+	RefreshMaintenancePollNotificationType,
 	DidResolveStackTraceLineNotificationType,
 	ReportingMessageType,
 	VersionCompatibility
@@ -157,6 +158,9 @@ export class WebviewController implements Disposable {
 			workspace.onDidChangeWorkspaceFolders(this.onWorkspaceFoldersChanged, this),
 			Container.agent.onDidEncounterMaintenanceMode(e => {
 				if (this._webview) this._webview.notify(DidEncounterMaintenanceModeNotificationType, e);
+			}),
+			Container.agent.onRefreshMaintenancePoll(e => {
+				if (this._webview) this._webview.notify(RefreshMaintenancePollNotificationType, e);
 			}),
 			Container.agent.onDidResolveStackTraceLine(e => {
 				if (this._webview) this._webview.notify(DidResolveStackTraceLineNotificationType, e);
@@ -559,6 +563,7 @@ export class WebviewController implements Disposable {
 
 		this._disposableWebview = Disposable.from(
 			this._webview!.onDidClose(this.onWebviewClosed, this),
+			// this._webview!.onDidChangeVisibility(this.onWebviewChangeVisibility, this),
 			this._webview!.onDidMessageReceive(
 				(...args) => this.onWebviewMessageReceived(webview, ...args),
 				this

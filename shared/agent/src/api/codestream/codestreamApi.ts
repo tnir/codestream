@@ -19,6 +19,7 @@ import {
 	AddBlameMapRequestType,
 	AddEnterpriseProviderHostRequest,
 	AddEnterpriseProviderHostResponse,
+	PollForMaintenanceModeResponse,
 	AddMarkersResponse,
 	AddReferenceLocationRequest,
 	AgentOpenUrlRequestType,
@@ -2895,6 +2896,46 @@ export class CodeStreamApiProvider implements ApiProvider {
 				response.newRelicSecApiUrl = json.newRelicSecApiUrl;
 				response.environmentHosts = json.environmentHosts;
 			}
+		} catch (err) {
+			Logger.log(`Error connecting to the API server: ${err.message}`);
+			response.ok = false;
+			if (err.name === "AbortError") {
+				response.error = {
+					message: "Connection to CodeStream API server timed out after 5 seconds",
+				};
+			} else {
+				response.error = {
+					message: err.message,
+				};
+			}
+		} finally {
+			clearTimeout(timeout);
+		}
+
+		return response;
+	}
+
+	async pollForMaintenanceMode() {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 5000);
+		const response: PollForMaintenanceModeResponse = {
+			ok: true,
+		};
+
+		try {
+			Logger.log("Verifying API server connectivity");
+
+			const nonJsonCapabilitiesResponse = await customFetch(
+				this.baseUrl + "/no-auth/capabilities",
+				{
+					agent: this._httpsAgent,
+					signal: controller.signal,
+				}
+			);
+
+			response.maintenanceMode = !!nonJsonCapabilitiesResponse.headers.get(
+				"x-cs-api-maintenance-mode"
+			);
 		} catch (err) {
 			Logger.log(`Error connecting to the API server: ${err.message}`);
 			response.ok = false;
