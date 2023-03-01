@@ -1,5 +1,14 @@
 # Change Log
 
+## [14.16.0] - 2023-3-2
+
+### Fixed
+
+- Fixes an issue where violations in the Golden Metrics section were linking to the wrong page on New Relic
+- Fixes an issue with the conversion of decimal to percentage in the display of error rate in Golden Metrics
+- Fixes an issue with the parsing of Ruby stack traces in errors
+- Fixes an issue where CodeStream hangs for 30 seconds on first time install of VS Code
+
 ## [14.15.2] - 2023-2-24
 
 ### Fixed
