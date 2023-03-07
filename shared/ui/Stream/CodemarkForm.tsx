@@ -95,6 +95,7 @@ import ContainerAtEditorLine from "./SpatialView/ContainerAtEditorLine";
 import ContainerAtEditorSelection from "./SpatialView/ContainerAtEditorSelection";
 import Tag from "./Tag";
 import Tooltip from "./Tooltip";
+import { isEmpty as _isEmpty } from "lodash-es";
 
 export interface ICrossPostIssueContext {
 	setSelectedAssignees(any: any): void;
@@ -180,6 +181,7 @@ interface ConnectedProps {
 	prLabel: LabelHash;
 	codeErrors: CodeErrorsState;
 	currentPullRequestSupportsReview?: boolean;
+	isPDIdev?: boolean;
 }
 
 interface State {
@@ -2103,7 +2105,9 @@ class CodemarkForm extends React.Component<Props, State> {
 					<PanelHeader
 						title={
 							this.props.currentCodeErrorId
-								? "Add Comment to Error"
+								? this.props.isPDIdev
+									? "Codemarks in errors have been disabled."
+									: "Add Comment to Error"
 								: this.props.currentReviewId
 								? "Add Comment to Review"
 								: this.props.textEditorUriHasPullRequestContext
@@ -2335,6 +2339,8 @@ class CodemarkForm extends React.Component<Props, State> {
 				this.props.textEditorUriHasPullRequestContext &&
 				this.state.isInsidePrChangeSet);
 
+		const isPDIdevAndError = this.props.isPDIdev && !_isEmpty(this.props.currentCodeErrorId);
+
 		return [
 			<form
 				id="code-comment-form"
@@ -2545,7 +2551,9 @@ class CodemarkForm extends React.Component<Props, State> {
 											? this.copyPermalink
 											: this.handleClickSubmit
 									}
-									disabled={commentIsDisabled || prReviewInProgressAndOutsideChangeset}
+									disabled={
+										commentIsDisabled || prReviewInProgressAndOutsideChangeset || isPDIdevAndError
+									}
 								>
 									{commentType === "link"
 										? this.state.copied
@@ -2709,6 +2717,7 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		inviteUsersOnTheFly,
 		prLabel: getPRLabel(state),
 		codeErrors: codeErrors,
+		isPDIdev: isFeatureEnabled(state, "PDIdev"),
 	};
 };
 
