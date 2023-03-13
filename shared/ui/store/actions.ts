@@ -47,6 +47,7 @@ export const bootstrap = (data?: SignedInBootstrapData) => async (dispatch, getS
 		const api = HostApi.instance;
 		const bootstrapCore = await api.send(BootstrapInHostRequestType, undefined);
 		if (bootstrapCore.session.userId === undefined) {
+			console.warn("COLIN: NO SIGNED IN USER");
 			dispatch(
 				bootstrapEssentials({
 					...bootstrapCore,
@@ -71,21 +72,21 @@ export const bootstrap = (data?: SignedInBootstrapData) => async (dispatch, getS
 			"bootstrap"
 		);
 		data = { ...bootstrapData, ...bootstrapCore, editorContext };
+	}
 
-		if (
-			data.configs.serverUrl &&
-			data.companies[0].switchToServerUrl &&
-			data.configs.serverUrl !== data.companies[0].switchToServerUrl
-		) {
-			console.log(
-				`This org uses a different server URL (${data.configs.serverUrl}), switching to ${data.companies[0].switchToServerUrl}...`
-			);
-			HostApi.instance.send(UpdateServerUrlRequestType, {
-				serverUrl: data.companies[0].switchToServerUrl,
-				copyToken: true,
-				currentTeamId: data.teams[0].id,
-			});
-		}
+	if (
+		data.configs.serverUrl &&
+		data.companies[0].switchToServerUrl &&
+		data.configs.serverUrl !== data.companies[0].switchToServerUrl
+	) {
+		console.log(
+			`This org uses a different server URL (${data.configs.serverUrl}), switching to ${data.companies[0].switchToServerUrl}...`
+		);
+		HostApi.instance.send(UpdateServerUrlRequestType, {
+			serverUrl: data.companies[0].switchToServerUrl,
+			copyToken: true,
+			currentTeamId: data.teams[0].id,
+		});
 	}
 
 	dispatch(bootstrapUsers(data.users));
