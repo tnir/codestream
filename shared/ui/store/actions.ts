@@ -47,7 +47,6 @@ export const bootstrap = (data?: SignedInBootstrapData) => async (dispatch, getS
 		const api = HostApi.instance;
 		const bootstrapCore = await api.send(BootstrapInHostRequestType, undefined);
 		if (bootstrapCore.session.userId === undefined) {
-			console.warn("COLIN: NO SIGNED IN USER");
 			dispatch(
 				bootstrapEssentials({
 					...bootstrapCore,
