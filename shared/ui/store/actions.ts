@@ -43,10 +43,13 @@ import { bootstrapUsers } from "./users/actions";
 export const reset = () => action("RESET");
 
 export const bootstrap = (data?: SignedInBootstrapData) => async (dispatch, getState) => {
+	console.warn("COLIN: BOOTSTRAPPED, DATA:", data);
 	if (data == undefined) {
 		const api = HostApi.instance;
+		console.warn("COLIN: NO SIGNED IN DATA");
 		const bootstrapCore = await api.send(BootstrapInHostRequestType, undefined);
 		if (bootstrapCore.session.userId === undefined) {
+			console.warn("COLIN: NO SESSION USER");
 			dispatch(
 				bootstrapEssentials({
 					...bootstrapCore,
@@ -56,6 +59,7 @@ export const bootstrap = (data?: SignedInBootstrapData) => async (dispatch, getS
 			return;
 		}
 
+		console.warn("COLIN: FETCHING USER BOOTSTRAP DATA");
 		const { bootstrapData, editorContext } = await withExponentialConnectionRetry(
 			dispatch,
 			async () => {
@@ -73,6 +77,8 @@ export const bootstrap = (data?: SignedInBootstrapData) => async (dispatch, getS
 		data = { ...bootstrapData, ...bootstrapCore, editorContext };
 	}
 
+	console.warn("COLIN: BOOTSTRAP DATA IS:", data);
+	console.warn("COMPANY 0 IS:", data.companies[0]);
 	if (
 		data.configs.serverUrl &&
 		data.companies[0].switchToServerUrl &&
