@@ -79,11 +79,15 @@ export const bootstrap = (data?: SignedInBootstrapData) => async (dispatch, getS
 
 	console.error("COLIN: BOOTSTRAP DATA IS:", data);
 	console.error("COLIN: COMPANY 0 IS:", data.companies[0]);
+	console.error(
+		`COLIN data.configs.serverUrl=${data.configs.serverUrl} switchToServerUrl=${data.companies[0].switchToServerUrl}`
+	);
 	if (
 		data.configs.serverUrl &&
 		data.companies[0].switchToServerUrl &&
 		data.configs.serverUrl !== data.companies[0].switchToServerUrl
 	) {
+		console.error("COLIN: SWITCHING SERVER URL TO:", data.companies[0].switchToServerUrl);
 		console.log(
 			`This org uses a different server URL (${data.configs.serverUrl}), switching to ${data.companies[0].switchToServerUrl}...`
 		);
