@@ -1031,7 +1031,6 @@ export class WebviewController implements Disposable {
 			}
 			case UpdateServerUrlRequestType.method: {
 				webview.onIpcRequest(UpdateServerUrlRequestType, e, async (_type, params) => {
-					Logger.log("COLIN: RECEIVED UpdateServerUrlRequestType", params);
 					Container.setPendingServerUrl(params.serverUrl);
 					if (params.copyToken && params.currentTeamId) {
 						// in the case of switching to a new server url, we need to copy the access token
@@ -1041,7 +1040,6 @@ export class WebviewController implements Disposable {
 							Container.config.email,
 							params.currentTeamId
 						);
-						Logger.log("COLIN: FROM TokenManager GOT:", token);
 						if (token) {
 							token.url = params.serverUrl;
 							await TokenManager.addOrUpdate(
@@ -1050,11 +1048,9 @@ export class WebviewController implements Disposable {
 								params.currentTeamId,
 								token
 							);
-							Logger.log("COLIN: DID COPY TOKEN");
 						}
 					}
 					await configuration.update("serverUrl", params.serverUrl, ConfigurationTarget.Global);
-					Logger.log("COLIN: DID UPDATE SERVER URL TO", params.serverUrl);
 					if (params.disableStrictSSL !== undefined) {
 						await configuration.update(
 							"disableStrictSSL",
