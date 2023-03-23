@@ -1,5 +1,17 @@
 # Change Log
 
+## [14.17.0] - 2023-3-23
+
+### Changed
+
+- Changes the default "Waiting on my Review" query for GitHub pull requests to use `review-requested:@me` instead of `involes:@me` so that draft PRs and PRs assigned to your teams are included
+
+### Fixed
+
+- Fixes an issue with CodeStream not recognizing the repo in your IDE when opening an error that has multiple repos associated with it
+- Fixes an issue with the link to set up Vulnerability Management pointing to the wrong environment
+- Fixes an issue with relative links in comments on a GitLab MR not working
+
 ## [14.16.1] - 2023-3-10
 
 ### Fixed
