@@ -143,6 +143,7 @@ export class AnomalyDetector {
 			"Total Methods": symbolStrs.size,
 			"Anomalous Error Methods": errorRateAnomalies.length,
 			"Anomalous Duration Methods": durationAnomalies.length,
+			"Entity GUID": this._request.entityGuid,
 		};
 		telemetry?.track({
 			eventName: "CLM Anomalies Calculated",
