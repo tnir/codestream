@@ -450,7 +450,11 @@ export class NewRelicProvider
 		return (await this.client()).request<T>(query, variables);
 	}
 
-	async query<T = any>(query: string, variables: any = undefined): Promise<T> {
+	async query<T = any>(
+		query: string,
+		variables: any = undefined,
+		tryCount: number = 3
+	): Promise<T> {
 		await this.ensureConnected();
 
 		if (this._providerInfo && this._providerInfo.tokenError) {
@@ -459,11 +463,23 @@ export class NewRelicProvider
 		}
 
 		let response: any;
-		try {
-			response = await (await this.client()).request<T>(query, variables);
-			// GraphQL returns happy HTTP 200 response for api level errors
-			this.checkGraphqlErrors(response);
-		} catch (ex) {
+		let ex: Error | undefined;
+		const fn = async () => {
+			try {
+				const potentialResponse = await (await this.client()).request<T>(query, variables);
+				// GraphQL returns happy HTTP 200 response for api level errors
+				this.checkGraphqlErrors(potentialResponse);
+				response = potentialResponse;
+				return true;
+			} catch (potentialEx) {
+				Logger.warn(potentialEx.message);
+				ex = potentialEx;
+				return false;
+			}
+		};
+		await Functions.withExponentialRetryBackoff(fn, tryCount, 1000);
+
+		if (!response && ex) {
 			if (ex instanceof GraphqlNrqlError) {
 				throw ex;
 			}
