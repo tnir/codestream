@@ -187,8 +187,10 @@ export class ScmManager {
 		try {
 			const { git } = SessionContainer.instance();
 			repositories = Array.from(await git.getRepositories());
+			Logger.debug(`getRepos: repositories ${JSON.stringify(repositories)}`);
 			if (request && request.inEditorOnly && repositories) {
 				repositories = repositories.filter(_ => _.isInWorkspace);
+				Logger.debug(`getRepos: repositories inEditorOnly ${JSON.stringify(repositories)}`);
 			}
 			if (request && request.includeCurrentBranches) {
 				branches = await Promise.all(repositories.map(repo => git.getCurrentBranch(repo.path)));
@@ -249,7 +251,9 @@ export class ScmManager {
 			}
 		}
 
+		Logger.debug(`getRepos: repositories before specialCase ${JSON.stringify(repositories)}`);
 		response.repositories = this.specialCase(response.repositories);
+		Logger.log(`getRepos: ${JSON.stringify(request)} ${JSON.stringify(repositories)}`);
 		return response;
 	}
 
