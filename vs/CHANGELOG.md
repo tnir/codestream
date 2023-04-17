@@ -1,5 +1,12 @@
 # Change Log
 
+## [14.18.1] - 2023-4-18
+
+### Fixed
+
+- Fixes an issue related to vulnerability management timeouts
+
+
 ## [14.18.0] - 2023-4-13
 
 ### Added

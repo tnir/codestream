@@ -1,5 +1,11 @@
 # Change Log
 
+## [14.18.1] - 2023-4-18
+
+### Fixed
+
+- Fixes an issue related to vulnerability management timeouts
+
 ## [14.18.0] - 2023-4-13
 
 ### Added
@@ -26,7 +32,7 @@
 
 ### Fixed
 
--  Fixes an issue with file watchers where the agent process would crash if it encountered a file it didn't have permission to read and decreased the number of files watched
+- Fixes an issue with file watchers where the agent process would crash if it encountered a file it didn't have permission to read and decreased the number of files watched
 
 ## [14.16.0] - 2023-3-8
 
@@ -201,7 +207,7 @@
 
 - Fixes an issue that was preventing signup via New Relic api key for users that had been invited
 - Fixes an issue that would cause the list of pull requests to disappear on transient network errors
-- Fixes an issue where closed violations were being displayed in the Observability section 
+- Fixes an issue where closed violations were being displayed in the Observability section
 - Addresses [#1198](https://github.com/TeamCodeStream/CodeStream/issues/1198) &mdash; java.lang.Throwable: class com.intellij.openapi.module.ModuleManager it is a service, use getService instead of getComponent
 
 ## [14.2.0] - 2022-9-29
