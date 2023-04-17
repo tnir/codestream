@@ -7,6 +7,7 @@ import {
 	ObservabilityAnomaly,
 } from "@codestream/protocols/agent";
 import { INewRelicProvider, NewRelicProvider } from "../newrelic";
+import { Logger } from "../../logger";
 
 interface Named {
 	name: string;
@@ -31,6 +32,7 @@ export class AnomalyDetector {
 			_request.sinceDaysAgo + _request.baselineDays
 		} days AGO UNTIL ${_request.sinceDaysAgo} days AGO`;
 		this._accountId = NewRelicProvider.parseId(_request.entityGuid)!.accountId;
+		this._sinceDaysAgo = _request.sinceDaysAgo;
 	}
 
 	private _dataTimeFrame;
@@ -39,6 +41,9 @@ export class AnomalyDetector {
 	private _totalDays = 0;
 	private _benchmarkSampleSizeTimeFrame = "SINCE 30 minutes ago";
 	private _sinceText = "";
+
+	private _sinceDaysAgo;
+	private _releaseBased = false;
 
 	async execute(): Promise<GetObservabilityAnomaliesResponse> {
 		const benchmarkSampleSizesMetric = await this.getBenchmarkSampleSizesMetric();
@@ -75,6 +80,8 @@ export class AnomalyDetector {
 				const now = new Date();
 				const timeSinceDeployment = now.getTime() - deploymentDate.getTime();
 				const daysSinceDeployment = Math.round(timeSinceDeployment / (1000 * 60 * 60 * 24));
+				this._sinceDaysAgo = daysSinceDeployment;
+				this._releaseBased = true;
 				this._dataTimeFrame = `SINCE ${daysSinceDeployment} days AGO`;
 				const baselineDays = parseInt(this._request.baselineDays as any);
 				this._baselineTimeFrame = `SINCE ${
@@ -137,18 +144,28 @@ export class AnomalyDetector {
 			symbolStrs.add(this.extractSymbolStr(name));
 		}
 
-		const telemetry = Container.instance().telemetry;
-
-		const event = {
-			"Total Methods": symbolStrs.size,
-			"Anomalous Error Methods": errorRateAnomalies.length,
-			"Anomalous Duration Methods": durationAnomalies.length,
-			"Entity GUID": this._request.entityGuid,
-		};
-		telemetry?.track({
-			eventName: "CLM Anomalies Calculated",
-			properties: event,
-		});
+		try {
+			const telemetry = Container.instance().telemetry;
+			const event = {
+				"Total Methods": symbolStrs.size,
+				"Anomalous Error Methods": errorRateAnomalies.length,
+				"Anomalous Duration Methods": durationAnomalies.length,
+				"Entity GUID": this._request.entityGuid,
+				"Minimum Change": Math.round((this._request.minimumRatio - 1) * 100),
+				"Minimum RPM": this._request.minimumErrorRate,
+				"Minimum Error Rate": this._request.minimumErrorRate,
+				"Minimum Avg Duration": this._request.minimumResponseTime,
+				"Since Days Ago": this._sinceDaysAgo,
+				"Baseline Days": this._request.baselineDays,
+				"Release Based": this._releaseBased,
+			};
+			telemetry?.track({
+				eventName: "CLM Anomalies Calculated",
+				properties: event,
+			});
+		} catch (e) {
+			Logger.warn("Error generating anomaly detection telemetry", e);
+		}
 
 		return {
 			responseTime: durationAnomalies,
