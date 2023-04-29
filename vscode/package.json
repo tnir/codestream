@@ -620,6 +620,7 @@
 		"dev:vscode:test": "node ./out/src/__test__/runTest.js",
 		"dev:vscode:watch-tests": "tsc -p tsconfig.test.json -w --outDir out",
 		"lint": "eslint --fix --ext .ts \"src/{**!(webviews)/*,*}\"",
+		"mwatch": "tmux new-session 'npm run watch' \\; split-window -h 'npm run agent:watch'",
 		"pack": "vsce package",
 		"postinstall": "patch-package",
 		"preinstall": "pushd \"../shared/ui\" && npm install --no-save && popd && pushd \"../shared/util\" && npm install --no-save && popd && pushd \"../shared/build\" && npm install --no-save && popd",

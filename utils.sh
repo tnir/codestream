@@ -84,6 +84,15 @@ function clean () {
   done
 }
 
+function killEsbuild () {
+  pkill esbuild
+  pids=$(ps aux | grep esbuild.ts | grep -v grep | awk '{print $2}')
+  for pid in $pids; do
+    echo "killing $pid"
+    kill -9 "$pid"
+  done
+}
+
 if [ "$1" = "clean" ]; then
   clean
 elif [ "$1" = "explainVersion" ]; then
@@ -94,6 +103,8 @@ elif [ "$1" = "test" ]; then
   test
 elif [ "$1" = "compile" ]; then
   compile_all "$@"
+elif [ "$1" = "killEsbuild" ]; then
+  killEsbuild
 else
   echo "Invalid command $1"
   exit 1
