@@ -93,6 +93,22 @@ function killEsbuild () {
   done
 }
 
+function usage () {
+  echo "Usage: utils.sh <command>"
+  echo "Commands:"
+  echo "  clean: remove node_modules from all projects"
+  echo "  explainVersion <package>: explain the version of a package in all projects. Shows why a particular version is being used"
+  echo "  showVersion <package>: briefly show the version of a package in all projects"
+  echo "  test: run tests in all projects"
+  echo "  compile: run typescript compiler (noEmit) on all projects"
+  echo "  killEsbuild: kill all esbuild processes"
+}
+
+if [ "$1" = "" ]; then
+  usage
+  exit 1
+fi
+
 if [ "$1" = "clean" ]; then
   clean
 elif [ "$1" = "explainVersion" ]; then
@@ -106,6 +122,7 @@ elif [ "$1" = "compile" ]; then
 elif [ "$1" = "killEsbuild" ]; then
   killEsbuild
 else
-  echo "Invalid command $1"
+  printf "Invalid command %s\n\n" "$1"
+  usage
   exit 1
 fi
