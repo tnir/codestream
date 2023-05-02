@@ -209,7 +209,7 @@ class Login extends React.Component<Props, State> {
 
 	handleClickGithubLogin = event => {
 		event.preventDefault();
-		if (this.props.isInVSCode && this.props.supportsVSCodeGithubSignin) {
+		if (this.props.isInVSCode) {
 			this.props.startIDESignin("github");
 		} else {
 			this.props.startSSOSignin("github");
@@ -475,7 +475,6 @@ const ConnectedLogin = connect<ConnectedProps, any, any, CodeStreamState>(
 			supportsSSOSignIn: supportsSSOSignIn(state.configs),
 			oktaEnabled: state.configs.isOnPrem,
 			isInVSCode: state.ide.name === "VSC",
-			supportsVSCodeGithubSignin: state.capabilities.vsCodeGithubSignin,
 			environmentHosts: state.configs.environmentHosts,
 			selectedRegion: state.context.__teamless__?.selectedRegion,
 			supportsMultiRegion,
