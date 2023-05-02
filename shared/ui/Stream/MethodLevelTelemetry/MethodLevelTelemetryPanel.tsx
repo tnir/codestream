@@ -130,7 +130,7 @@ export const MethodLevelTelemetryPanel = () => {
 				functionIdentifiers: {
 					functionName: derivedState.currentMethodLevelTelemetry.functionName,
 					codeNamespace: derivedState.currentMethodLevelTelemetry.codeNamespace,
-					relativeFilePath: derivedState.currentMethodLevelTelemetry.filePath,
+					relativeFilePath: derivedState.currentMethodLevelTelemetry.relativeFilePath,
 				},
 				repoId: derivedState.currentMethodLevelTelemetry.repo.id,
 				includeErrors: true,
