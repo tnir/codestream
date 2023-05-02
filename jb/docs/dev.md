@@ -35,6 +35,10 @@ export JAVA_HOME="$HOME/jbr"
 export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
+> NOTE: If you utilize JetBrains Toolbox for managing the installation of their IDEs / utilities, then your installation path will be available by clicking 'Settings' next to the application in JetBrains Toolbox. By default, it will look similar to:
+>
+> `/Users/<your home dir>/Library/Application Support/JetBrains/Toolbox/apps/IDEA-U/ch-0/231.8109.175`
+
 The Jetbrains JVM is required to run tests and build the plugin. The project is preconfigured to use a
 JVM Runtime called jbr-11. You need to setup this JMV yourself by going to 
 `File -> Project Structure` and then click on `SDK` and in the dropdown choose `Add Sdk`. 
