@@ -33,6 +33,7 @@ import { CodeStreamAgent } from "./agent";
 import { getCorrelationContext } from "./system";
 import { LogCorrelationContext, TraceLevel } from "./types";
 import { reportAgentError } from "./nrErrorReporter";
+import { isResponseError } from "@codestream/utils/system/errors";
 // import { Telemetry } from './telemetry';
 
 // const ConsolePrefix = `[CodeStreamAgent]`;
@@ -106,6 +107,12 @@ export class Logger {
 			const match = /.*\s*?at\s(.+?)\s/.exec(stack);
 			if (match != null) {
 				message = match[1];
+			}
+		}
+
+		if (isResponseError(ex)) {
+			if (ex.data) {
+				params.push(ex.data);
 			}
 		}
 

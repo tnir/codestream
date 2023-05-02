@@ -2,7 +2,7 @@
 	"name": "codestream",
 	"displayName": "New Relic CodeStream",
 	"description": "Simplify your workflow by bringing performance data from New Relic, pull requests from GitHub, and issues from Jira together in your IDE. Also integrates with Slack, Teams, GitLab, Bitbucket and more.",
-	"version": "14.18.1",
+	"version": "14.18.2",
 	"author": "CodeStream",
 	"publisher": "CodeStream",
 	"extensionKind": [
@@ -620,6 +620,7 @@
 		"dev:vscode:test": "node ./out/src/__test__/runTest.js",
 		"dev:vscode:watch-tests": "tsc -p tsconfig.test.json -w --outDir out",
 		"lint": "eslint --fix --ext .ts \"src/{**!(webviews)/*,*}\"",
+		"mwatch": "tmux new-session 'npm run watch' \\; split-window -h 'npm run agent:watch'",
 		"pack": "vsce package",
 		"postinstall": "patch-package",
 		"preinstall": "pushd \"../shared/ui\" && npm install --no-save && popd && pushd \"../shared/util\" && npm install --no-save && popd && pushd \"../shared/build\" && npm install --no-save && popd",

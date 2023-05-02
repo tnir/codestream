@@ -122,7 +122,6 @@ export const Signup = (props: Props) => {
 			supportsSSOSignIn: supportsSSOSignIn(state.configs),
 			oktaEnabled: state.configs.isOnPrem,
 			isInVSCode: state.ide.name === "VSC",
-			supportsVSCodeGithubSignin: state.capabilities.vsCodeGithubSignin,
 			acceptedTOS: state.session.acceptedTOS,
 			machineId: state.session.machineId || "0",
 			webviewFocused: state.context.hasFocus,
@@ -409,7 +408,7 @@ export const Signup = (props: Props) => {
 			HostApi.instance.track("Provider Auth Selected", {
 				Provider: "GitHub",
 			});
-			if (derivedState.isInVSCode && derivedState.supportsVSCodeGithubSignin) {
+			if (derivedState.isInVSCode) {
 				return dispatch(startIDESignin("github", buildSignupInfo()));
 			} else {
 				return dispatch(startSSOSignin("github", buildSignupInfo()));
