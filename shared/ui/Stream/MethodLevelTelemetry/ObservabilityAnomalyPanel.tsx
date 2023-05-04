@@ -14,6 +14,8 @@ import {
 	DidChangeObservabilityDataNotificationType,
 	GetMethodLevelTelemetryRequestType,
 	GetMethodLevelTelemetryResponse,
+	GetObservabilityErrorGroupMetadataRequestType,
+	GetObservabilityErrorGroupMetadataResponse,
 	ObservabilityAnomaly,
 	WarningOrError,
 } from "@codestream/protocols/agent";
@@ -36,6 +38,8 @@ import { WarningBox } from "../WarningBox";
 import { MetaLabel } from "../Codemark/BaseCodemark";
 import Icon from "../Icon";
 import { PanelHeader } from "../../src/components/PanelHeader";
+import { ErrorRow } from "../Observability";
+import { openErrorGroup } from "@codestream/webview/store/codeErrors/thunks";
 
 const Root = styled.div``;
 
@@ -75,6 +79,7 @@ export const ObservabilityAnomalyPanel = () => {
 				(state.users[state.session.userId!].preferences || {}).observabilityRepoEntities ||
 				EMPTY_ARRAY,
 			clmSettings: state.preferences.clmSettings || {},
+			sessionStart: state.context.sessionStart,
 		};
 	});
 
@@ -88,6 +93,7 @@ export const ObservabilityAnomalyPanel = () => {
 	>(undefined);
 	const [remappedDeployments, setRemappedDeployments] = useState({});
 	const [loading, setLoading] = useState<boolean>(true);
+	const [isLoadingErrorGroupGuid, setIsLoadingErrorGroupGuid] = useState("");
 	const [warningOrErrors, setWarningOrErrors] = useState<WarningOrError[] | undefined>(undefined);
 	const previousCurrentObservabilityAnomaly = usePrevious(derivedState.currentObservabilityAnomaly);
 	const [showGoldenSignalsInEditor, setshowGoldenSignalsInEditor] = useState<boolean>(
@@ -119,8 +125,10 @@ export const ObservabilityAnomalyPanel = () => {
 				},
 				since,
 				includeDeployments: true,
+				includeErrors: true,
 				timeseriesGroup: "1 day",
 			});
+
 			response.goldenMetrics?.forEach(gm => {
 				gm.result.forEach(r => {
 					if (r.endTimeSeconds) {
@@ -421,6 +429,54 @@ export const ObservabilityAnomalyPanel = () => {
 									{/*		<b>File:</b> {derivedState?.currentMethodLevelTelemetry.relativeFilePath}*/}
 									{/*	</div>*/}
 									{/*)}*/}
+									{telemetryResponse?.errors && telemetryResponse.errors.length > 0 && (
+										<div>
+											<br />
+											<MetaLabel>Errors</MetaLabel>
+											<div>
+												{telemetryResponse.errors.map((_, index) => {
+													const indexedErrorGroupGuid = `${_.errorGroupGuid}_${index}`;
+													return (
+														<ErrorRow
+															key={`observability-error-${index}`}
+															title={_.errorClass}
+															tooltip={_.message}
+															subtle={_.message}
+															alternateSubtleRight={`${_.count}`} // we want to show count instead of timestamp
+															url={_.errorGroupUrl}
+															customPadding={"0"}
+															isLoading={isLoadingErrorGroupGuid === indexedErrorGroupGuid}
+															onClick={async e => {
+																try {
+																	setIsLoadingErrorGroupGuid(indexedErrorGroupGuid);
+																	const response = (await HostApi.instance.send(
+																		GetObservabilityErrorGroupMetadataRequestType,
+																		{ errorGroupGuid: _.errorGroupGuid }
+																	)) as GetObservabilityErrorGroupMetadataResponse;
+																	dispatch(
+																		openErrorGroup(_.errorGroupGuid, _.occurrenceId, {
+																			multipleRepos: response?.relatedRepos?.length > 1,
+																			relatedRepos: response?.relatedRepos || undefined,
+																			timestamp: _.lastOccurrence,
+																			sessionStart: derivedState.sessionStart,
+																			pendingEntityId: response?.entityId || _.entityId,
+																			occurrenceId: response?.occurrenceId || _.occurrenceId,
+																			pendingErrorGroupGuid: _.errorGroupGuid,
+																			openType: "CLM Details",
+																		})
+																	);
+																} catch (ex) {
+																	console.error(ex);
+																} finally {
+																	setIsLoadingErrorGroupGuid("");
+																}
+															}}
+														/>
+													);
+												})}
+											</div>
+										</div>
+									)}
 									<div>
 										<br />
 										{telemetryResponse &&

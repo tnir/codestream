@@ -76,6 +76,7 @@ import Tooltip from "./Tooltip";
 import { WarningBox } from "./WarningBox";
 import { ObservabilityAnomaliesWrapper } from "@codestream/webview/Stream/ObservabilityAnomaliesWrapper";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { DEFAULT_CLM_SETTINGS } from "./CLMSettings";
 
 interface Props {
 	paneState: PaneState;
@@ -155,11 +156,21 @@ const GenericCopy = styled.div`
 	margin: 5px 0 10px 0;
 `;
 
+const SubtleRight = styled.time`
+	color: var(--text-color-subtle);
+	font-weight: normal;
+	padding-left: 5px;
+	&.no-padding {
+		padding-left: 0;
+	}
+`;
+
 export const ErrorRow = (props: {
 	title: string;
 	subtle?: string;
 	tooltip?: string;
 	timestamp?: number;
+	alternateSubtleRight?: string;
 	isLoading?: boolean;
 	url?: string;
 	onClick?: Function;
@@ -191,10 +202,10 @@ export const ErrorRow = (props: {
 			</div>
 			<div>
 				<Tooltip title={props.tooltip} delay={1} placement="bottom">
-					<>
+					<div>
 						<span>{props.title}</span>
 						{props.subtle && <span className="subtle-tight"> {props.subtle}</span>}
-					</>
+					</div>
 				</Tooltip>
 			</div>
 			<div className="icons">
@@ -221,6 +232,9 @@ export const ErrorRow = (props: {
 				)}
 
 				{props.timestamp && <Timestamp time={props.timestamp} relative abbreviated />}
+				{!props.timestamp && props.alternateSubtleRight && (
+					<SubtleRight>{props.alternateSubtleRight}</SubtleRight>
+				)}
 			</div>
 		</Row>
 	);
@@ -654,33 +668,33 @@ export const Observability = React.memo((props: Props) => {
 				entityGuid,
 				sinceDaysAgo: !_isNil(derivedState?.clmSettings?.compareDataLastValue)
 					? derivedState?.clmSettings?.compareDataLastValue
-					: 2,
+					: DEFAULT_CLM_SETTINGS.compareDataLastValue,
 				baselineDays: !_isNil(derivedState?.clmSettings?.againstDataPrecedingValue)
 					? derivedState?.clmSettings?.againstDataPrecedingValue
-					: 7,
+					: DEFAULT_CLM_SETTINGS.againstDataPrecedingValue,
 				sinceReleaseAtLeastDaysAgo: !_isNil(derivedState?.clmSettings?.compareDataLastReleaseValue)
 					? derivedState?.clmSettings?.compareDataLastReleaseValue
-					: 7,
+					: DEFAULT_CLM_SETTINGS.compareDataLastReleaseValue,
 				minimumErrorRate: parseFloat(
 					!_isNil(derivedState?.clmSettings?.minimumErrorRateValue)
 						? derivedState?.clmSettings?.minimumErrorRateValue
-						: 0
+						: DEFAULT_CLM_SETTINGS.minimumErrorRateValue
 				),
 				minimumResponseTime: parseFloat(
 					!_isNil(derivedState?.clmSettings?.minimumAverageDurationValue)
 						? derivedState?.clmSettings?.minimumAverageDurationValue
-						: 0
+						: DEFAULT_CLM_SETTINGS.minimumAverageDurationValue
 				),
 				minimumSampleRate: parseFloat(
 					!_isNil(derivedState?.clmSettings?.minimumBaselineValue)
 						? derivedState?.clmSettings?.minimumBaselineValue
-						: 0
+						: DEFAULT_CLM_SETTINGS.minimumBaselineValue
 				),
 				minimumRatio:
 					parseFloat(
 						!_isNil(derivedState?.clmSettings?.minimumChangeValue)
 							? derivedState?.clmSettings?.minimumChangeValue
-							: 0
+							: DEFAULT_CLM_SETTINGS.minimumChangeValue
 					) /
 						100 +
 					1,

@@ -1519,27 +1519,32 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		if (!scm)
 			throw new ResponseError(
 				ERROR_REVIEW_SCM_NOT_FOUND,
-				"Unable to create review: SCM info not found"
+				"Unable to create review: SCM info not found",
+				scm
 			);
 		if (!scm.remotes?.length)
 			throw new ResponseError(
 				ERROR_REVIEW_NO_REMOTES,
-				"Unable to create review: git repository has no remotes"
+				"Unable to create review: git repository has no remotes",
+				scm
 			);
 		if (!scm.repoId)
 			throw new ResponseError(
 				ERROR_REVIEW_REPO_NOT_FOUND,
-				"Unable to create review: git repository not found"
+				"Unable to create review: git repository not found",
+				scm
 			);
 		if (!scm.branch)
 			throw new ResponseError(
 				ERROR_REVIEW_BRANCH_NOT_FOUND,
-				"Unable to create review: branch not found"
+				"Unable to create review: branch not found",
+				scm
 			);
 		if (!scm.commits)
 			throw new ResponseError(
 				ERROR_REVIEW_COMMITS_NOT_FOUND,
-				"Unable to create review: commit history not found"
+				"Unable to create review: commit history not found",
+				scm
 			);
 		const { git, reviews, scm: scmManager } = SessionContainer.instance();
 

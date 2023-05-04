@@ -1,5 +1,22 @@
 # Change Log
 
+## [14.19.0] - 2023-5-4
+
+### Added
+
+- Adds an Errors section when clicking on a codelens to view the details for code-level metrics, which allows you to click through to individual error groups
+
+### Changed
+
+- Changed the "Recent" filter for GitHub pull requests to leverage GitHub's `involves` qualifier
+- Smooths out the loading of an error when opening one either via the Errors section or from the Errors Inbox on New Relic
+
+### Fixed
+
+- Fixes an issue with the ability to connect to GitHub via VS Code's connection not being offered
+- Fixes an issue with tooltips for Errors in the Observability section not displaying
+- Fixes an issue with checking out a branch when the repo was renamed in git but not locally
+
 ## [14.18.1] - 2023-4-18
 
 ### Fixed

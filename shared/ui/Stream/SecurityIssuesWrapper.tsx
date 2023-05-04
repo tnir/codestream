@@ -31,16 +31,6 @@ interface Props {
 	accountId: number;
 }
 
-function isResponseError<T>(obj: unknown): obj is ResponseError<T> {
-	if (!obj) {
-		return false;
-	}
-	return (
-		Object.prototype.hasOwnProperty.call(obj, "code") &&
-		Object.prototype.hasOwnProperty.call(obj, "message")
-	);
-}
-
 function isResponseUrlError<T>(obj: unknown): obj is ResponseError<{ url: string }> {
 	if (!obj) {
 		return false;

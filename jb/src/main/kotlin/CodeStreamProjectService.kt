@@ -5,7 +5,6 @@ import com.codestream.editor.EditorFactoryListenerImpl
 import com.codestream.editor.FileEditorManagerListenerImpl
 import com.codestream.editor.VirtualFileListenerImpl
 import com.codestream.protocols.webview.*
-import com.codestream.system.CodeStreamDiffURLStreamHandler
 import com.codestream.workaround.ToolWindowManagerWorkaround
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
@@ -50,7 +49,6 @@ class CodeStreamProjectService(val project: Project) : Disposable {
 
     init {
         logger.info("Initializing CodeStream")
-        CodeStreamDiffURLStreamHandler
         extractAssets()
         initDebugMonitors()
         initEditorFactoryListener()
