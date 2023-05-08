@@ -5,22 +5,12 @@ import {
 	GetObservabilityAnomaliesRequest,
 	GetObservabilityAnomaliesResponse,
 	ObservabilityAnomaly,
+	Named,
+	NameValue,
+	Comparison,
 } from "@codestream/protocols/agent";
 import { INewRelicProvider, NewRelicProvider } from "../newrelic";
 import { Logger } from "../../logger";
-
-interface Named {
-	name: string;
-}
-interface NameValue extends Named {
-	value: number;
-}
-
-interface Comparison extends Named {
-	oldValue: number;
-	newValue: number;
-	ratio: number;
-}
 
 export class AnomalyDetector {
 	constructor(
@@ -144,6 +134,32 @@ export class AnomalyDetector {
 			symbolStrs.add(this.extractSymbolStr(name));
 		}
 
+		const anomalousSymbolStrs = [
+			...durationAnomalies.map(_ => this.extractSymbolStr(_.name)),
+			...errorRateAnomalies.map(_ => this.extractSymbolStr(_.name)),
+		];
+		const allOtherAnomalies: ObservabilityAnomaly[] = [];
+		for (const [name] of benchmarkSampleSizes) {
+			const symbolStr = this.extractSymbolStr(name);
+			if (anomalousSymbolStrs.find(_ => _ === symbolStr)) continue;
+
+			const symbol = this.extractSymbol(name);
+			const anomaly: ObservabilityAnomaly = {
+				name,
+				text: name,
+				...symbol,
+				oldValue: 0,
+				newValue: 0,
+				ratio: 1,
+				sinceText: "",
+				totalDays: 0,
+				chartHeaderTexts: {},
+				metricTimesliceName: "",
+				errorMetricTimesliceName: "",
+			};
+			allOtherAnomalies.push(anomaly);
+		}
+
 		try {
 			const telemetry = Container.instance().telemetry;
 			const event = {
@@ -170,6 +186,7 @@ export class AnomalyDetector {
 		return {
 			responseTime: durationAnomalies,
 			errorRate: errorRateAnomalies,
+			allOtherAnomalies: allOtherAnomalies,
 			detectionMethod,
 			isSupported: true,
 		};
