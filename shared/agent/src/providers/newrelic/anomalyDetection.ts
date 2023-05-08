@@ -168,7 +168,7 @@ export class AnomalyDetector {
 				"Anomalous Duration Methods": durationAnomalies.length,
 				"Entity GUID": this._request.entityGuid,
 				"Minimum Change": Math.round((this._request.minimumRatio - 1) * 100),
-				"Minimum RPM": this._request.minimumErrorRate,
+				"Minimum RPM": this._request.minimumSampleRate,
 				"Minimum Error Rate": this._request.minimumErrorRate,
 				"Minimum Avg Duration": this._request.minimumResponseTime,
 				"Since Days Ago": this._sinceDaysAgo,
