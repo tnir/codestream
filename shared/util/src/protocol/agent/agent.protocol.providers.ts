@@ -2,6 +2,7 @@
 import { NotificationType, RequestType } from "vscode-languageserver-protocol";
 
 import {
+	BitbucketParticipantRole,
 	CrossPostIssueValues,
 	DidResolveStackTraceLineNotification,
 	GitLabMergeRequest,
@@ -553,6 +554,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	author: {
 		login: string;
 		avatarUrl: string;
+		id?: string;
 	};
 	authorAssociation:
 		| "COLLABORATOR"
@@ -577,6 +579,9 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		};
 	};
 	comments?: any[]; //TODO: Fix this!
+	description: string; //this is for bitbucket
+	additions: number; //bitbucket
+	deletions: number; //bitbucket
 	files: {
 		pageInfo: {
 			endCursor?: string;
@@ -626,6 +631,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 						author: {
 							login: string;
 							avatarUrl: string;
+							id?: string;
 						};
 						id: string;
 					}[];
@@ -692,9 +698,120 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	};
 	participants: {
 		nodes: {
-			avatarUrl: string;
+			//gitlab
+			avatarUrl?: string;
+			//bitbucket
+			type?: string;
+			user: {
+				display_name: string;
+				links: {
+					avatar: {
+						href: string;
+					};
+				};
+				type?: string;
+				uuid?: string;
+				account_id: string;
+				nickname: string;
+			};
+			role: BitbucketParticipantRole;
+			approved: boolean;
+			state?: string;
+			participated_on: string;
 		}[];
 	};
+	participantsUnfiltered: {
+		nodes: {
+			type?: string;
+			user: {
+				display_name: string;
+				links: {
+					avatar: {
+						href: string;
+					};
+				};
+				type?: string;
+				uuid?: string;
+				account_id: string;
+				nickname: string;
+			};
+			role: BitbucketParticipantRole;
+			approved: boolean;
+			state?: string;
+			participated_on: string;
+		}[];
+	};
+	reviewers: {
+		nodes: {
+			type?: string;
+			user: {
+				display_name: string;
+				links: {
+					avatar: {
+						href: string;
+					};
+				};
+				type?: string;
+				uuid?: string;
+				account_id: string;
+				nickname: string;
+			};
+			role: BitbucketParticipantRole;
+			approved: boolean;
+			state?: string;
+			participated_on: string;
+		}[];
+	};
+	members: {
+		nodes: {
+			type: string;
+			user: {
+				display_name: string;
+				links: {
+					self: {
+						href: string;
+					};
+					avatar: {
+						href: string;
+					};
+					html: {
+						href: string;
+					};
+				};
+				type: string;
+				uuid: string;
+				account_id: string;
+				nickname: string;
+			};
+			workspace: {
+				type: string;
+				uuid: string;
+				name: string;
+				slug: string;
+				links: {
+					avatar: {
+						href: string;
+					};
+					html: {
+						href: string;
+					};
+					self: {
+						href: string;
+					};
+				};
+			};
+			links: {
+				self: {
+					href: string;
+				};
+			};
+		}[];
+	};
+	//bitbucket
+	isApproved: boolean;
+	// isRequested: boolean;
+	// approvalStatus: string;
+	// requestStatus: string;
 	assignees: {
 		nodes: {
 			avatarUrl: string;
@@ -821,6 +938,7 @@ export interface FetchThirdPartyPullRequestCommitsResponse {
 	author: {
 		name: string;
 		avatarUrl: string;
+		id?: string;
 		user?: {
 			login: string;
 			avatarUrl?: string;
@@ -936,6 +1054,7 @@ export interface GetMyPullRequestsResponse {
 	author: {
 		login: string;
 		avatarUrl: string;
+		id?: string;
 	};
 	body: string;
 	bodyText: string;

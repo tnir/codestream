@@ -102,7 +102,7 @@ const BBPRLabel: LabelHash = {
 	PR: "PR",
 	PRs: "PRs",
 	pr: "pr",
-	AddSingleComment: "Add single comment",
+	AddSingleComment: "Add comment",
 	repoBaseLabel: "base",
 	repoBranchBaseLabel: "destination",
 	repoHeadLabel: "head",
@@ -127,7 +127,7 @@ export const getPRLabelForProvider = (providerId: string): LabelHash => {
 	return providerIdNormalized.startsWith("gitlab")
 		? { ...MRLabel, icon: "" }
 		: providerIdNormalized.startsWith("bitbucket*org")
-		? BBPRLabel
+		? { ...BBPRLabel, icon: "" }
 		: { ...PRLabel, icon: "" };
 };
 
@@ -358,8 +358,8 @@ export const getSupportedPullRequestHosts = createSelector(
 				_.id === "github*com" ||
 				_.id === "github/enterprise" ||
 				_.id === "gitlab*com" ||
-				_.id === "gitlab/enterprise"
-			// || 				_.id === "bitbucket*org"
+				_.id === "gitlab/enterprise" ||
+				_.id === "bitbucket*org"
 		);
 	}
 );
@@ -381,8 +381,8 @@ export const getConnectedSupportedPullRequestHosts = createSelector(
 					_.id === "github*com" ||
 					_.id === "github/enterprise" ||
 					_.id === "gitlab*com" ||
-					_.id === "gitlab/enterprise"
-				// || 					_.id === "bitbucket*org"
+					_.id === "gitlab/enterprise" ||
+					_.id === "bitbucket*org"
 			)
 			.map(_ => {
 				let obj: { accessTokenError?: boolean } = {};
