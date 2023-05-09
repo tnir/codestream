@@ -1291,7 +1291,7 @@ export const Observability = React.memo((props: Props) => {
 														<EntityAssociator
 															label={
 																<span>
-																	Select the service that is built from this repository to see how it's performing, and how individual methods in your code are
+																	Select the service on New Relic that is built from this repository to see how it's
 																	performing. Or,{" "}
 																	<Link
 																		onClick={() => {

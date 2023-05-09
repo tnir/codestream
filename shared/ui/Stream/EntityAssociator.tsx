@@ -132,7 +132,7 @@ export const EntityAssociator = React.memo((props: PropsWithChildren<EntityAssoc
 							});
 					}}
 				>
-					Associate
+					Show Performance Data
 				</Button>
 			</Tooltip>
 			{props.children}
