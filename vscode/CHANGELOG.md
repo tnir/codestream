@@ -4,17 +4,13 @@
 
 ### Added
 
-- Adds "All other methods" node to Code-Level Metrics observability section 
-- Adds abillity for admins to mass delete all posts on an error and individually deleting posts
-- Adds error section to code-level-metrics view, including the error rate chart to be the first among the charts show
-
-### Changed
-
-- Changed repo association help text, botton, and section text
+- Adds support for reviewing Bitbucket pull requests
+- Adds "All other methods" node to Code-Level Metrics observability section
+- Adds abillity for admins to mass delete all posts and individual posts on an error
+- Adds list of related errors to the code-level metrics details view
 
 ### Fixed
 
-- Fixes for BitBucket support
 - Fixes for code-level-metrics charts not loading
 - Addresses [#1317](https://github.com/TeamCodeStream/codestream/issues/1317) &mdash; Error gpg bad revision
 
