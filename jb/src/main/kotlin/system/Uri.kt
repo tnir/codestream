@@ -13,12 +13,19 @@ private val os: OS by lazy {
 
 const val SPACE_ENCODED: String = "%20"
 const val COLON_ENCODED: String = "%3A"
+const val OPEN_SQUARE_BRACKET_ENCODED: String = "%5B"
+const val CLOSE_SQUARE_BRACKET_ENCODED: String = "%5D"
 const val HASH_ENCODED: String = "%23"
 const val URI_FILE_BEGIN = "file:"
 const val WINDOWS_NETWORK_FILE_BEGIN = "file:////"
 const val URI_PATH_SEP: Char = '/'
 const val URI_VALID_FILE_BEGIN: String = "file:///"
 const val VCS_FILE_BEGIN = "vcs:/"
+
+fun String.replaceReservedUriCharacters(): String = this.replace(" ", SPACE_ENCODED)
+    .replace("#", HASH_ENCODED)
+    .replace("[", OPEN_SQUARE_BRACKET_ENCODED)
+    .replace("]", CLOSE_SQUARE_BRACKET_ENCODED)
 
 fun sanitizeURI(_uri: String?): String? {
     var uri = _uri ?: return null

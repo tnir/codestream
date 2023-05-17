@@ -2,6 +2,7 @@
 import { NotificationType, RequestType } from "vscode-languageserver-protocol";
 
 import {
+	BitbucketParticipantRole,
 	CrossPostIssueValues,
 	DidResolveStackTraceLineNotification,
 	GitLabMergeRequest,
@@ -553,6 +554,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	author: {
 		login: string;
 		avatarUrl: string;
+		id?: string;
 	};
 	authorAssociation:
 		| "COLLABORATOR"
@@ -577,6 +579,9 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		};
 	};
 	comments?: any[]; //TODO: Fix this!
+	description: string; //this is for bitbucket
+	additions: number; //bitbucket
+	deletions: number; //bitbucket
 	files: {
 		pageInfo: {
 			endCursor?: string;
@@ -626,6 +631,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 						author: {
 							login: string;
 							avatarUrl: string;
+							id?: string;
 						};
 						id: string;
 					}[];
@@ -692,9 +698,120 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	};
 	participants: {
 		nodes: {
-			avatarUrl: string;
+			//gitlab
+			avatarUrl?: string;
+			//bitbucket
+			type?: string;
+			user: {
+				display_name: string;
+				links: {
+					avatar: {
+						href: string;
+					};
+				};
+				type?: string;
+				uuid?: string;
+				account_id: string;
+				nickname: string;
+			};
+			role: BitbucketParticipantRole;
+			approved: boolean;
+			state?: string;
+			participated_on: string;
 		}[];
 	};
+	participantsUnfiltered: {
+		nodes: {
+			type?: string;
+			user: {
+				display_name: string;
+				links: {
+					avatar: {
+						href: string;
+					};
+				};
+				type?: string;
+				uuid?: string;
+				account_id: string;
+				nickname: string;
+			};
+			role: BitbucketParticipantRole;
+			approved: boolean;
+			state?: string;
+			participated_on: string;
+		}[];
+	};
+	reviewers: {
+		nodes: {
+			type?: string;
+			user: {
+				display_name: string;
+				links: {
+					avatar: {
+						href: string;
+					};
+				};
+				type?: string;
+				uuid?: string;
+				account_id: string;
+				nickname: string;
+			};
+			role: BitbucketParticipantRole;
+			approved: boolean;
+			state?: string;
+			participated_on: string;
+		}[];
+	};
+	members: {
+		nodes: {
+			type: string;
+			user: {
+				display_name: string;
+				links: {
+					self: {
+						href: string;
+					};
+					avatar: {
+						href: string;
+					};
+					html: {
+						href: string;
+					};
+				};
+				type: string;
+				uuid: string;
+				account_id: string;
+				nickname: string;
+			};
+			workspace: {
+				type: string;
+				uuid: string;
+				name: string;
+				slug: string;
+				links: {
+					avatar: {
+						href: string;
+					};
+					html: {
+						href: string;
+					};
+					self: {
+						href: string;
+					};
+				};
+			};
+			links: {
+				self: {
+					href: string;
+				};
+			};
+		}[];
+	};
+	//bitbucket
+	isApproved: boolean;
+	// isRequested: boolean;
+	// approvalStatus: string;
+	// requestStatus: string;
 	assignees: {
 		nodes: {
 			avatarUrl: string;
@@ -821,6 +938,7 @@ export interface FetchThirdPartyPullRequestCommitsResponse {
 	author: {
 		name: string;
 		avatarUrl: string;
+		id?: string;
 		user?: {
 			login: string;
 			avatarUrl?: string;
@@ -936,6 +1054,7 @@ export interface GetMyPullRequestsResponse {
 	author: {
 		login: string;
 		avatarUrl: string;
+		id?: string;
 	};
 	body: string;
 	bodyText: string;
@@ -1255,12 +1374,26 @@ export interface ObservabilityAnomaly {
 
 export type DetectionMethod = "Release Based" | "Time Based";
 
+export interface Named {
+	name: string;
+}
+export interface NameValue extends Named {
+	value: number;
+}
+
+export interface Comparison extends Named {
+	oldValue: number;
+	newValue: number;
+	ratio: number;
+}
+
 export interface GetObservabilityAnomaliesResponse {
 	responseTime: ObservabilityAnomaly[];
 	errorRate: ObservabilityAnomaly[];
 	detectionMethod?: DetectionMethod;
 	error?: string;
 	isSupported?: boolean;
+	allOtherAnomalies?: ObservabilityAnomaly[];
 }
 
 export const GetObservabilityAnomaliesRequestType = new RequestType<
@@ -1431,7 +1564,7 @@ export const NRErrorTypes = [
 	"INTERNAL_RATE",
 ] as const;
 
-export type NRErrorType = typeof NRErrorTypes[number];
+export type NRErrorType = (typeof NRErrorTypes)[number];
 
 export interface NRErrorResponse {
 	isConnected?: boolean;
@@ -2026,11 +2159,11 @@ export type VulnerabilityStatus =
 
 export const riskSeverityList = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN", "INFO"] as const;
 
-export type RiskSeverity = typeof riskSeverityList[number];
+export type RiskSeverity = (typeof riskSeverityList)[number];
 
 export const criticalityList = ["CRITICAL", "HIGH", "MODERATE", "LOW"] as const;
 
-export type CriticalityType = typeof criticalityList[number];
+export type CriticalityType = (typeof criticalityList)[number];
 
 // /v1/issues/ response
 // https://source.datanerd.us/incubator/nrsec-workflow-api/blob/dacb63f32aa836a4b90f6345a83e0ae95f7d3463/src/main/java/com/newrelic/nrsecworkflowapi/api/SecurityIssueSummary.java

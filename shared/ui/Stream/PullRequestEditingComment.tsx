@@ -1,6 +1,5 @@
 import { useAppDispatch } from "@codestream/webview/utilities/hooks";
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
 import styled from "styled-components";
 import { PRButtonRow } from "./PullRequestComponents";
 import {
@@ -33,7 +32,8 @@ export const PullRequestEditingComment = styled((props: Props) => {
 	const handleEdit = async () => {
 		setIsLoadingMessage("Updating Comment...");
 		try {
-			if (text == "" || text == props.text) return;
+			if (text == "" || text == props.text || text == props.pr.description) return;
+			//bitbucket is text == props.pr.description
 
 			await dispatch(
 				api({
@@ -49,7 +49,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 						pullRequestId: "idComputed" in pr ? pr.idComputed : pr.id,
 						id,
 						isPending: props.isPending,
-						body: replaceHtml(text),
+						body: replaceHtml(text || props.pr.description),
 					},
 				})
 			);
@@ -64,7 +64,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 	};
 
 	const handleCancelEdit = async () => {
-		if (text == null || text == undefined || text == props.text) {
+		if (text == null || text == props.text || text == props.pr.description) {
 			done();
 			return;
 		}
@@ -95,7 +95,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 				<MessageInput
 					autoFocus
 					multiCompose
-					text={text}
+					text={text || props.pr.description}
 					onChange={value => setText(value)}
 					onSubmit={handleEdit}
 					setIsPreviewing={value => setIsPreviewing(value)}
