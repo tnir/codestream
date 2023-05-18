@@ -1,7 +1,6 @@
 package com.codestream.extensions
 
-import com.codestream.system.HASH_ENCODED
-import com.codestream.system.SPACE_ENCODED
+import com.codestream.system.replaceReservedUriCharacters
 import com.codestream.system.sanitizeURI
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,9 +13,7 @@ val VirtualFile.uri: String?
         val isCsDiff = url.startsWith("codestream-diff://")
         val workingUrl = if (isCsDiff) url.replace(Regex("""^codestream-diff://"""), "file://") else url
         return try {
-            val uriStrEncoded = workingUrl
-                .replace(" ", SPACE_ENCODED)
-                .replace("#", HASH_ENCODED)
+            val uriStrEncoded = workingUrl.replaceReservedUriCharacters()
             val uriStr = try {
                 URL(uriStrEncoded).toURI().toString()
             } catch (e: Exception) {

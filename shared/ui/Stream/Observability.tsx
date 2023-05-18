@@ -1291,8 +1291,8 @@ export const Observability = React.memo((props: Props) => {
 														<EntityAssociator
 															label={
 																<span>
-																	Associate this repo with an entity on New Relic in order to see
-																	telemetry. Or,{" "}
+																	Select the service on New Relic that is built from this repository to see how it's
+																	performing. Or,{" "}
 																	<Link
 																		onClick={() => {
 																			dispatch(openPanel(WebviewPanels.OnboardNewRelic));

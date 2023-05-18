@@ -373,10 +373,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				for (const connectedProvider of PRConnectedProviders) {
 					setIsLoadingPRs({ provider: connectedProvider.id, isLoading: true });
 					setPrError({ provider: connectedProvider.id });
-					if (connectedProvider.id?.includes("bitbucket")) continue;
+					// if (connectedProvider.id?.includes("bitbucket")) continue;
 
-					const queriesByProvider: PullRequestQuery[] =
-						theQueries[connectedProvider.id] || defaultQueries[connectedProvider.id];
+					const connectedProviderQueries = theQueries[connectedProvider.id];
+
+					const queriesByProvider: PullRequestQuery[] = connectedProviderQueries?.length
+						? connectedProviderQueries
+						: defaultQueries[connectedProvider.id];
 					if (!queriesByProvider) {
 						continue;
 					}
@@ -516,6 +519,19 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				// Update default queries for users in a non-destructive way
 				if (derivedState.pullRequestQueries) {
 					patchQueries(defaultQueriesResponse, derivedState.pullRequestQueries, saveQueries);
+					const newObject: FetchProviderDefaultPullResponse = {};
+					//check if there is an empty array and if so, take it out
+					Object.keys(derivedState.pullRequestQueries).forEach(key => {
+						if (
+							derivedState.pullRequestQueries &&
+							derivedState.pullRequestQueries![key] &&
+							Array.isArray(derivedState.pullRequestQueries![key]) &&
+							derivedState.pullRequestQueries![key].length > 0
+						) {
+							newObject[key] = derivedState.pullRequestQueries![key];
+						}
+					});
+					derivedState.pullRequestQueries = newObject;
 				}
 
 				const queries = {
@@ -1680,8 +1696,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					<PaneBody key={"openpullrequests"}>
 						{!derivedState.isPRSupportedCodeHostConnected && (
 							<>
-								{/* eventually need for Bitbucket*/}
-								<NoContent>Connect to GitHub or GitLab to see your PRs</NoContent>
+								<NoContent>Connect to GitHub, GitLab, or Bitbucket to see your PRs</NoContent>
 								<IntegrationButtons noBorder>
 									{derivedState.PRSupportedProviders.map(provider => {
 										if (!provider) return null;

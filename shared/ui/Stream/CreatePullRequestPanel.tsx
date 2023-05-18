@@ -2,7 +2,6 @@ import { configureAndConnectProvider } from "@codestream/webview/store/providers
 import cx from "classnames";
 import React, { MouseEventHandler, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormattedMessage } from "react-intl";
-import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 
 import {
@@ -37,7 +36,6 @@ import { PanelHeader } from "../src/components/PanelHeader";
 import { CodeStreamState } from "../store";
 import {
 	closeAllPanels,
-	openPanel,
 	setCurrentPullRequest,
 	setCurrentRepo,
 	setCurrentReview,
@@ -144,6 +142,7 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 			"github/enterprise",
 			"gitlab*com",
 			"gitlab/enterprise",
+			"bitbucket*org",
 		];
 		const codeHostProviders = Object.keys(providers).filter(id =>
 			[
@@ -593,6 +592,7 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 					},
 				});
 			}, 100);
+			props.closePanel(e);
 		}
 	};
 
@@ -962,7 +962,7 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 		const { codeHostProviders, connectedCodeHostProviders, providers } = derivedState;
 		let items = codeHostProviders.map(providerId => {
 			// if we're already connected, don't show
-			if (connectedCodeHostProviders[providerId]) return null;
+			// if (connectedCodeHostProviders[providerId]) return null;
 
 			const provider = providers[providerId];
 			const { name, isEnterprise, host } = provider;
@@ -1679,11 +1679,7 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 										<Icon name="pull-request" />
 										<div>
 											<span>{prLabel.Pullrequest} created.</span>
-											<Button
-												onClick={() => {
-													HostApi.instance.send(OpenUrlRequestType, { url: prUrl! });
-												}}
-											>
+											<Button onClick={props.closePanel}>
 												<Icon name="pull-request" /> View {prLabel.pullrequest}
 											</Button>
 										</div>

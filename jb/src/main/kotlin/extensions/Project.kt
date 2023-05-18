@@ -1,15 +1,22 @@
 package com.codestream.extensions
 
+import com.codestream.system.CLOSE_SQUARE_BRACKET_ENCODED
 import com.codestream.system.HASH_ENCODED
+import com.codestream.system.OPEN_SQUARE_BRACKET_ENCODED
 import com.codestream.system.SPACE_ENCODED
+import com.codestream.system.replaceReservedUriCharacters
 import com.codestream.system.sanitizeURI
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.vfs.VirtualFile
 import org.eclipse.lsp4j.WorkspaceFolder
 import java.io.File
 import java.net.URL
+
+private val logger = Logger.getInstance(Project::class.java)
 
 val Project.workspaceFolders: Set<WorkspaceFolder>
     get() {
@@ -35,13 +42,11 @@ val Project.baseUri: String?
             val url = "file://" + File(basePath).canonicalPath
             sanitizeURI(
                 URL(
-                    url
-                        .replace(" ", SPACE_ENCODED)
-                        .replace("#", HASH_ENCODED)
+                    url.replaceReservedUriCharacters()
                 ).toURI().toString()
             )
         } catch (e: Exception) {
-            // LOG.warn(e)
+            logger.warn(e)
             null
         }
     }
