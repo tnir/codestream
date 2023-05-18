@@ -1935,6 +1935,7 @@ export class BitbucketProvider
 		const response = await this.delete<BitBucketCreateCommentRequest>(
 			`/repositories/${repoWithOwner}/pullrequests/${pullRequestId}/comments/${request.id}`
 		);
+
 		const directives: Directive[] = [
 			{
 				type: "updatePullRequest",
@@ -1943,8 +1944,10 @@ export class BitbucketProvider
 				},
 			},
 			{
-				type: "updateNode",
-				data: { id: request.id },
+				type: "removeNode",
+				data: {
+					id: request.id,
+				},
 			},
 		];
 
@@ -2411,6 +2414,7 @@ export class BitbucketProvider
 			viewerCanUpdate: bool,
 			viewerCanDelete: bool,
 			id: _.id,
+			deleted: _.deleted,
 			author: {
 				login: _.user.display_name,
 				name: _.user.display_name,
@@ -2445,6 +2449,7 @@ export class BitbucketProvider
 			bodyHtml: comment.content.html,
 			state: comment.type,
 			id: comment.id,
+			deleted: comment.deleted,
 		};
 	}
 
@@ -2753,40 +2758,44 @@ export class BitbucketProvider
 
 	private _setUpResponse(array: BitbucketPullRequest[]) {
 		const providerId = this.providerConfig?.id;
-		const response = array.map(item => {
-			return {
-				author: {
-					avatarUrl: item.author.links.avatar.href,
-					login: item.author.display_name,
-				},
-				baseRefName: item.destination.branch.name,
-				body: item.summary.html,
-				bodyText: item.summary.raw,
-				createdAt: new Date(item.created_on).getTime(),
-				headRefName: item.source.branch.name,
-				headRepository: {
-					name: item.source.repository.name,
-					nameWithOwner: item.source.repository.full_name,
-				},
-				id: item.id + "",
-				idComputed: JSON.stringify({
-					id: item.id,
-					pullRequestId: item.id,
-					repoWithOwner: item.source.repository.full_name,
-				}),
-				lastEditedAt: item.updated_on,
-				labels: {
-					nodes: [],
-				},
-				number: item.id,
-				providerId: providerId,
-				state: item.state,
-				title: item.title,
-				updatedAt: item.updated_on,
-				url: item.links.html.href,
-			} as GetMyPullRequestsResponse;
-		});
-		return response;
+		if (array.length) {
+			const response = array.map(item => {
+				return {
+					author: {
+						avatarUrl: item.author.links.avatar.href,
+						login: item.author.display_name,
+					},
+					baseRefName: item.destination.branch.name,
+					body: item.summary.html,
+					bodyText: item.summary.raw,
+					createdAt: new Date(item.created_on).getTime(),
+					headRefName: item.source.branch.name,
+					headRepository: {
+						name: item.source.repository.name,
+						nameWithOwner: item.source.repository.full_name,
+					},
+					id: item.id + "",
+					idComputed: JSON.stringify({
+						id: item.id,
+						pullRequestId: item.id,
+						repoWithOwner: item.source.repository.full_name,
+					}),
+					lastEditedAt: item.updated_on,
+					labels: {
+						nodes: [],
+					},
+					number: item.id,
+					providerId: providerId,
+					state: item.state,
+					title: item.title,
+					updatedAt: item.updated_on,
+					url: item.links.html.href,
+				} as GetMyPullRequestsResponse;
+			});
+			return response;
+		} else {
+			return [];
+		}
 	}
 
 	private async _getDefaultReviewers(
@@ -2829,7 +2838,7 @@ export class BitbucketProvider
 		fullnameArr: { fullname: string }[],
 		query: string
 	): Promise<GetMyPullRequestsResponse[]> {
-		let array = [];
+		let array: any[] = [];
 		for (let i = 0; i < fullnameArr.length; i++) {
 			const recents = await this.get<BitbucketValues<BitbucketPullRequests[]>>(
 				`/repositories/${fullnameArr[i].fullname}/pullrequests?${query}`
@@ -2842,6 +2851,7 @@ export class BitbucketProvider
 			} else if (recents.body.values.length === 1) {
 				if (recents.body.values[0]) {
 					array.push(recents.body.values);
+					array = flatten(array);
 				}
 			}
 		}
@@ -3282,6 +3292,23 @@ export class BitbucketProvider
 					for (const key in directive.data) {
 						node[key] = directive.data[key];
 					}
+				}
+			} else if (directive.type === "removeNode") {
+				if (!directive.data.id) continue;
+
+				let nodeIndex = 0;
+				let nodeRemoveIndex = -1;
+				for (const node of pr.timelineItems.nodes) {
+					if (node.id === directive.data.id) {
+						// is an outer node
+						nodeRemoveIndex = nodeIndex;
+						break;
+					}
+
+					nodeIndex++;
+				}
+				if (nodeRemoveIndex > -1) {
+					pr.timelineItems.nodes.splice(nodeRemoveIndex, 1);
 				}
 			} else if (directive.type === "addReply") {
 				pr.comments = pr.comments || [];
