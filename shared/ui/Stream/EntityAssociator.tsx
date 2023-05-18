@@ -64,7 +64,7 @@ export const EntityAssociator = React.memo((props: PropsWithChildren<EntityAssoc
 					value={selected}
 					isClearable
 					debounceTimeout={750}
-					placeholder={`Type to search for entities...`}
+					placeholder={`Type to search for services...`}
 					onChange={newValue => {
 						setSelected(newValue);
 					}}
@@ -132,7 +132,7 @@ export const EntityAssociator = React.memo((props: PropsWithChildren<EntityAssoc
 							});
 					}}
 				>
-					Associate
+					Show Performance Data
 				</Button>
 			</Tooltip>
 			{props.children}

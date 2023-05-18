@@ -7,7 +7,7 @@ plugins {
 }
 
 group "com.codestream"
-version "14.19.0"
+version "14.20.0"
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
@@ -120,6 +120,10 @@ runIde {
     }
 }
 
+tasks.withType(Test) {
+    environment 'TEST_MODE', 'true'
+}
+
 import org.gradle.internal.os.OperatingSystem
 
 task buildDeps(type: Exec) {
@@ -207,6 +211,7 @@ copyDebugAgent.dependsOn buildDebugDeps
 
 task buildDebugDependencies {}
 buildDebugDependencies.dependsOn buildDebugDeps, copyDebugAgent, copyProtobuf
+
 
 
 

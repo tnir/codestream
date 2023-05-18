@@ -128,6 +128,13 @@ const PR_QUERIES: PRProviderQueries = {
 			query: `is:pr is:open assignee:@me -author:@me`,
 		},
 	],
+	"bitbucket*org": [
+		{
+			providerId: "bitbucket*org",
+			name: "Waiting on my Review",
+			query: `with_default_reviewer=true&state=OPEN`,
+		},
+	],
 };
 
 interface ProviderPullRequests {
@@ -170,7 +177,8 @@ export class ThirdPartyProviderRegistry {
 					name === "github" ||
 					name === "github_enterprise" ||
 					name === "gitlab" ||
-					name === "gitlab_enterprise"
+					name === "gitlab_enterprise" ||
+					name === "bitbucket"
 				);
 			}
 		);
@@ -870,20 +878,12 @@ export class ThirdPartyProviderRegistry {
 			],
 			"bitbucket*org": [
 				//https://api.bitbucket.org//2.0/
-				// {
-				// 	providerId: "bitbucket*org",
-				// 	name: "Waiting on my Review",
-				// 	// TODO - @me @workspace @repo
-				// 	query: ``,
-				// 	hidden: false
-				// },
-				// {
-				// 	providerId: "bitbucket*org",
-				// 	name: "Assigned to Me",
-				// 	// TODO - how should this be formatted?
-				// 	query: `repositories/<foo>>/<bar>/pullrequests/<number>?fields=reviewers`, //this is per pullrequest
-				// 	hidden: false
-				// },
+				{
+					providerId: "bitbucket*org",
+					name: "Waiting on my Review",
+					query: `with_default_reviewer=true&state=OPEN`,
+					hidden: false,
+				},
 				{
 					providerId: "bitbucket*org",
 					name: "Created by Me",
@@ -893,7 +893,7 @@ export class ThirdPartyProviderRegistry {
 				{
 					providerId: "bitbucket*org",
 					name: "Recent",
-					query: `sort=updated_on&state=OPEN&state=MERGED&state=DECLINED&state=SUPERSEDED&pagelen=5`,
+					query: `recent=true&state=OPEN&state=MERGED&state=DECLINED&state=SUPERSEDED&pagelen=5`,
 					hidden: false,
 				},
 			],

@@ -87,7 +87,16 @@ export async function git(
 	if (promise === undefined) {
 		Logger.log(`GIT: Running${command}`);
 		// Fixes https://github.com/eamodio/vscode-gitlens/issues/73 & https://github.com/eamodio/vscode-gitlens/issues/161
-		args.splice(0, 0, "-c", "core.quotepath=false", "-c", "color.ui=false");
+		args.splice(
+			0,
+			0,
+			"-c",
+			"core.quotepath=false",
+			"-c",
+			"color.ui=false",
+			"-c",
+			"log.showSignature=false"
+		);
 		if (isWslGit()) {
 			args.unshift("-d", wslDistro(), "git");
 		}

@@ -1,5 +1,18 @@
 # Change Log
 
+## [14.20.0] - 2023-5-18
+
+### Added
+- Adds support for reviewing Bitbucket pull requests
+- Adds "All other methods" node to Code-Level Metrics observability section 
+- Adds abillity for admins to mass delete all posts and individual posts on an error
+- Adds list of related errors to the code-level metrics details view
+
+### Fixed
+
+- Fixes for code-level-metrics charts not loading
+- Addresses [#1317](https://github.com/TeamCodeStream/codestream/issues/1317) &mdash; Error gpg bad revision
+
 ## [14.19.0] - 2023-5-4
 
 ### Added
