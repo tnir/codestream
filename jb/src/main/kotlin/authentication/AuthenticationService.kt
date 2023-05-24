@@ -123,6 +123,7 @@ class AuthenticationService(val project: Project) {
         appSettings.state.teamId = null
     }
 
+    private var upgradeRequiredShown = false
     fun onApiVersionChanged(notification: DidChangeApiVersionCompatibilityNotification) {
         apiVersionCompatibility = notification.compatibility
         if (notification.compatibility == ApiVersionCompatibility.API_UPGRADE_RECOMMENDED) {
@@ -130,7 +131,8 @@ class AuthenticationService(val project: Project) {
         }
 
         project.webViewService?.postNotification(DidChangeApiVersionCompatibility())
-        if (notification.compatibility != ApiVersionCompatibility.API_COMPATIBLE) {
+        if (notification.compatibility != ApiVersionCompatibility.API_COMPATIBLE && !upgradeRequiredShown) {
+            upgradeRequiredShown = true
             ApplicationManager.getApplication().invokeLater {
                 project.codeStream?.show()
             }
