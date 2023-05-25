@@ -1056,11 +1056,15 @@ export class NewRelicProvider
 		let spanSubquery = "";
 		if (functionIdentifiers?.functionName) {
 			codeClause = `code.function = '${functionIdentifiers.functionName}'`;
+			const codeClauseSubClauses = [];
 			if (functionIdentifiers.codeNamespace) {
-				codeClause += ` AND code.namespace = '${functionIdentifiers.codeNamespace}'`;
+				codeClauseSubClauses.push(`code.namespace = '${functionIdentifiers.codeNamespace}'`);
 			}
 			if (functionIdentifiers.relativeFilePath) {
-				codeClause += ` AND code.filepath = '${functionIdentifiers.relativeFilePath}'`;
+				codeClauseSubClauses.push(`code.filepath = '${functionIdentifiers.relativeFilePath}'`);
+			}
+			if (codeClauseSubClauses.length > 0) {
+				codeClause += ` AND (${codeClauseSubClauses.join(" OR ")})`;
 			}
 			spanSubquery =
 				functionIdentifiers && functionIdentifiers.functionName
