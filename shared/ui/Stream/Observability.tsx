@@ -27,6 +27,7 @@ import { shallowEqual } from "react-redux";
 import styled from "styled-components";
 
 import { ObservabilityRelatedWrapper } from "@codestream/webview/Stream/ObservabilityRelatedWrapper";
+import { ObservabilityPreview } from "@codestream/webview/Stream/ObservabilityPreview";
 import { CurrentMethodLevelTelemetry } from "@codestream/webview/store/context/types";
 import { setRefreshAnomalies } from "../store/context/actions";
 
@@ -1289,10 +1290,11 @@ export const Observability = React.memo((props: Props) => {
 												{repoForEntityAssociator && (
 													<>
 														<EntityAssociator
+															isSidebarView={true}
 															label={
 																<span>
-																	Select the service on New Relic that is built from this repository to see how it's
-																	performing. Or,{" "}
+																	Select the service on New Relic that is built from this repository
+																	to see how it's performing. Or,{" "}
 																	<Link
 																		onClick={() => {
 																			dispatch(openPanel(WebviewPanels.OnboardNewRelic));
@@ -1312,6 +1314,7 @@ export const Observability = React.memo((props: Props) => {
 															remote={repoForEntityAssociator.repoRemote}
 															remoteName={repoForEntityAssociator.repoName}
 														/>
+														<ObservabilityPreview />
 													</>
 												)}
 											</>
