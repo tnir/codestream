@@ -299,30 +299,32 @@ export const onLogin =
 			})
 		);
 
+		const { companies, teams, context } = getState();
+		const team = teams[context.currentTeamId];
+		const company = companies[team.companyId];
+
 		if (nrSignupTestUi) {
-			const userIdNumeric = response.state.userId.replace(/\D/g, "").substring(0, 10);
-			const abTestValue = Number(userIdNumeric) % 2;
-
-			if (abTestValue === 0) {
-				setUserPreferences([
-					{
-						prefPath: ["sidebarPanes", WebviewPanels.OpenPullRequests, "removed"],
-						value: true,
-					},
-
-					{
-						prefPath: ["sidebarPanes", WebviewPanels.OpenReviews, "removed"],
-						value: true,
-					},
-					{
-						prefPath: ["sidebarPanes", WebviewPanels.Tasks, "removed"],
-						value: true,
-					},
-					{
-						prefPath: ["sidebarPanes", WebviewPanels.CICD, "removed"],
-						value: true,
-					},
-				]);
+			if (company?.testGroups && company?.testGroups["simple-ui"] === "simple") {
+				dispatch(
+					setUserPreferences([
+						{
+							prefPath: ["sidebarPanes", WebviewPanels.OpenPullRequests, "removed"],
+							value: true,
+						},
+						{
+							prefPath: ["sidebarPanes", WebviewPanels.OpenReviews, "removed"],
+							value: true,
+						},
+						{
+							prefPath: ["sidebarPanes", WebviewPanels.Tasks, "removed"],
+							value: true,
+						},
+						{
+							prefPath: ["sidebarPanes", WebviewPanels.CICD, "removed"],
+							value: true,
+						},
+					])
+				);
 			}
 		}
 
@@ -344,7 +346,6 @@ export const onLogin =
 			dispatch(setCurrentCodeError(response.state.codeErrorId));
 		}
 
-		const { context } = getState();
 		if (context.pendingProtocolHandlerUrl && !teamCreated) {
 			await dispatch(handlePendingProtocolHandlerUrl(context.pendingProtocolHandlerUrl));
 			dispatch(clearPendingProtocolHandlerUrl());
