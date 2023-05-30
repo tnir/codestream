@@ -1274,6 +1274,7 @@ export const UpdateNewRelicOrgIdRequestType = new RequestType<
 
 export interface GetObservabilityErrorsRequest {
 	filters: { repoId: string; entityGuid?: string }[];
+	timeWindow?: string;
 }
 
 export interface ObservabilityErrorCore {
