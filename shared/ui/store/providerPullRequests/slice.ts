@@ -1,5 +1,4 @@
 import {
-	BitbucketParticipantRole,
 	DiscussionNode,
 	FetchThirdPartyPullRequestCommitsResponse,
 	FetchThirdPartyPullRequestPullRequest,
@@ -987,6 +986,7 @@ const providerPullRequestsSlice = createSlice({
 						} else if (directive.type === "updateReviewers") {
 							const uuid = directive.data.user.account_id;
 							const foundUser = pr.participants.nodes.findIndex(_ => _.user?.account_id === uuid);
+							const foundReviewer = pr.reviewers!.nodes.findIndex(e => e.user?.account_id === uuid);
 							if (foundUser != -1) {
 								pr.participants.nodes[foundUser].state = directive.data.state;
 								pr.participants.nodes[foundUser].approved = directive.data.approved;
@@ -1010,21 +1010,29 @@ const providerPullRequestsSlice = createSlice({
 									role: directive.data.role,
 								});
 							}
-							pr.participants.nodes.filter(participant => {
-								if (
-									pr.reviewers?.nodes.find(
-										reviewer => reviewer.user.account_id !== participant.user.account_id
-									)
-								) {
-									if (participant.role === BitbucketParticipantRole.Participant) {
-										if (participant.state !== null) {
-											pr.reviewers?.nodes.push(participant);
-										}
-									} else {
-										pr.reviewers?.nodes.push(participant);
-									}
-								}
-							});
+							if (foundReviewer != -1) {
+								pr.reviewers!.nodes[foundReviewer].state = directive.data.state;
+								pr.reviewers!.nodes[foundReviewer].approved = directive.data.approved;
+								pr.reviewers!.nodes[foundReviewer].participated_on = directive.data.participated_on;
+								pr.reviewers!.nodes[foundReviewer].role = directive.data.role;
+							} else {
+								pr.reviewers?.nodes.push({
+									user: {
+										account_id: uuid,
+										nickname: directive.data.user.nickname,
+										display_name: directive.data.user.display_name,
+										links: {
+											avatar: {
+												href: directive.data.user.links.avatar.href,
+											},
+										},
+									},
+									state: directive.data.state,
+									approved: directive.data.approved,
+									participated_on: directive.data.participated_on,
+									role: directive.data.role,
+								});
+							}
 						} else if (directive.type === "addNode") {
 							pr.comments = pr.comments || [];
 							pr.comments.push(directive.data);
