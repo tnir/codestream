@@ -215,7 +215,7 @@ export const PullRequestConversationTab = (props: {
 			}
 		} else {
 			//if no reviewers, use all members
-			newLabels = pr.members.nodes;
+			newLabels = pr.members.nodes.filter(member => member.user.account_id !== pr.author.id);
 		}
 		return newLabels;
 	};
