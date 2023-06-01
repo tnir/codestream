@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { Modal } from "../../Modal";
-import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
+import {
+	BitbucketParticipantRole,
+	FetchThirdPartyPullRequestPullRequest,
+} from "@codestream/protocols/agent";
 import { Dialog } from "@codestream/webview/src/components/Dialog";
 import { InlineMenu } from "@codestream/webview/src/components/controls/InlineMenu";
 import Button from "../../Button";
@@ -11,6 +14,44 @@ interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
 	onClose: Function;
 	isAddReviewer: boolean;
+	addItems: {
+		type?: string;
+		user: {
+			display_name: string;
+			links: {
+				avatar: {
+					href: string;
+				};
+			};
+			type?: string;
+			uuid: string;
+			account_id: string;
+			nickname: string;
+		};
+		role: BitbucketParticipantRole;
+		approved: boolean;
+		state?: string; //"approved" | "changes_requested"
+		participated_on: string;
+	}[];
+	removeItems: {
+		type?: string;
+		user: {
+			display_name: string;
+			links: {
+				avatar: {
+					href: string;
+				};
+			};
+			type?: string;
+			uuid: string;
+			account_id: string;
+			nickname: string;
+		};
+		role: BitbucketParticipantRole;
+		approved: boolean;
+		state?: string; //"approved" | "changes_requested"
+		participated_on: string;
+	}[];
 }
 
 export const BitbucketParticipantEditScreen = (props: Props) => {
@@ -21,60 +62,13 @@ export const BitbucketParticipantEditScreen = (props: Props) => {
 	const [reviewerId, setReviewerId] = useState("");
 	const [error, setError] = useState("");
 
-	const removeRevieweritems = () => {
-		if (props.pr.reviewers?.nodes.length) {
-			return props.pr.reviewers?.nodes.map(_ => {
-				return {
-					label: _.user.display_name,
-					key: _.user.account_id,
-					action: () => {
-						setReviewerId(_.user.account_id);
-						setReviewerSelection(_.user.display_name);
-					},
-				};
-			});
-		}
-		return [];
-	};
-
-	const getRemoveReviewerItems = removeRevieweritems();
-
-	const addReviewerItems = () => {
-		let itemsMap;
-		if (props.pr.members.nodes.length) {
-			itemsMap = props.pr.members.nodes.map(_ => {
-				if (_.user.account_id !== pr.pr.author.id) {
-					return {
-						label: _.user.display_name,
-						key: _.user.account_id,
-						action: () => {
-							setReviewerId(_.user.account_id);
-							setReviewerSelection(_.user.display_name);
-						},
-					};
-				} else {
-					return {
-						label: "",
-						key: _.user.account_id,
-						action: () => {},
-					};
-				}
-			});
-		} else {
-			itemsMap = [];
-		}
-		return itemsMap;
-	};
-
-	const getAddReviewerItems = addReviewerItems();
-
 	const removeReviewer = async () => {
 		await dispatch(
 			api({
 				method: "removeReviewerFromPullRequest",
 				params: {
 					reviewerId: reviewerId,
-					pullRequestId: props.pr.id,
+					pullRequestId: props.pr.number,
 					fullname: props.pr.repository.nameWithOwner,
 				},
 			})
@@ -88,7 +82,7 @@ export const BitbucketParticipantEditScreen = (props: Props) => {
 				method: "addReviewerToPullRequest",
 				params: {
 					reviewerId: reviewerId,
-					pullRequestId: props.pr.id,
+					pullRequestId: props.pr.number,
 					fullname: props.pr.repository.nameWithOwner,
 				},
 			})
@@ -113,11 +107,30 @@ export const BitbucketParticipantEditScreen = (props: Props) => {
 									{/* {reviewerError && <WarningBox items={[{ message: reviewerError }]}></WarningBox>} */}
 									<div style={{ margin: "20px 0" }}>
 										<div className="controls">
-											<InlineMenu items={getRemoveReviewerItems}>{reviewerSelection}</InlineMenu>
-											<div style={{ height: "10px" }} />
+											<>
+												<InlineMenu
+													items={props.removeItems.map(_ => {
+														return {
+															label: _.user.display_name,
+															key: _.user.account_id,
+															action: () => {
+																setReviewerId(_.user.account_id);
+																setReviewerSelection(_.user.display_name);
+															},
+														};
+													})}
+												>
+													{reviewerSelection}
+												</InlineMenu>
+												<div style={{ height: "10px" }} />
+											</>
 										</div>
 									</div>
-									<Button style={{ padding: "0 5px 0 5px" }} onClick={removeReviewer}>
+									<Button
+										disabled={reviewerSelection === "Select reviewer"}
+										style={{ padding: "0 5px 0 5px" }}
+										onClick={removeReviewer}
+									>
 										Remove
 									</Button>
 								</div>
@@ -140,11 +153,28 @@ export const BitbucketParticipantEditScreen = (props: Props) => {
 									{/* {reviewerError && <WarningBox items={[{ message: reviewerError }]}></WarningBox>} */}
 									<div style={{ margin: "20px 0" }}>
 										<div className="controls">
-											<InlineMenu items={getAddReviewerItems}>{reviewerSelection}</InlineMenu>
+											<InlineMenu
+												items={props.addItems.map(_ => {
+													return {
+														label: _.user.display_name,
+														key: _.user.account_id,
+														action: () => {
+															setReviewerId(_.user.account_id);
+															setReviewerSelection(_.user.display_name);
+														},
+													};
+												})}
+											>
+												{reviewerSelection}
+											</InlineMenu>
 											<div style={{ height: "10px" }} />
 										</div>
 									</div>
-									<Button style={{ padding: "0 5px 0 5px" }} onClick={addReviewer}>
+									<Button
+										disabled={reviewerSelection === "Select reviewer"}
+										style={{ padding: "0 5px 0 5px" }}
+										onClick={addReviewer}
+									>
 										Add
 									</Button>
 								</div>

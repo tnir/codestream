@@ -662,28 +662,44 @@ export const setUserPreference = createAppAsyncThunk<void, SetUserPreferenceRequ
 	}
 );
 
-// usage setUserPreference({"foo":true, "bar.baz.bin":"no"})
-export const setUserPreferences = (data: any) => async dispatch => {
-	const newPreference = {};
-	let newPreferencePointer = newPreference;
-	for (const key of Object.keys(data)) {
-		const prefPath = key.split(".");
-		while (prefPath.length > 1) {
-			const part = prefPath.shift()!.replace(/\./g, "*");
-			newPreferencePointer[part] = {};
-			newPreferencePointer = newPreferencePointer[part];
-		}
-		newPreferencePointer[prefPath[0].replace(/\./g, "*")] = data[key];
-	}
+/* 
+Usage:
+	dispatch(
+		setUserPreferences([
+			{ prefPath: ["pizza"], value: "yes" },
+			{ prefPath: ["car", "honda", "civic"], value: "decent" },
+		])
+	);
+*/
+export const setUserPreferences = (request: SetUserPreferenceRequest[]) => async dispatch => {
+	const result: any = {};
 
+	for (const preference of request) {
+		let currentObj = result;
+		const { prefPath, value } = preference;
+
+		for (let i = 0; i < prefPath.length; i++) {
+			const key = prefPath[i];
+
+			if (i === prefPath.length - 1) {
+				currentObj[key] = value;
+			} else {
+				currentObj[key] = currentObj[key] || {};
+				currentObj = currentObj[key];
+			}
+		}
+	}
 	try {
 		// optimistically merge it into current preferences
-		dispatch(updatePreferences(newPreference));
+		dispatch(updatePreferences(result));
 		const response = await HostApi.instance.send(UpdatePreferencesRequestType, {
-			preferences: newPreference,
+			preferences: result,
 		});
 		// update with confirmed server response
-		dispatch(updatePreferences(response.preferences));
+		// To keep consistent with setUserPreference (singular)...
+		// turning this off so we don't get 3 updates: one optimistically, one
+		// via API return, and one via pubnu
+		// dispatch(updatePreferences(response.preferences));
 	} catch (error) {
 		logError(`Error trying to update preferences`, { message: error.message });
 	}

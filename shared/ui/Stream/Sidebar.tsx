@@ -90,6 +90,7 @@ const EMPTY_HASH = {};
 const EMPTY_SIZE = { width: 0, height: 0 };
 export const Sidebar = React.memo(function Sidebar() {
 	const dispatch = useAppDispatch();
+
 	const derivedState = useAppSelector((state: CodeStreamState) => {
 		const preferences = getPreferences(state);
 		const repos = getRepos(state);
@@ -114,7 +115,6 @@ export const Sidebar = React.memo(function Sidebar() {
 				_ => _ !== WebviewPanels.OpenReviews && _ !== WebviewPanels.CodemarksForFile
 			);
 		}
-
 		return {
 			repos,
 			sidebarPanes: preferences.sidebarPanes || EMPTY_HASH,

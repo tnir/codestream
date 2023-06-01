@@ -196,15 +196,15 @@ export const PullRequestReviewButton = (props: Props) => {
 	};
 
 	const mapping = {
-		approve: { icon: "thumbsup", text: "Unapprove", requestedState: "unapprove" }, //this pullrequest is approved
-		unapprove: { icon: "thumbsdown", text: "Approve", requestedState: "approve" }, //this pullrequest is unapproved
+		approve: { icon: "thumbsup", text: "Approve", requestedState: "approve" }, //this pullrequest is unapproved, clicking this will approve it
+		unapprove: { icon: "thumbsdown", text: "Unapprove", requestedState: "unapprove" }, //this pullrequest is approved, clicking this will unapprove it
 		"request-changes": {
-			icon: "question",
+			icon: "review",
 			text: "Request Changes",
 			requestedState: "request-changes", //this pull request doesn't already have changes requested
 		},
 		"changes-requested": {
-			icon: "question",
+			icon: "review",
 			text: "Changes Requested",
 			requestedState: "changes-requested", //this really mean un-request changes (bitbucket button on their UI says changes-requested)
 		},
@@ -219,15 +219,15 @@ export const PullRequestReviewButton = (props: Props) => {
 
 	const currentUser = props.pullRequest.viewer.id;
 
-	if (props.pullRequest.participantsUnfiltered.nodes.length !== 0) {
-		const currentUserInfo = props.pullRequest.participantsUnfiltered.nodes.find(
+	if (props.pullRequest.participants.nodes.length !== 0) {
+		const currentUserInfo = props.pullRequest.participants.nodes.find(
 			_ => _.user.account_id === currentUser
 		);
 		viewerRole = currentUserInfo?.role;
 		if (currentUserInfo?.approved) {
-			approvalStatus = mapping["approve"];
-		} else {
 			approvalStatus = mapping["unapprove"];
+		} else {
+			approvalStatus = mapping["approve"];
 		}
 		if (currentUserInfo?.state === "changes_requested") {
 			requestStatus = mapping["changes-requested"];
@@ -235,7 +235,7 @@ export const PullRequestReviewButton = (props: Props) => {
 			requestStatus = mapping["request-changes"];
 		}
 	} else {
-		approvalStatus = mapping["unapprove"];
+		approvalStatus = mapping["approve"];
 		requestStatus = mapping["request-changes"];
 	}
 
@@ -245,9 +245,8 @@ export const PullRequestReviewButton = (props: Props) => {
 				method: "submitReview",
 				params: {
 					eventType: value,
-					pullRequestId: props.pullRequest.id,
+					pullRequestId: props.pullRequest.number,
 					userId: props.pullRequest.viewer.id,
-					participants: props.pullRequest.participantsUnfiltered.nodes,
 					repoWithOwner: props.pullRequest.repository.nameWithOwner,
 					viewerRole: viewerRole,
 				},

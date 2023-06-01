@@ -416,8 +416,8 @@ interface BitbucketRepoFull extends BitbucketRepo {
 		branching_model: boolean;
 	};
 	author: BitbucketAuthor;
-	participants: BitbucketUnfilteredParticipants[];
-	reviewers?: BitbucketReviewers[];
+	participants: BitbucketParticipants[];
+	reviewers?: BitbucketReviewers[]; //this is bitbucket API reviewer array, not OUR version (our version includes participants with status & reviewers)
 }
 
 interface BitbucketPullRequestComment2 {
@@ -662,6 +662,7 @@ interface BitbucketWorkspaceMembers {
 [];
 
 interface BitbucketReviewers {
+	//This is the reviewer from the bitbucket API, NOT our version of reviewer
 	display_name: string;
 	links: {
 		self: {
@@ -682,7 +683,7 @@ interface BitbucketReviewers {
 [];
 
 interface BitbucketUpdateReviewerRequest {
-	reviewers: BitbucketReviewers[];
+	reviewers: BitbucketReviewers[]; //this is the reviewers for Bitbucket API, not for us
 }
 
 interface BitbucketMergeRequestResponse {
@@ -812,7 +813,7 @@ interface BitbucketMergeRequestResponse {
 		};
 	};
 	reviewers: BitbucketReviewers[];
-	participants: BitbucketUnfilteredParticipants[];
+	participants: BitbucketParticipants[];
 	links: {
 		html: {
 			href: string;
@@ -1145,7 +1146,7 @@ interface BitbucketPullRequest {
 		};
 	};
 	reviewers?: BitbucketReviewers[];
-	participants: BitbucketUnfilteredParticipants[];
+	participants: BitbucketParticipants[];
 	links: {
 		html: {
 			href: string;
@@ -1163,7 +1164,7 @@ interface BitbucketUpdateDescription {
 	description: string;
 }
 
-export interface BitbucketUnfilteredParticipants {
+export interface BitbucketParticipants {
 	type?: string;
 	user: {
 		display_name: string;
@@ -1495,44 +1496,19 @@ export class BitbucketProvider
 		return { users: [] };
 	}
 
-	private isPRApproved = (participants: BitbucketUnfilteredParticipants[]) => {
-		//returns false or true
-		if (participants.length) {
-			const participantLength = participants.length;
-			const approvedParticipants = participants.filter(
-				(_: { approved: boolean; state?: string }) => _.approved && _.state === "approved"
-			);
-			const isApproved = participantLength == approvedParticipants?.length;
-			return isApproved;
-		}
-		return false;
-	};
-
-	private excludeNonActiveParticipants = (participants: BitbucketUnfilteredParticipants[]) => {
-		const nonReviewers = participants.filter(
-			(_: { role: BitbucketParticipantRole }) => _.role !== BitbucketParticipantRole.Reviewer
-		);
-		const filteredParticipants = nonReviewers.filter((_: { state?: string }) => _.state !== null);
-		return filteredParticipants;
-	};
-
-	private separateReviewers = (participants: BitbucketUnfilteredParticipants[]) => {
-		const reviewers = participants.filter(
-			(_: { role: BitbucketParticipantRole }) => _.role !== BitbucketParticipantRole.Participant
-		);
-		return reviewers;
-	};
-
-	private isChangesRequested = (participants: any) => {
-		if (participants.length) {
-			const changesRequestedParticipants = participants.filter(
-				(_: { approved: boolean; state?: string }) => !_.approved && _.state === "changes_requested"
-			);
-			if (changesRequestedParticipants.length) {
-				return true;
+	//reviewers array needs to be participants wtih status and all those marked as reviewer
+	private reviewers = (participants: BitbucketParticipants[]) => {
+		const array: BitbucketParticipants[] = [];
+		participants.filter(_ => {
+			if (_.role === BitbucketParticipantRole.Participant) {
+				if (_.state !== null) {
+					array.push(_);
+				}
+			} else {
+				array.push(_);
 			}
-		}
-		return false;
+		});
+		return array;
 	};
 
 	@log()
@@ -1555,36 +1531,56 @@ export class BitbucketProvider
 			const repoSplit = repoWithOwner.split("/");
 			const workspace = repoSplit[0];
 
-			const pr = await this.get<BitbucketPullRequest>(
+			const prResponse = this.get<BitbucketPullRequest>(
 				`/repositories/${repoWithOwner}/pullrequests/${pullRequestId}`
 			);
 
-			const comments = await this.get<BitbucketValues<BitbucketPullRequestComment[]>>(
+			const commentsResponse = this.get<BitbucketValues<BitbucketPullRequestComment[]>>(
 				`/repositories/${repoWithOwner}/pullrequests/${pullRequestId}/comments?pagelen=100`
 			);
 
-			const timeline = await this.get<BitbucketValues<TimelineItem[]>>(
+			const timelineResponse = this.get<BitbucketValues<TimelineItem[]>>(
 				`/repositories/${repoWithOwner}/pullrequests/${pullRequestId}/activity?pagelen=50`
 			);
 
-			const commits = await this.get<BitbucketValues<BitbucketPullRequestCommit[]>>(
+			const commitsResponse = this.get<BitbucketValues<BitbucketPullRequestCommit[]>>(
 				`/repositories/${repoWithOwner}/pullrequests/${pullRequestId}/commits`
 			);
 
-			const diffstat = await this.get<BitbucketValues<BitbucketDiffStat[]>>(
+			const diffstatResponse = this.get<BitbucketValues<BitbucketDiffStat[]>>(
 				`/repositories/${repoWithOwner}/pullrequests/${pullRequestId}/diffstat`
 			);
 
-			const members = await this.get<BitbucketValues<BitbucketWorkspaceMembers[]>>(
+			const membersResponse = this.get<BitbucketValues<BitbucketWorkspaceMembers[]>>(
 				`/workspaces/${workspace}/members`
 			);
 
 			//get all users who have a permission of greater than read
-			const permissions = await this.get<BitbucketValues<BitbucketUserPermissionsRequest[]>>(
+			const permissionsResponse = this.get<BitbucketValues<BitbucketUserPermissionsRequest[]>>(
 				`/user/permissions/repositories?q=permission>"read"`
 			);
 
-			const userResponse = await this.getCurrentUser();
+			const userResponseResponse = this.getCurrentUser();
+
+			const allResponses = await Promise.all([
+				prResponse,
+				commentsResponse,
+				timelineResponse,
+				commitsResponse,
+				diffstatResponse,
+				membersResponse,
+				permissionsResponse,
+				userResponseResponse,
+			]);
+
+			const pr = allResponses[0];
+			const comments = allResponses[1];
+			const timeline = allResponses[2];
+			const commits = allResponses[3];
+			const diffstat = allResponses[4];
+			const members = allResponses[5];
+			const permissions = allResponses[6];
+			const userResponse = allResponses[7];
 
 			const isViewerCanUpdate = () => {
 				return !!permissions.body.values.find(
@@ -1667,10 +1663,7 @@ export class BitbucketProvider
 				}
 			};
 
-			const newParticipantsArray = this.excludeNonActiveParticipants(pr.body.participants);
-			const newReviewersArray = this.separateReviewers(pr.body.participants);
-
-			const isApproved = this.isPRApproved(newParticipantsArray);
+			const newReviewersArray = this.reviewers(pr.body.participants); //participants wtih status and all those marked as reviewer
 
 			const viewerDidAuthor = isViewerDidAuthor();
 
@@ -1730,22 +1723,18 @@ export class BitbucketProvider
 							nodes: mappedTimelineItems,
 						},
 						participants: {
-							nodes: newParticipantsArray,
-						},
-						participantsUnfiltered: {
-							nodes: pr.body.participants,
+							nodes: pr.body.participants, //all participants & reviewers regardless of status
 						},
 						reviewers: {
-							nodes: newReviewersArray,
+							nodes: newReviewersArray, //participants wtih status and all those marked as reviewer
 						},
 						members: {
-							nodes: members.body.values,
+							nodes: members.body.values, //all members in the workspace
 						},
 						url: pr.body.links.html.href,
 						viewer: viewer,
 						viewerDidAuthor: viewerDidAuthor,
 						viewerCanUpdate: viewerCanUpdate,
-						isApproved: isApproved,
 						id: pr.body.id,
 						updatedAt: pr.body.updated_on,
 					} as any, //TODO: make this work
@@ -1778,7 +1767,6 @@ export class BitbucketProvider
 		mergeMessage: string;
 		mergeMethod: string;
 		closeSourceBranch?: boolean;
-		prParticipants: BitbucketUnfilteredParticipants;
 	}): Promise<Directives | undefined | { error: string }> {
 		const payload: BitbucketMergeRequest = {
 			message: request.mergeMessage,
@@ -2125,6 +2113,10 @@ export class BitbucketProvider
 			payload
 		);
 
+		const selectedParticipant = response.body.participants.find(
+			_ => _.user.account_id === request.reviewerId
+		);
+
 		const directives: Directive[] = [
 			{
 				type: "updatePullRequest",
@@ -2135,7 +2127,20 @@ export class BitbucketProvider
 			{
 				type: "removeRequestedReviewer",
 				data: {
-					participants: response.body.participants,
+					user: {
+						display_name: selectedParticipant?.user.display_name,
+						account_id: selectedParticipant?.user.account_id,
+						nickname: selectedParticipant?.user.nickname,
+						links: {
+							avatar: {
+								href: selectedParticipant?.user.links.avatar.href,
+							},
+						},
+					},
+					approved: selectedParticipant?.approved,
+					state: selectedParticipant?.state,
+					participated_on: selectedParticipant?.participated_on,
+					role: selectedParticipant?.role,
 				},
 			},
 		];
@@ -2156,25 +2161,24 @@ export class BitbucketProvider
 		const repoSplit = request.fullname.split("/");
 		const workspace = repoSplit[0];
 
+		//access workspace members in order to get add new reviewer info
 		const members = await this.get<BitbucketValues<BitbucketWorkspaceMembers[]>>(
 			`/workspaces/${workspace}/members`
 		);
 
 		//get user info from members
-		let userInfo = pr.body.reviewers;
-		const selectedUser = request.reviewerId;
-		if (userInfo) {
-			members.body.values.find(_ => {
-				if (_.user.account_id === selectedUser) {
-					userInfo?.push(_.user);
-				}
-			});
-		}
 
-		const newReviewers = userInfo;
+		let reviewers = pr.body.reviewers || [];
+		const selectedUser = request.reviewerId;
+
+		members.body.values.map(member => {
+			if (member.user.account_id === selectedUser) {
+				reviewers.push(member.user);
+			}
+		});
 
 		const payload = {
-			reviewers: newReviewers ?? [],
+			reviewers: reviewers,
 		};
 		Logger.log(`commenting:addRequestedReviewer`, {
 			request: request,
@@ -2184,6 +2188,10 @@ export class BitbucketProvider
 		const response = await this.put<BitbucketUpdateReviewerRequest, BitbucketPullRequest>(
 			`/repositories/${request.fullname}/pullrequests/${request.pullRequestId}`,
 			payload
+		);
+
+		const selectedParticipant = response.body.participants.find(
+			_ => _.user.account_id === selectedUser
 		);
 
 		const directives: Directive[] = [
@@ -2196,7 +2204,20 @@ export class BitbucketProvider
 			{
 				type: "updateReviewers",
 				data: {
-					participants: response.body.participants,
+					user: {
+						display_name: selectedParticipant?.user.display_name,
+						account_id: selectedParticipant?.user.account_id,
+						nickname: selectedParticipant?.user.nickname,
+						links: {
+							avatar: {
+								href: selectedParticipant?.user.links.avatar.href,
+							},
+						},
+					},
+					approved: selectedParticipant?.approved,
+					state: selectedParticipant?.state,
+					participated_on: selectedParticipant?.participated_on,
+					role: selectedParticipant?.role,
 				},
 			},
 		];
@@ -2213,7 +2234,6 @@ export class BitbucketProvider
 		// used with old servers
 		pullRequestReviewId?: string;
 		userId: string;
-		participants: BitbucketUnfilteredParticipants[];
 		repoWithOwner: string;
 		viewerRole: string;
 	}): Promise<Directives> {
@@ -3145,17 +3165,36 @@ export class BitbucketProvider
 				//this is for approve
 				// go through the array of participants, match the uuid, then do update
 				const uuid = directive.data.user.account_id;
-				const foundUser = pr.participantsUnfiltered.nodes.findIndex(
-					_ => _.user?.account_id === uuid
-				);
+				const foundUser = pr.participants.nodes.findIndex(_ => _.user?.account_id === uuid);
+				const foundReviewer = pr.reviewers!.nodes.findIndex(e => e.user?.account_id === uuid);
 				if (foundUser != -1) {
-					pr.participantsUnfiltered.nodes[foundUser].state = directive.data.state;
-					pr.participantsUnfiltered.nodes[foundUser].approved = directive.data.approved;
-					pr.participantsUnfiltered.nodes[foundUser].participated_on =
-						directive.data.participated_on;
-					pr.participantsUnfiltered.nodes[foundUser].role = directive.data.role;
+					pr.participants.nodes[foundUser].state = directive.data.state;
+					pr.participants.nodes[foundUser].approved = directive.data.approved;
+					pr.participants.nodes[foundUser].participated_on = directive.data.participated_on;
+					pr.participants.nodes[foundUser].role = directive.data.role;
+					pr.reviewers!.nodes[foundReviewer].state = directive.data.state;
+					pr.reviewers!.nodes[foundReviewer].approved = directive.data.approved;
+					pr.reviewers!.nodes[foundReviewer].participated_on = directive.data.participated_on;
+					pr.reviewers!.nodes[foundReviewer].role = directive.data.role;
 				} else {
-					pr.participantsUnfiltered.nodes.push({
+					pr.participants.nodes.push({
+						user: {
+							account_id: uuid,
+							nickname: directive.data.user.nickname,
+							display_name: directive.data.user.display_name,
+							links: {
+								avatar: {
+									href: directive.data.user.links.avatar.href,
+								},
+							},
+						},
+						state: directive.data.state,
+						approved: directive.data.approved,
+						participated_on: directive.data.participated_on,
+						role: directive.data.role,
+					});
+
+					pr.reviewers?.nodes.push({
 						user: {
 							account_id: uuid,
 							nickname: directive.data.user.nickname,
@@ -3172,53 +3211,54 @@ export class BitbucketProvider
 						role: directive.data.role,
 					});
 				}
-				const nonReviewers = pr.participantsUnfiltered.nodes.filter(
-					_ => _.role !== BitbucketParticipantRole.Reviewer
-				);
-				const filteredParticipants = nonReviewers.filter(_ => _.state !== null);
-				const reviewers = pr.participantsUnfiltered.nodes.filter(
-					_ => _.role !== BitbucketParticipantRole.Participant
-				);
-				//update participants with filteredParticipants & update reviewers with reviewers
-				pr.participants.nodes = filteredParticipants;
-				pr.reviewers.nodes = reviewers;
 			} else if (directive.type === "removeApprovedBy") {
 				//this is for unapprove
 				const uuid = directive.data.user.account_id;
-				const foundUser = pr.participantsUnfiltered.nodes.findIndex(
-					_ => _.user?.account_id === uuid
-				);
+				const foundUser = pr.participants.nodes.findIndex(_ => _.user?.account_id === uuid);
+				const foundReviewer = pr.reviewers!.nodes.findIndex(e => e.user?.account_id === uuid);
 				if (foundUser != -1) {
-					pr.participantsUnfiltered.nodes[foundUser].state = directive.data.state;
-					pr.participantsUnfiltered.nodes[foundUser].approved = directive.data.approved;
-					pr.participantsUnfiltered.nodes[foundUser].participated_on =
-						directive.data.participated_on;
-					pr.participantsUnfiltered.nodes[foundUser].role = directive.data.role;
+					pr.participants.nodes[foundUser].state = directive.data.state;
+					pr.participants.nodes[foundUser].approved = directive.data.approved;
+					pr.participants.nodes[foundUser].participated_on = directive.data.participated_on;
+					pr.participants.nodes[foundUser].role = directive.data.role;
+					pr.reviewers!.nodes[foundReviewer].state = directive.data.state;
+					pr.reviewers!.nodes[foundReviewer].approved = directive.data.approved;
+					pr.reviewers!.nodes[foundReviewer].participated_on = directive.data.participated_on;
+					pr.reviewers!.nodes[foundReviewer].role = directive.data.role;
 				}
-				const nonReviewers = pr.participantsUnfiltered.nodes.filter(
-					_ => _.role !== BitbucketParticipantRole.Reviewer
-				);
-				const filteredParticipants = nonReviewers.filter(_ => _.state !== null);
-				const reviewers = pr.participantsUnfiltered.nodes.filter(
-					_ => _.role !== BitbucketParticipantRole.Participant
-				);
-				//update participants with filteredParticipants & update reviewers with reviewers
-				pr.participants.nodes = filteredParticipants;
-				pr.reviewers.nodes = reviewers;
 			} else if (directive.type === "addRequestChanges") {
 				//This is for request changes
 				const uuid = directive.data.user.account_id;
-				const foundUser = pr.participantsUnfiltered.nodes.findIndex(
-					_ => _.user?.account_id === uuid
-				);
+				const foundUser = pr.participants.nodes.findIndex(_ => _.user?.account_id === uuid);
+				const foundReviewer = pr.reviewers!.nodes.findIndex(e => e.user?.account_id === uuid);
 				if (foundUser !== -1) {
-					pr.participantsUnfiltered.nodes[foundUser].state = directive.data.state;
-					pr.participantsUnfiltered.nodes[foundUser].approved = directive.data.approved;
-					pr.participantsUnfiltered.nodes[foundUser].participated_on =
-						directive.data.participated_on;
-					pr.participantsUnfiltered.nodes[foundUser].role = directive.data.role;
+					pr.participants.nodes[foundUser].state = directive.data.state;
+					pr.participants.nodes[foundUser].approved = directive.data.approved;
+					pr.participants.nodes[foundUser].participated_on = directive.data.participated_on;
+					pr.participants.nodes[foundUser].role = directive.data.role;
+					pr.reviewers!.nodes[foundReviewer].state = directive.data.state;
+					pr.reviewers!.nodes[foundReviewer].approved = directive.data.approved;
+					pr.reviewers!.nodes[foundReviewer].participated_on = directive.data.participated_on;
+					pr.reviewers!.nodes[foundReviewer].role = directive.data.role;
 				} else {
-					pr.participantsUnfiltered.nodes.push({
+					pr.participants.nodes.push({
+						user: {
+							account_id: uuid,
+							nickname: directive.data.user.nickname,
+							display_name: directive.data.user.display_name,
+							links: {
+								avatar: {
+									href: directive.data.user.links.avatar.href,
+								},
+							},
+						},
+						state: directive.data.state,
+						approved: directive.data.approved,
+						participated_on: directive.data.participated_on,
+						role: directive.data.role,
+					});
+
+					pr.reviewers?.nodes.push({
 						user: {
 							account_id: uuid,
 							nickname: directive.data.user.nickname,
@@ -3235,67 +3275,75 @@ export class BitbucketProvider
 						role: directive.data.role,
 					});
 				}
-				const nonReviewers = pr.participantsUnfiltered.nodes.filter(
-					_ => _.role !== BitbucketParticipantRole.Reviewer
-				);
-				const filteredParticipants = nonReviewers.filter(_ => _.state !== null);
-				const reviewers = pr.participantsUnfiltered.nodes.filter(
-					_ => _.role !== BitbucketParticipantRole.Participant
-				);
-				//update participants with filteredParticipants & update reviewers with reviewers
-				pr.participants.nodes = filteredParticipants;
-				pr.reviewers.nodes = reviewers;
 			} else if (directive.type === "removePendingReview") {
 				//removing the requested changes
 				const uuid = directive.data.user.account_id;
-				const foundUser = pr.participantsUnfiltered.nodes.findIndex(
-					_ => _.user?.account_id === uuid
-				);
+				const foundUser = pr.participants.nodes.findIndex(_ => _.user?.account_id === uuid);
+				const foundReviewer = pr.reviewers!.nodes.findIndex(e => e.user?.account_id === uuid);
 				if (foundUser !== -1) {
-					pr.participantsUnfiltered.nodes[foundUser].state = directive.data.state;
-					pr.participantsUnfiltered.nodes[foundUser].approved = directive.data.approved;
-					pr.participantsUnfiltered.nodes[foundUser].participated_on =
-						directive.data.participated_on;
-					pr.participantsUnfiltered.nodes[foundUser].role = directive.data.role;
+					pr.participants.nodes[foundUser].state = directive.data.state;
+					pr.participants.nodes[foundUser].approved = directive.data.approved;
+					pr.participants.nodes[foundUser].participated_on = directive.data.participated_on;
+					pr.participants.nodes[foundUser].role = directive.data.role;
+					pr.reviewers!.nodes[foundReviewer].state = directive.data.state;
+					pr.reviewers!.nodes[foundReviewer].approved = directive.data.approved;
+					pr.reviewers!.nodes[foundReviewer].participated_on = directive.data.participated_on;
+					pr.reviewers!.nodes[foundReviewer].role = directive.data.role;
 				}
-				const nonReviewers = pr.participantsUnfiltered.nodes.filter(
-					_ => _.role !== BitbucketParticipantRole.Reviewer
-				);
-				const filteredParticipants = nonReviewers.filter(_ => _.state !== null);
-				const reviewers = pr.participantsUnfiltered.nodes.filter(
-					_ => _.role !== BitbucketParticipantRole.Participant
-				);
-				//update participants with filteredParticipants & update reviewers with reviewers
-				pr.participants.nodes = filteredParticipants;
-				pr.reviewers.nodes = reviewers;
 			} else if (directive.type === "removeRequestedReviewer") {
-				const nonReviewers = directive.data.participants.filter(
-					(_: { role: BitbucketParticipantRole }) => _.role !== BitbucketParticipantRole.Reviewer
-				);
-				const filteredParticipants = nonReviewers.filter(
-					(_: { state?: string }) => _.state !== null
-				);
-				const reviewers = directive.data.participants.filter(
-					(_: { role: BitbucketParticipantRole }) => _.role !== BitbucketParticipantRole.Participant
-				);
-				//update participants with filteredParticipants & update reviewers with reviewers
-				pr.participants.nodes = filteredParticipants;
-				pr.participantsUnfiltered.nodes = directive.data.participants;
-				pr.reviewers.nodes = reviewers;
+				const uuid = directive.data.user.account_id;
+				const foundUser = pr.participants.nodes.findIndex(_ => _.user?.account_id === uuid);
+				const foundReviewer = pr.reviewers!.nodes.findIndex(e => e.user?.account_id === uuid);
+				if (foundUser != -1) {
+					pr.participants.nodes[foundUser].state = directive.data.state;
+					pr.participants.nodes[foundUser].approved = directive.data.approved;
+					pr.participants.nodes[foundUser].participated_on = directive.data.participated_on;
+					pr.participants.nodes[foundUser].role = directive.data.role;
+				}
+				if (foundReviewer != 1) {
+					pr.reviewers?.nodes.splice(foundReviewer, 1); //the ui won't let you remove a reviewer with status, so this is OK here
+				}
 			} else if (directive.type === "updateReviewers") {
-				const nonReviewers = directive.data.participants.filter(
-					(_: { role: BitbucketParticipantRole }) => _.role !== BitbucketParticipantRole.Reviewer
-				);
-				const filteredParticipants = nonReviewers.filter(
-					(_: { state?: string }) => _.state !== null
-				);
-				const reviewers = directive.data.participants.filter(
-					(_: { role: BitbucketParticipantRole }) => _.role !== BitbucketParticipantRole.Participant
-				);
-				//update participants with filteredParticipants & update reviewers with reviewers
-				pr.participants.nodes = filteredParticipants;
-				pr.participantsUnfiltered.nodes = directive.data.participants;
-				pr.reviewers.nodes = reviewers;
+				const uuid = directive.data.user.account_id;
+				const foundUser = pr.participants.nodes.findIndex(_ => _.user?.account_id === uuid);
+				if (foundUser != -1) {
+					pr.participants.nodes[foundUser].state = directive.data.state;
+					pr.participants.nodes[foundUser].approved = directive.data.approved;
+					pr.participants.nodes[foundUser].participated_on = directive.data.participated_on;
+					pr.participants.nodes[foundUser].role = directive.data.role;
+				} else {
+					pr.participants.nodes.push({
+						user: {
+							account_id: uuid,
+							nickname: directive.data.user.nickname,
+							display_name: directive.data.user.display_name,
+							links: {
+								avatar: {
+									href: directive.data.user.links.avatar.href,
+								},
+							},
+						},
+						state: directive.data.state,
+						approved: directive.data.approved,
+						participated_on: directive.data.participated_on,
+						role: directive.data.role,
+					});
+				}
+				pr.participants.nodes.filter(participant => {
+					if (
+						pr.reviewers?.nodes.find(
+							reviewer => reviewer.user.account_id !== participant.user.account_id
+						)
+					) {
+						if (participant.role === BitbucketParticipantRole.Participant) {
+							if (participant.state !== null) {
+								pr.reviewers?.nodes.push(participant);
+							}
+						} else {
+							pr.reviewers?.nodes.push(participant);
+						}
+					}
+				});
 			} else if (directive.type === "addNode") {
 				pr.comments = pr.comments || [];
 				pr.comments.push(directive.data);
