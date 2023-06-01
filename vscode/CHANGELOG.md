@@ -3,14 +3,16 @@
 ## [14.22.0] - 2023-6-01
 
 ### Changed
-- Altered Bitbucket Add Reviewers dropdown to account for no reviewers available	
+- Altered Bitbucket Add Reviewers dropdown to account for no reviewers available
+- Altered Bitbucket Icons for Pull Request Approval and Change Requests	
 
 ### Fixed
 - Fixed Bitbucket api request timeout issue
-- Fixed Bitbucket issue that allowed codestream to remove a status reviewer
 - Fixed Bitbucket issue that allowed already assigned reviewer to be selected again
 - Fixed Bitbucket issue that allowed assigning reviewers to an already declined pull request
+- Fixed Bitbucket UI issue that displayed duplicate reviewers until refreshing
 - Fixed Bitbucket issue that caused review buttons to be active without reviewer selected
+- Fixed Bitbucket issue that caused add/remove reviewers buttons to be active without reviewers selected
 
 ## [14.21.0] - 2023-5-25
 
