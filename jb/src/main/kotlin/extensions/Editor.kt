@@ -70,7 +70,8 @@ val Editor.margins: EditorMargins
         val height = this.component.height
         val heightWithBreadcrumbs = withBreadcrumbs?.height ?: height
         val heightWithTabHeaders = withTabHeaders?.height ?: height
-        val tabRowHeight = ((withTabHeaders as? JBTabsImpl)?.myInfo2Label?.values?.firstOrNull()?.height ?: 27) + 1
+        // should not matter as spatial view is deprecated and the add codemark icon is shown in the gutter
+        val tabRowHeight = 28
 
         var bottom: Int
         var top: Int
