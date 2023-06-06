@@ -13,7 +13,10 @@ abort_on_fail=1
 [ "$1" == "configure" ] && mode=configure
 [ "$1" == "deploy" ] && mode=deploy
 [ "$1" == "configureNoAbort" ] && mode=configure && abort_on_fail=0
+[ "$1" == "install" ] && mode=install
+[ "$1" == "reconfigure" ] && mode=reconfigure
 [ -z "$mode" ] && echo "Error: bad configure mode" && exit 1
+
 
 # This script is called as a hook (from dt-configure-sandbox, deployment script, git hook, ...).
 # DO NOT CALL IT DIRECTLY.
