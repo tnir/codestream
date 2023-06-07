@@ -164,6 +164,9 @@ def createDownloadNodeTask(String platform, String executableName) {
         ])
         dest "$projectDir/src/main/resources/agent/node-${platform}"
         onlyIfModified true
+        onlyIf {
+            System.getenv("TCBUILD_BYPASS_SUPPLEMENTAL_SOFTWARE") == null
+        }
     }
 }
 
