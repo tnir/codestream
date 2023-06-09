@@ -1,11 +1,11 @@
 param([string] $checkoutDir = $pwd, [string] $assetEnv = "")
 
-$computer = 'teamcity.codestream.us'
+$computer = 'teamcity.cdstrm.dev'
 $username = 'web'
 $keyfile = 'C:\Users\Administrator\.ssh\id_rsa'
 $localReleaseLicenseFile = $checkoutDir + '\vs\licenses\Release\teamdev.licenses'
 $localDebugLicenseFile = $checkoutDir + '\vs\licenses\Debug\teamdev.licenses'
-$remoteLicenseFile = '/home/web/.codestream/licenses/teamdev/DotNetBrowser/runtime/teamdev.licenses'
+$remoteLicenseFile = '/home/web/.codestream/licenses/teamdev.DotNetBrowser.licenses.txt'
 
 Write-Host ""
 Write-Host "---- Script Values ----"
