@@ -392,7 +392,9 @@ export const upgradePendingCodeError =
 						// pending any longer
 						pendingErrorGroupGuid: undefined,
 						// if there's already a selected line, retain it
-						lineIndex: state.context.currentCodeErrorData?.lineIndex || 0,
+						lineIndex: state.context.currentCodeErrorData?.lineIndex ?? undefined,
+						// same with timestamp
+						timestamp: state.context.currentCodeErrorData?.timestamp ?? undefined,
 					})
 				);
 				return {
