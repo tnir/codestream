@@ -7,6 +7,7 @@ plugins {
 }
 
 group "com.codestream"
+
 version "14.23.0"
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -162,7 +163,7 @@ def createCopyNodeTask(String platform) {
         include "**/*"
         into "$projectDir/src/main/resources/agent/node-${platform}"
         onlyIf {
-            System.getenv("TCBUILD_SUPPLEMENTAL_SOFTWARE_PATH") != null
+            System.getenv("TCBUILD_BYPASS_SUPPLEMENTAL_SOFTWARE") == null
         }
     }
 }
@@ -211,6 +212,7 @@ copyDebugAgent.dependsOn buildDebugDeps
 
 task buildDebugDependencies {}
 buildDebugDependencies.dependsOn buildDebugDeps, copyDebugAgent, copyProtobuf
+
 
 
 
