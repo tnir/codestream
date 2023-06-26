@@ -8,8 +8,6 @@ import {
 	OtcLoginRequestType,
 	PasswordLoginRequest,
 	PasswordLoginRequestType,
-	ProviderTokenRequest,
-	ProviderTokenRequestType,
 	TokenLoginRequest,
 	TokenLoginRequestType,
 	UpdateNewRelicOrgIdRequestType,
@@ -22,7 +20,6 @@ import { withExponentialConnectionRetry } from "@codestream/webview/store/common
 import { reset } from "@codestream/webview/store/session/actions";
 import {
 	BootstrapInHostRequestType,
-	ConnectToIDEProviderRequestType,
 	OpenUrlRequestType,
 } from "../ipc/host.protocol";
 import { GetActiveEditorContextRequestType } from "../ipc/host.protocol.editor";
@@ -128,10 +125,13 @@ export const startSSOSignin =
 		}
 	};
 
+// NOTE - this functionality is deprecated per Unified Identity
 export const startIDESignin =
 	(provider: SupportedSSOProvider, info?: SSOAuthInfo) =>
 	async (dispatch, getState: () => CodeStreamState) => {
 		try {
+			throw new Error("IDE sign-in is deprecated");
+			/*
 			const { session } = getState();
 			const result = await HostApi.instance.send(ConnectToIDEProviderRequestType, { provider });
 			const request: ProviderTokenRequest = {
@@ -160,6 +160,7 @@ export const startIDESignin =
 				info.gotError = true;
 				return dispatch(goToSSOAuth(provider, { ...(info || emptyObject) }));
 			}
+			*/
 		} catch (error) {
 			logError(error, { detail: `Unable to start VSCode ${provider} sign in` });
 		}

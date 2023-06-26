@@ -420,7 +420,8 @@ export const Signup = (props: Props) => {
 				Provider: "GitHub",
 				Email: email,
 			});
-			if (derivedState.isInVSCode) {
+			if (false /*derivedState.isInVSCode*/) {
+				// per Unified Identity, IDE sign-in is deprecated
 				return dispatch(startIDESignin("github", buildSignupInfo()));
 			} else {
 				return dispatch(startSSOSignin("github", buildSignupInfo()));

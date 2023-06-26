@@ -192,7 +192,8 @@ class Login extends React.Component<Props, State> {
 
 	handleClickGithubLogin = event => {
 		event.preventDefault();
-		if (this.props.isInVSCode) {
+		if (false /*this.props.isInVSCode*/) {
+			// per Unified Identity, IDE sign-in is deprecated
 			this.props.startIDESignin("github");
 		} else {
 			this.props.startSSOSignin("github");
