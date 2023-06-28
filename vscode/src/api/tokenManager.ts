@@ -7,6 +7,17 @@ import { GlobalState } from "../common";
 import { extensionId } from "../constants";
 import { Container } from "../container";
 
+export enum SaveTokenReason {
+	COPY = "COPY",
+	LOGIN_SUCCESS = "LOGIN_SUCCESS",
+	LOGOUT = "LOGOUT",
+	LOGIN_ERROR = "LOGIN_ERROR",
+	AUTO_SIGN_IN = "AUTO_SIGN_IN",
+	SIGN_IN_COMMAND = "SIGN_IN_COMMAND",
+	UPDATE_SERVER_URL = "UPDATE_SERVER_URL",
+	SERVER_MIGRATION = "SERVER_MIGRATION"
+}
+
 const CredentialService = `${extensionId}:vscode`;
 
 interface TokenMap {
@@ -28,14 +39,26 @@ function getTokenMap() {
 	);
 }
 
-export async function addOrUpdate(url: string, email: string, teamId: string, token: AccessToken) {
-	if (!url || !email) return;
+export async function addOrUpdate(
+	saveTokenReason: SaveTokenReason,
+	url: string,
+	email: string,
+	teamId: string,
+	token: AccessToken
+) {
+	if (!url || !email) {
+		Logger.warn(`TokenManager.addOrUpdate ${saveTokenReason} missing url / email`);
+		return;
+	}
 
 	const key = toKey(url, email, teamId);
+
+	Logger.log(`TokenManager.addOrUpdate key: ${key} ${saveTokenReason}`);
 
 	if (keychain !== undefined) {
 		try {
 			await keychain.setPassword(CredentialService, key, JSON.stringify(token));
+			Logger.log(`TokenManager.addOrUpdate ${saveTokenReason} completed`);
 			return;
 		} catch (ex) {
 			Logger.error(ex, "TokenManager.addOrUpdate: Failed to set credentials");
@@ -46,17 +69,29 @@ export async function addOrUpdate(url: string, email: string, teamId: string, to
 
 	const tokens = getTokenMap();
 	tokens[key] = token;
+	Logger.log(`TokenManager.addOrUpdate ${saveTokenReason}`);
 	await Container.context.globalState.update(GlobalState.AccessTokens, tokens);
 }
 
-export async function clear(url: string, email: string, teamId?: string) {
-	if (!url || !email) return;
+export async function clear(
+	saveTokenReason: SaveTokenReason,
+	url: string,
+	email: string,
+	teamId?: string
+) {
+	if (!url || !email) {
+		Logger.warn("TokenManager.clear missing url / email");
+		return;
+	}
 
 	const key = toKey(url, email, teamId);
+
+	Logger.log(`TokenManager.clear key: ${key} ${saveTokenReason}`);
 
 	if (keychain !== undefined) {
 		try {
 			await keychain.deletePassword(CredentialService, key);
+			Logger.log(`TokenManager.cleared ${saveTokenReason}`);
 		} catch (ex) {
 			Logger.error(ex, "TokenManager.clear: Failed to clear credentials");
 		}
@@ -66,6 +101,7 @@ export async function clear(url: string, email: string, teamId?: string) {
 	if (tokens[key] === undefined) return;
 
 	delete tokens[key];
+	Logger.log(`TokenManager.clear ${saveTokenReason}`);
 	await Container.context.globalState.update(GlobalState.AccessTokens, tokens);
 }
 
@@ -81,12 +117,14 @@ export async function get(
 	if (!url || !email) return undefined;
 
 	const key = toKey(url, email, teamId);
+	Logger.log(`TokenManager.get key: ${key}`);
 	let migrate = false;
 	if (keychain !== undefined) {
 		migrate = true;
 		try {
 			const tokenJson = await keychain.getPassword(CredentialService, key);
 			if (tokenJson != null) {
+				Logger.log(`TokenManager.get success`);
 				return JSON.parse(tokenJson) as AccessToken;
 			}
 		} catch (ex) {
@@ -115,7 +153,7 @@ async function migrateTokenToKeyChain(
 	try {
 		await keychain.setPassword(CredentialService, key, JSON.stringify(token));
 	} catch (ex) {
-		Logger.error(ex, "TokenManager.migrateTokenToKeyChain: Failed to migrate credentials");
+		Logger.error(ex, "===--- TokenManager.migrateTokenToKeyChain: Failed to migrate credentials");
 		return;
 	}
 
