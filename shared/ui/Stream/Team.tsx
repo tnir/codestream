@@ -661,8 +661,7 @@ class Team extends React.Component<Props, State> {
 			<Dialog wide title="My Organization" onClose={() => this.props.closeModal()}>
 				{!company.codestreamOnly && (
 					<div style={{ marginBottom: "15px" }}>
-						The following people from your New Relic organization are on CodeStream. Note that
-						admins are specific to CodeStream.
+						The following people from your New Relic organization are on CodeStream.
 					</div>
 				)}
 				<div style={{ margin: "0 -20px" }}>
