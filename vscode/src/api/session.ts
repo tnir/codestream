@@ -634,6 +634,8 @@ export class CodeStreamSession implements Disposable {
 					this._email!,
 					this._teamId!
 				);
+			} else {
+				Logger.log(`NOT clearing access token, reason: ${reason}`);
 			}
 
 			this._email = undefined;

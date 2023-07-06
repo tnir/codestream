@@ -38,6 +38,15 @@ enum class SaveTokenReason {
     AUTO_SIGN_IN,
 }
 
+enum class CSLogoutReason {
+    MAINTAINENCE_MODE,
+    DID_LOGOUT,
+    CONFIG_CHANGE,
+    SIGN_OUT_ACTION,
+    WEBVIEW_MSG,
+    UNSUPPORTED_VERSION,
+}
+
 class AuthenticationService(val project: Project) {
 
     private val extensionCapabilities: JsonElement get() = gson.toJsonTree(Capabilities())
@@ -134,16 +143,21 @@ class AuthenticationService(val project: Project) {
         }
     }
 
-    suspend fun logout(newServerUrl: String? = null) {
+    suspend fun logout(reason: CSLogoutReason, newServerUrl: String? = null) {
         val agent = project.agentService ?: return
         val session = project.sessionService ?: return
         val settings = project.settingsService ?: return
 
-        session.logout()
+        logger.info("Logging out of CodeStream $reason")
+
+        session.logout(reason)
         agent.restart(newServerUrl)
-        saveAccessToken(SaveTokenReason.LOGOUT, null)
-        settings.state.teamId = null
-        appSettings.state.teamId = null
+
+        if (reason != CSLogoutReason.UNSUPPORTED_VERSION && reason != CSLogoutReason.MAINTAINENCE_MODE) {
+            saveAccessToken(SaveTokenReason.LOGOUT, null)
+            settings.state.teamId = null
+            appSettings.state.teamId = null
+        }
     }
 
     private var upgradeRequiredShown = false
@@ -181,9 +195,9 @@ class AuthenticationService(val project: Project) {
     private fun saveAccessToken(reason: SaveTokenReason, accessToken: JsonObject?, serverUrl: String? = null, teamId: String? = null) {
         val settings = project.settingsService ?: return
         if (accessToken != null) {
-            logger.info("Saving access token to password safe $reason with provided teamid $teamId")
+            logger.info("Saving access token to password safe reason: $reason with provided teamid $teamId")
         } else {
-            logger.info("Clearing access token from password safe $reason with provided teamid $teamId")
+            logger.info("Clearing access token from password safe reason: $reason with provided teamid $teamId")
         }
 
         val credentials = accessToken?.let {

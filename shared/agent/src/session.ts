@@ -712,6 +712,7 @@ export class CodeStreamSession {
 		this.agent.sendNotification(DidChangeVersionCompatibilityNotificationType, e);
 
 		if (e.compatibility === VersionCompatibility.UnsupportedUpgradeRequired) {
+			Logger.log("onVersionCompatibilityChanged performing logout on UnsupportedUpgradeRequired");
 			this.logout(LogoutReason.UnsupportedVersion);
 		}
 	}
@@ -1503,6 +1504,7 @@ export class CodeStreamSession {
 
 	@log()
 	logout(reason: LogoutReason) {
+		Logger.log(`Session.logout: ${reason}`);
 		this.setStatus(SessionStatus.SignedOut);
 		return this.agent.sendNotification(DidLogoutNotificationType, { reason: reason });
 	}

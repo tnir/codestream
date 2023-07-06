@@ -2,6 +2,7 @@ package com.codestream.settings
 
 import com.codestream.agentService
 import com.codestream.appDispatcher
+import com.codestream.authentication.CSLogoutReason
 import com.codestream.codeStream
 import com.codestream.gson
 import com.codestream.protocols.webview.ShowProgressIndicator
@@ -93,7 +94,7 @@ class SettingsService(val project: Project) : PersistentStateComponent<SettingsS
         logger.info("Restarting agent on config change, resetContext: $resetContext")
         if (resetContext) {
             clearWebViewContext()
-            project.sessionService?.logout() // clear out project.sessionService?.userLoggedIn?.team?.id
+            project.sessionService?.logout(CSLogoutReason.CONFIG_CHANGE) // clear out project.sessionService?.userLoggedIn?.team?.id
             state.teamId = null
             applicationSettings.state.teamId = null
         }
@@ -113,7 +114,7 @@ class SettingsService(val project: Project) : PersistentStateComponent<SettingsS
     }
 
     fun getWebViewContextJson(): JsonElement {
-        var jsonObject = gson.fromJson<JsonObject>(state.webViewContext)
+        val jsonObject = gson.fromJson<JsonObject>(state.webViewContext)
         project.sessionService?.userLoggedIn?.team?.id.let {
             jsonObject["currentTeamId"] = it
         }
