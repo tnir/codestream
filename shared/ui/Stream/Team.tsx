@@ -490,7 +490,7 @@ class Team extends React.Component<Props, State> {
 		HostApi.instance.send(KickUserRequestType, { teamId, userId: user.id });
 	};
 
-	renderAdminUser(user: CSUser) {
+	renderAdminUser(user: CSUser, company: CSCompany) {
 		const { isCurrentUserAdmin, adminIds } = this.props;
 
 		const revokeAdmin = { label: "Revoke Admin", action: () => this.revoke(user) };
@@ -498,7 +498,10 @@ class Team extends React.Component<Props, State> {
 		const kickUser = { label: "Remove from Org", action: () => this.confirmKick(user) };
 
 		const isUserAdmin = adminIds?.includes(user.id);
-		if (isCurrentUserAdmin && user.id !== this.props.currentUserId) {
+		if (!company.codestreamOnly) {
+			// don't display any label or dropdown for non CS-only orgs
+			return null;
+		} else if (isCurrentUserAdmin && user.id !== this.props.currentUserId) {
 			if (isUserAdmin) {
 				return (
 					<span className="float-right">
@@ -668,7 +671,7 @@ class Team extends React.Component<Props, State> {
 					<UL>
 						{this.props.members.map(user => (
 							<li key={user.email}>
-								{this.renderAdminUser(user)}
+								{this.renderAdminUser(user, company)}
 								<ProfileLink id={user.id}>
 									<Headshot person={user} />
 									<b className="wide-text">{user.fullName} </b>
