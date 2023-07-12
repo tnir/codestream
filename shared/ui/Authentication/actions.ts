@@ -18,10 +18,7 @@ import { LogoutRequestType } from "@codestream/protocols/webview";
 import { setBootstrapped } from "@codestream/webview/store/bootstrapped/actions";
 import { withExponentialConnectionRetry } from "@codestream/webview/store/common";
 import { reset } from "@codestream/webview/store/session/actions";
-import {
-	BootstrapInHostRequestType,
-	OpenUrlRequestType,
-} from "../ipc/host.protocol";
+import { BootstrapInHostRequestType, OpenUrlRequestType } from "../ipc/host.protocol";
 import { GetActiveEditorContextRequestType } from "../ipc/host.protocol.editor";
 import { logError } from "../logger";
 import { CodeStreamState } from "../store";
@@ -70,6 +67,7 @@ export interface SSOAuthInfo {
 		repoId: string;
 		commitHash: string;
 	};
+	joinCompanyId?: string;
 }
 
 export const ProviderNames = {
@@ -108,6 +106,9 @@ export const startSSOSignin =
 		}
 		if (session.machineId) {
 			query.machineId = session.machineId;
+		}
+		if (info && info.joinCompanyId) {
+			query.joinCompanyId = info.joinCompanyId;
 		}
 		query.enableUId = "1"; // operating under Unified Identity
 

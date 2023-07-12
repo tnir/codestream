@@ -398,8 +398,11 @@ export const Signup = (props: Props) => {
 			info.type = SignupType.CreateTeam;
 		}
 
-		info.fromSignup = fromSignup;
+		if (props.joinCompanyId) {
+			info.joinCompanyId = props.joinCompanyId;
+		}
 
+		info.fromSignup = fromSignup;
 		return info;
 	};
 
