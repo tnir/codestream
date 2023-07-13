@@ -102,7 +102,6 @@ export async function clear(
 	if (tokens[key] === undefined) return;
 
 	delete tokens[key];
-	Logger.log(`TokenManager.clear ${saveTokenReason}`);
 	await Container.context.globalState.update(GlobalState.AccessTokens, tokens);
 
 	if (keychain) {
