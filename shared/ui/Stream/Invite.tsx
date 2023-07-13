@@ -1,21 +1,18 @@
 import {
 	GetLatestCommittersRequestType,
-	GetNewRelicUsersRequestType,
 	KickUserRequestType,
 	RepoScmStatus,
 	UpdateTeamAdminRequestType,
 	UpdateTeamSettingsRequestType,
 } from "@codestream/protocols/agent";
 import { CSTeam, CSUser } from "@codestream/protocols/api";
+import { switchToTeam } from "@codestream/webview/store/session/thunks";
 import copy from "copy-to-clipboard";
 import { sortBy as _sortBy } from "lodash-es";
 import React from "react";
 import { FormattedMessage } from "react-intl";
 import { connect } from "react-redux";
-import { AsyncPaginate } from "react-select-async-paginate";
 import styled from "styled-components";
-
-import { switchToTeam } from "@codestream/webview/store/session/thunks";
 import { CSText } from "../src/components/CSText";
 import { Dialog } from "../src/components/Dialog";
 import { UserStatus } from "../src/components/UserStatus";
@@ -117,8 +114,6 @@ const H3 = styled.h3`
 	margin-left: 20px;
 `;
 
-type SelectOptionType = { label: string; value: string };
-
 interface Props extends ConnectedProps {}
 
 interface ConnectedProps {
@@ -167,8 +162,6 @@ interface State {
 	modifiedRepos: RepoScmStatus[];
 	loadingStatus: boolean;
 	suggested: any[];
-	nrUsers: { [email: string]: string };
-	selectedNRUsers: SelectOptionType[];
 	blameMapEmail: string;
 	addingBlameMap: boolean;
 	showInvitePopup: boolean;
@@ -188,8 +181,6 @@ class Invite extends React.Component<Props, State> {
 		modifiedRepos: [],
 		loadingStatus: false,
 		suggested: [],
-		nrUsers: {},
-		selectedNRUsers: [],
 		blameMapEmail: "",
 		addingBlameMap: false,
 		showInvitePopup: false,
@@ -222,52 +213,9 @@ class Invite extends React.Component<Props, State> {
 		this.getSuggestedInvitees();
 	}
 
-	getNRUsers = async (search: string, _loadedOptions, additional?: { nextCursor?: string }) => {
-		if (this.props.company.codestreamOnly) {
-			return {
-				options: [],
-				hasMore: false,
-			};
-		}
-
-		const result = await HostApi.instance.send(GetNewRelicUsersRequestType, {
-			search,
-			nextCursor: additional?.nextCursor,
-		});
-		const invitedEmails = this.props.invited.map(u => u.email);
-		const options = result.users
-			.filter(u => !invitedEmails.includes(u.email))
-			.filter(u => u.email !== this.props.currentUserEmail)
-			.map(u => ({
-				label: `${u.name} (${u.email})`,
-				value: u.email,
-			}));
-
-		this.setState(prevState => ({
-			nrUsers: {
-				...prevState.nrUsers,
-				...result.users.reduce(
-					(acc, x) => ({
-						...acc,
-						[x.email]: x.name,
-					}),
-					{}
-				),
-			},
-		}));
-		return {
-			options,
-			hasMore: !!result.nextCursor,
-			additional: {
-				nextCursor: result.nextCursor,
-			},
-		};
-	};
-
 	getSuggestedInvitees = async () => {
 		// for now, suggested invitees are only available to admins
 		if (!this.props.isCurrentUserAdmin) return;
-		if (!this.props.company.codestreamOnly) return;
 
 		const result = await HostApi.instance.send(GetLatestCommittersRequestType, {});
 		const committers = result ? result.scm : undefined;
@@ -340,21 +288,6 @@ class Invite extends React.Component<Props, State> {
 		});
 	};
 
-	onSubmitNRUsers = event => {
-		event.preventDefault();
-		const { selectedNRUsers, nrUsers } = this.state;
-		for (const user of selectedNRUsers) {
-			this.onClickReinvite(
-				{
-					email: user.value,
-					fullName: nrUsers[user.value],
-				},
-				"nr"
-			);
-		}
-		this.setState({ selectedNRUsers: [] });
-	};
-
 	onClickReinvite = (user, type) => {
 		const { email, fullName } = user;
 		this.setState({ invitingEmails: { ...this.state.invitingEmails, [email]: 1 } });
@@ -374,21 +307,10 @@ class Invite extends React.Component<Props, State> {
 					this.setState({ invitingEmails: { ...this.state.invitingEmails, [email]: 0 } });
 				}, 3000);
 			});
-		let inviteMethod: string;
-		switch (type) {
-			case "reinvite":
-				inviteMethod = "Reinvite";
-				break;
-			case "nr":
-				inviteMethod = "Manual - NR Org Member";
-				break;
-			default:
-				inviteMethod = "Suggested";
-		}
 		HostApi.instance.track("Teammate Invited", {
 			"Invitee Email Address": user.email,
 			"Invitee Name": user.fullName,
-			"Invitation Method": inviteMethod,
+			"Invitation Method": type === "reinvite" ? "Reinvite" : "Suggested",
 		});
 	};
 
@@ -645,41 +567,9 @@ class Invite extends React.Component<Props, State> {
 
 		return (
 			<Dialog wide title="Invite" onClose={() => this.props.closeModal()}>
-				{!this.props.company.codestreamOnly ? (
-					<>
-						<div style={{ marginBottom: "15px" }}>
-							Invite people from your New Relic organization to try out CodeStream.
-						</div>
-						<div style={{ marginBottom: "15px" }}>
-							<AsyncPaginate
-								id="input-nr-invitees-autocomplete"
-								name="nr-invitees-autocomplete"
-								classNamePrefix="react-select"
-								loadOptions={this.getNRUsers.bind(this)}
-								value={this.state.selectedNRUsers}
-								isMulti
-								isClearable
-								debounceTimeout={750}
-								placeholder={"Type to search for users..."}
-								closeMenuOnSelect={false}
-								onChange={selectedNRUsers => {
-									this.setState({ selectedNRUsers });
-								}}
-								components={{ ClearIndicator: () => null, IndicatorSeparator: () => null }}
-							/>
-							<Button
-								style={{ width: "60px", margin: "10px 0 0" }}
-								onClick={this.onSubmitNRUsers.bind(this)}
-							>
-								Invite
-							</Button>
-						</div>
-					</>
-				) : (
-					<form className="standard-form" onSubmit={this.onSubmit} style={{ padding: "0" }}>
-						{this.renderFieldset()}
-					</form>
-				)}
+				<form className="standard-form" onSubmit={this.onSubmit} style={{ padding: "0" }}>
+					{this.renderFieldset()}
+				</form>
 				<div style={{ margin: "0 -20px" }}>
 					{this.props.invited.length > 0 && (
 						<>
@@ -810,7 +700,6 @@ const mapStateToProps = state => {
 		return user;
 	});
 	const currentUser = users[session.userId];
-
 	const invisible = currentUser.status ? currentUser.status.invisible : false;
 
 	const adminIds = team.adminIds;

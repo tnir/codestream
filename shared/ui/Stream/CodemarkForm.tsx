@@ -170,7 +170,6 @@ interface ConnectedProps {
 	currentTeamId: string;
 	currentReviewId?: string;
 	currentCodeErrorId?: string;
-	isNonCsOrg: boolean;
 	isCurrentUserAdmin?: boolean;
 	blameMap?: { [email: string]: string };
 	activePanel?: WebviewPanels;
@@ -2210,11 +2209,10 @@ class CodemarkForm extends React.Component<Props, State> {
 
 	renderEmailAuthors = () => {
 		const { unregisteredAuthors, emailAuthors, isPreviewing } = this.state;
-		const { isNonCsOrg, isCurrentUserAdmin } = this.props;
+		const { isCurrentUserAdmin } = this.props;
 
 		if (isPreviewing) return null;
 		if (unregisteredAuthors.length === 0) return null;
-		if (isNonCsOrg) return null;
 
 		return unregisteredAuthors.map(author => {
 			return (
@@ -2653,7 +2651,6 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		editorContext,
 		users,
 		teams,
-		companies,
 		session,
 		preferences,
 		providers,
@@ -2662,7 +2659,6 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		codeErrors,
 	} = state;
 	const user = users[session.userId!] as CSMe;
-
 	const channel = context.currentStreamId
 		? getStreamForId(state.streams, context.currentTeamId, context.currentStreamId) ||
 		  getStreamForTeam(state.streams, context.currentTeamId)
@@ -2685,7 +2681,6 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 	const inviteUsersOnTheFly =
 		isFeatureEnabled(state, "emailSupport") && isFeatureEnabled(state, "inviteUsersOnTheFly");
 	const textEditorUriContext = parseCodeStreamDiffUri(editorContext.textEditorUri!);
-	const company = companies[team.companyId];
 
 	return {
 		repos,
@@ -2696,7 +2691,6 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		currentTeamId: state.context.currentTeamId,
 		blameMap: blameMap || EMPTY_OBJECT,
 		isCurrentUserAdmin,
-		isNonCsOrg: !company.codestreamOnly,
 		activePanel: context.panelStack[0] as WebviewPanels,
 		shouldShare:
 			safe(() => state.preferences[state.context.currentTeamId].shareCodemarkEnabled) || false,

@@ -1,16 +1,12 @@
 import {
 	EntityAccount,
-	EntityType,
 	GetObservabilityEntitiesRequestType,
 	WarningOrError,
 } from "@codestream/protocols/agent";
-import React, { PropsWithChildren, useState } from "react";
-import { components, OptionProps } from "react-select";
-import { AsyncPaginate } from "react-select-async-paginate";
-import styled from "styled-components";
-
-import { HostApi } from "@codestream/webview/webview-api";
 import { api } from "@codestream/webview/store/codeErrors/thunks";
+import { HostApi } from "@codestream/webview/webview-api";
+import React, { PropsWithChildren, useState } from "react";
+import { AsyncPaginate } from "react-select-async-paginate";
 import { logError } from "../logger";
 import { Button } from "../src/components/Button";
 import { NoContent } from "../src/components/Pane";
@@ -31,34 +27,6 @@ type SelectOptionType = { label: string; value: string };
 
 type AdditionalType = { nextCursor?: string };
 
-const OptionName = styled.div`
-	color: var(--text-color);
-	white-space: nowrap;
-	overflow: hidden;
-`;
-
-const OptionType = styled.span`
-	color: var(--text-color-subtle);
-	font-size: smaller;
-`;
-
-const OptionAccount = styled.div`
-	color: var(--text-color-subtle);
-	font-size: smaller;
-`;
-
-const Option = (props: OptionProps) => {
-	const children = (
-		<>
-			<OptionName>
-				{props.data?.label} <OptionType>{props.data?.labelAppend}</OptionType>
-			</OptionName>
-			<OptionAccount>{props.data?.sublabel}</OptionAccount>
-		</>
-	);
-	return <components.Option {...props} children={children} />;
-};
-
 export const EntityAssociator = React.memo((props: PropsWithChildren<EntityAssociatorProps>) => {
 	const dispatch = useAppDispatch();
 	const [selected, setSelected] = useState<SelectOptionType | null>(null);
@@ -71,22 +39,7 @@ export const EntityAssociator = React.memo((props: PropsWithChildren<EntityAssoc
 			nextCursor: additional?.nextCursor,
 		});
 		const options = result.entities.map(e => {
-			const typeLabel = (t: EntityType) => {
-				switch (t) {
-					case "BROWSER_APPLICATION_ENTITY":
-						return "Browser";
-					case "MOBILE_APPLICATION_ENTITY":
-						return "Mobile";
-					default:
-						return "APM";
-				}
-			};
-			return {
-				label: e.name,
-				value: e.guid,
-				sublabel: e.account,
-				labelAppend: typeLabel(e.entityType),
-			};
+			return { label: e.name, value: e.guid };
 		});
 		return {
 			options,
@@ -115,7 +68,6 @@ export const EntityAssociator = React.memo((props: PropsWithChildren<EntityAssoc
 					onChange={newValue => {
 						setSelected(newValue);
 					}}
-					components={{ Option }}
 				/>
 			</div>
 			<Button

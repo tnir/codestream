@@ -60,8 +60,7 @@ export const ProviderAuth = (connect(undefined) as any)((props: Props) => {
 	const onClickTryAgain = (event: React.SyntheticEvent) => {
 		event.preventDefault();
 		setTryAgainDisabled(true);
-		if (false /*props.provider === "github" && props.useIDEAuth*/) {
-			// per Unified Identity, IDE sign-in is deprecated
+		if (props.provider === "github" && props.useIDEAuth) {
 			props.dispatch(
 				startIDESignin(
 					props.provider,

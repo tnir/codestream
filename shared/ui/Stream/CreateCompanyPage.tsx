@@ -1,16 +1,17 @@
+import { CSCompany } from "@codestream/protocols/api";
+import { switchToForeignCompany, switchToTeam } from "@codestream/webview/store/session/thunks";
+import { useAppDispatch, useAppSelector } from "@codestream/webview/utilities/hooks";
 import React from "react";
 import { FormattedMessage } from "react-intl";
-
-import { logout, setEnvironment } from "@codestream/webview/store/session/thunks";
-import { useAppDispatch, useAppSelector } from "@codestream/webview/utilities/hooks";
 import { TooltipIconWrapper } from "../Authentication/Signup";
 import { TextInput } from "../Authentication/TextInput";
 import { Button } from "../src/components/Button";
 import { Dialog } from "../src/components/Dialog";
 import { CodeStreamState } from "../store";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { goToSignup } from "../store/context/actions";
+import { createCompany, createForeignCompany } from "../store/companies/actions";
 import { Dropdown } from "../Stream/Dropdown";
+import { wait } from "../utils";
 import { closeModal } from "./actions";
 import Icon from "./Icon";
 import Tooltip from "./Tooltip";
@@ -20,8 +21,6 @@ export function CreateCompanyPage() {
 	const derivedState = useAppSelector((state: CodeStreamState) => {
 		const { environmentHosts, environment } = state.configs;
 		const { currentTeamId } = state.context;
-		const { userId } = state.session;
-		const currentUser = state.users[userId!];
 		const supportsMultiRegion = isFeatureEnabled(state, "multiRegion");
 
 		return {
@@ -30,7 +29,6 @@ export function CreateCompanyPage() {
 			currentCompanyId: state.teams[currentTeamId].companyId,
 			companies: state.companies,
 			supportsMultiRegion,
-			currentUser,
 		};
 	});
 
@@ -102,12 +100,22 @@ export function CreateCompanyPage() {
 			if (derivedState.environmentHosts && currentHost && region && region !== currentHost.name) {
 				const selectedHost = derivedState.environmentHosts.find(host => host.name === region);
 				if (selectedHost) {
-					await dispatch(setEnvironment(selectedHost.shortName, selectedHost.publicApiUrl));
+					// what's not to love about code like this?
+					const company = (await dispatch(
+						createForeignCompany({ name: companyName }, selectedHost)
+					)) as unknown as CSCompany;
+					// artificial delay to ensure analytics from creating the team are actually processed before we logout below
+					await wait(1000);
+					await dispatch(switchToForeignCompany(company.id));
 				}
+			} else {
+				const team = (await dispatch(createCompany({ name: companyName }))) as unknown as any;
+				// artificial delay to ensure analytics from creating the team are actually processed before we logout below
+				await wait(1000);
+				await dispatch(
+					switchToTeam({ teamId: team.teamId, accessTokenFromEligibleCompany: team?.accessToken })
+				);
 			}
-			const email = derivedState.currentUser.email;
-			await dispatch(logout());
-			await dispatch(goToSignup({ newOrg: true, companyName, email }));
 		} catch (error) {
 			console.error(error);
 		} finally {

@@ -1,6 +1,7 @@
 "use strict";
 import fs from "fs";
 import { sep } from "path";
+
 import {
 	BuiltFromResult,
 	RelatedRepoWithRemotes,
@@ -55,9 +56,6 @@ import {
 	GetObservabilityAnomaliesRequest,
 	GetObservabilityAnomaliesRequestType,
 	GetObservabilityAnomaliesResponse,
-	GetNewRelicUsersRequest,
-	GetNewRelicUsersRequestType,
-	GetNewRelicUsersResponse,
 	GetObservabilityEntitiesRequest,
 	GetObservabilityEntitiesRequestType,
 	GetObservabilityEntitiesResponse,
@@ -82,9 +80,6 @@ import {
 	GetServiceLevelTelemetryRequest,
 	GetServiceLevelTelemetryRequestType,
 	GetServiceLevelTelemetryResponse,
-	UpdateAzureFullNameRequest,
-	UpdateAzureFullNameRequestType,
-	UpdateAzureFullNameResponse,
 	GoldenMetricUnitMappings,
 	isNRErrorResponse,
 	MethodGoldenMetrics,
@@ -159,8 +154,7 @@ export function escapeNrql(nrql: string) {
 }
 
 const ENTITY_CACHE_KEY = "entityCache";
-const PRODUCTION_US_GRAPHQL_URL = "https://api.newrelic.com/graphql";
-const PRODUCTION_EU_GRAPHQL_URL = "https://api-eu.newrelic.com/graphql";
+
 export interface INewRelicProvider {
 	getProductUrl: () => string;
 	query: <T = any>(query: string, variables: any) => Promise<T>;
@@ -191,7 +185,6 @@ export class NewRelicProvider
 	private _newRelicUserId: number | undefined = undefined;
 	private _accountIds: number[] | undefined = undefined;
 	private _memoizedBuildRepoRemoteVariants: any;
-	private _clientUrlNeedsUpdate: boolean = false;
 	private _clmSpanDataExistsCache = new Cache<ClmSpanData>({
 		defaultTtl: 120 * 1000,
 	});
@@ -225,20 +218,10 @@ export class NewRelicProvider
 	}
 
 	get headers() {
-		const headers: { [key: string]: string } = {
+		return {
+			"Api-Key": this.accessToken!,
 			"Content-Type": "application/json",
-			"newrelic-requesting-services": "CodeStream",
 		};
-
-		const token = this.accessToken;
-		if (token) {
-			if (this._providerInfo?.bearerToken) {
-				headers["Authorization"] = `Bearer ${token}`;
-			} else {
-				headers["Api-Key"] = token;
-			}
-		}
-		return headers;
 	}
 
 	get apiUrl() {
@@ -275,11 +258,7 @@ export class NewRelicProvider
 	}
 
 	get graphQlBaseUrl() {
-		if (this._providerInfo?.bearerToken) {
-			return `${this.coreUrl}/graphql`;
-		} else {
-			return `${this.baseUrl}/graphql`;
-		}
+		return `${this.baseUrl}/graphql`;
 	}
 
 	private clearAllCaches() {
@@ -314,31 +293,15 @@ export class NewRelicProvider
 		return super.onDisconnected(request);
 	}
 
-	protected async client(useOtherRegion?: boolean): Promise<GraphQLClient> {
-		let client;
-		// if (useOtherRegion && this.session.isProductionCloud) {
-		if (useOtherRegion) {
-			let newGraphQlBaseUrl = this.graphQlBaseUrl;
-			if (newGraphQlBaseUrl === PRODUCTION_US_GRAPHQL_URL) {
-				client = this._client = this.createClient(PRODUCTION_EU_GRAPHQL_URL, this.accessToken);
-			} else if (newGraphQlBaseUrl === PRODUCTION_EU_GRAPHQL_URL) {
-				client = this._client = this.createClient(PRODUCTION_US_GRAPHQL_URL, this.accessToken);
-			} else {
-				client =
-					this._client || (this._client = this.createClient(this.graphQlBaseUrl, this.accessToken));
-			}
-			this._clientUrlNeedsUpdate = true;
-		} else {
-			if (this._clientUrlNeedsUpdate) {
-				client = this._client = this.createClient(this.graphQlBaseUrl, this.accessToken);
-				this._clientUrlNeedsUpdate = false;
-			} else {
-				client =
-					this._client || (this._client = this.createClient(this.graphQlBaseUrl, this.accessToken));
-			}
-		}
+	protected async client(): Promise<GraphQLClient> {
+		const client =
+			this._client || (this._client = this.createClient(this.graphQlBaseUrl, this.accessToken));
 
-		client.setHeaders(this.headers);
+		client.setHeaders({
+			"Api-Key": this.accessToken!,
+			"Content-Type": "application/json",
+			"NewRelic-Requesting-Services": "CodeStream",
+		});
 		ContextLogger.setData({
 			nrUrl: this.graphQlBaseUrl,
 			versionInfo: {
@@ -366,7 +329,15 @@ export class NewRelicProvider
 			fetch: customFetch,
 		};
 		const client = new GraphQLClient(graphQlBaseUrl, options);
-		client.setHeaders(this.headers);
+
+		// set accessToken on a per-usage basis... possible for accessToken
+		// to be revoked from the source (github.com) and a stale accessToken
+		// could be cached in the _client instance.
+		client.setHeaders({
+			"Api-Key": accessToken!,
+			"Content-Type": "application/json",
+			"NewRelic-Requesting-Services": "CodeStream",
+		});
 
 		return client;
 	}
@@ -393,7 +364,6 @@ export class NewRelicProvider
 
 	@log()
 	async configure(config: ProviderConfigurationData, verify?: boolean): Promise<boolean> {
-		// FIXME: this whole method of configuring New Relic by key should go away with Unified Identity
 		if (verify) {
 			if (!(await super.configure(config, true))) return false;
 		}
@@ -483,8 +453,7 @@ export class NewRelicProvider
 	async query<T = any>(
 		query: string,
 		variables: any = undefined,
-		tryCount: number = 3,
-		isMultiRegion: boolean = false
+		tryCount: number = 3
 	): Promise<T> {
 		await this.ensureConnected();
 
@@ -494,31 +463,13 @@ export class NewRelicProvider
 		}
 
 		let response: any;
-		let responseOther: any;
 		let ex: Error | undefined;
 		const fn = async () => {
 			try {
-				let potentialResponse, potentialOtherResponse;
-				if (isMultiRegion) {
-					const currentRegionPromise = (await this.client(false)).request<T>(query, variables);
-					const otherRegionPromise = (await this.client(true)).request<T>(query, variables);
-					[potentialResponse, potentialOtherResponse] = await Promise.all([
-						currentRegionPromise,
-						otherRegionPromise,
-					]);
-				} else {
-					potentialResponse = await (await this.client(false)).request<T>(query, variables);
-				}
+				const potentialResponse = await (await this.client()).request<T>(query, variables);
 				// GraphQL returns happy HTTP 200 response for api level errors
-				if (potentialOtherResponse) {
-					this.checkGraphqlErrors(potentialResponse);
-					this.checkGraphqlErrors(potentialOtherResponse);
-					response = potentialResponse;
-					responseOther = potentialOtherResponse;
-				} else {
-					this.checkGraphqlErrors(potentialResponse);
-					response = potentialResponse;
-				}
+				this.checkGraphqlErrors(potentialResponse);
+				response = potentialResponse;
 				return true;
 			} catch (potentialEx) {
 				Logger.warn(potentialEx.message);
@@ -527,33 +478,6 @@ export class NewRelicProvider
 			}
 		};
 		await Functions.withExponentialRetryBackoff(fn, tryCount, 1000);
-
-		// If multiRegion, and we are doing an entitySearch query, add region values
-		if (responseOther) {
-			let responseRegion, responseRegionOther;
-			if (this.graphQlBaseUrl === PRODUCTION_US_GRAPHQL_URL) {
-				responseRegion = "US";
-				responseRegionOther = "EU";
-			} else {
-				responseRegion = "EU";
-				responseRegionOther = "US";
-			}
-			for (let i = 0; i < response.actor.entitySearch.results.entities.length; i++) {
-				response.actor.entitySearch.results.entities[i].region = responseRegion;
-			}
-			for (let i = 0; i < responseOther.actor.entitySearch.results.entities.length; i++) {
-				responseOther.actor.entitySearch.results.entities[i].region = responseRegionOther;
-			}
-
-			const combinedArray = [
-				...responseOther.actor.entitySearch.results.entities,
-				...response.actor.entitySearch.results.entities,
-			].filter((obj, index, self) => self.findIndex(o => o.guid === obj.guid) === index);
-
-			if (!_isEmpty(combinedArray)) {
-				response.actor.entitySearch.results.entities = combinedArray;
-			}
-		}
 
 		if (!response && ex) {
 			if (ex instanceof GraphqlNrqlError) {
@@ -684,7 +608,6 @@ export class NewRelicProvider
 					  entities {
 						guid
 						name
-						entityType
 						account {
 							name
 						  }
@@ -698,12 +621,10 @@ export class NewRelicProvider
 				cursor: request.nextCursor ?? null,
 			});
 			const entities = response.actor.entitySearch.results.entities.map(
-				(_: { guid: string; name: string; account: { name: string }; entityType: EntityType }) => {
+				(_: { guid: string; name: string; account: { name: string } }) => {
 					return {
 						guid: _.guid,
-						name: _.name,
-						account: _.account.name,
-						entityType: _.entityType,
+						name: `${_.name} (${_.account.name})`,
 					};
 				}
 			);
@@ -822,7 +743,7 @@ export class NewRelicProvider
 	async getObservabilityRepos(
 		request: GetObservabilityReposRequest
 	): Promise<GetObservabilityReposResponse> {
-		const { force = false, isMultiRegion } = request;
+		const { force = false } = request;
 		const cacheKey = JSON.stringify(request);
 		if (!force) {
 			const cached = this._observabilityReposCache.get(cacheKey);
@@ -870,8 +791,7 @@ export class NewRelicProvider
 				// find REPOSITORY entities tied to a remote
 				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(
 					remotes,
-					force,
-					isMultiRegion
+					force
 				);
 
 				if (isNRErrorResponse(repositoryEntitiesResponse)) {
@@ -1466,41 +1386,6 @@ export class NewRelicProvider
 		}
 	}
 
-	@lspHandler(GetNewRelicUsersRequestType)
-	@log()
-	async getUsers(request: GetNewRelicUsersRequest): Promise<GetNewRelicUsersResponse> {
-		try {
-			const query = request.search ? `search: "${request.search}"` : "";
-			const cursor = request.nextCursor || "null";
-			const response = await this.query<{
-				actor: {
-					users: {
-						userSearch: {
-							users: { email: string; name: string }[];
-							nextCursor?: string;
-						};
-					};
-				};
-			}>(`{
-				actor {
-					users {
-						userSearch(query: {scope: {${query}}}, cursor: ${cursor}) {
-							users {
-								email
-								name
-							}
-							nextCursor
-						}
-					}
-				}
-			}`);
-			return response.actor.users.userSearch;
-		} catch (e) {
-			ContextLogger.error(e, "getUsers");
-			throw e;
-		}
-	}
-
 	@lspHandler(GetNewRelicRelatedEntitiesRequestType)
 	@log()
 	async getNewRelicRelatedEntities(
@@ -1845,27 +1730,6 @@ export class NewRelicProvider
 			ContextLogger.error(ex);
 			return undefined;
 		}
-	}
-
-	@lspHandler(UpdateAzureFullNameRequestType)
-	@log()
-	async setFullName(
-		request: UpdateAzureFullNameRequest
-	): Promise<UpdateAzureFullNameResponse | undefined> {
-		try {
-			const userId = (await this.getUserId()) || undefined;
-
-			const response = await this.setFullNameMutation({
-				userId,
-				newFullName: request.fullName!,
-			});
-
-			return { fullName: response?.userManagementUpdateUser?.user?.name };
-		} catch (ex) {
-			ContextLogger.error(ex);
-		}
-
-		return undefined;
 	}
 
 	@log()
@@ -3433,8 +3297,7 @@ export class NewRelicProvider
 	 */
 	protected async findRepositoryEntitiesByRepoRemotes(
 		remotes: string[],
-		force = false,
-		isMultiRegion = false
+		force = false
 	): Promise<RepoEntitiesByRemotesResponse | NRErrorResponse> {
 		const cacheKey = JSON.stringify(remotes);
 		if (!force) {
@@ -3474,12 +3337,7 @@ export class NewRelicProvider
 	}
   }
   `;
-			const queryResponse = await this.query<EntitySearchResponse>(
-				query,
-				undefined,
-				3,
-				isMultiRegion
-			);
+			const queryResponse = await this.query<EntitySearchResponse>(query);
 			const response = {
 				entities: queryResponse.actor.entitySearch.results.entities,
 				remotes: remoteVariants,
@@ -3989,23 +3847,6 @@ export class NewRelicProvider
 			{
 				email: request.emailAddress,
 				errorGroupGuid: request.errorGroupGuid,
-			}
-		);
-	}
-
-	private setFullNameMutation(request: { userId: number | undefined; newFullName: string }) {
-		return this.query(
-			`mutation userManagementUpdateUser($name: String!, $id: ID!) {
-				userManagementUpdateUser(updateUserOptions: {name: $name, id: $id}) {
-				  user {
-					name
-				  }
-				}
-			  }			  
-		  	`,
-			{
-				name: request.newFullName,
-				id: request.userId,
 			}
 		);
 	}

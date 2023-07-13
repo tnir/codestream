@@ -4,7 +4,7 @@ import { FormattedMessage } from "react-intl";
 import { GetUserInfoRequestType, RegisterUserRequestType } from "@codestream/protocols/agent";
 import { LoginResult } from "@codestream/protocols/api";
 import styled from "styled-components";
-import { isEmpty as _isEmpty } from "lodash-es";
+
 import { CodeStreamState } from "../store";
 import Button from "../Stream/Button";
 import Icon from "../Stream/Icon";
@@ -19,7 +19,8 @@ import { supportsSSOSignIn } from "../store/configs/slice";
 import {
 	goToCompanyCreation,
 	goToEmailConfirmation,
-	goToOldLogin,
+	goToLogin,
+	goToNewRelicSignup,
 	goToOktaConfig,
 	goToTeamCreation,
 } from "../store/context/actions";
@@ -33,10 +34,7 @@ import { completeSignup, SignupType, startIDESignin, startSSOSignin } from "./ac
 import { PresentTOS } from "./PresentTOS";
 import { TextInput } from "./TextInput";
 
-const isPasswordValid = (password: string) =>
-	password.length >= 8 &&
-	Boolean(password.match(/[a-zA-Z]/)) &&
-	Boolean(password.match(/[^a-zA-Z]/));
+const isPasswordValid = (password: string) => password.length >= 6;
 export const isEmailValid = (email: string) => {
 	const emailRegex = new RegExp(
 		"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
@@ -104,10 +102,6 @@ interface Props {
 	/** the following attributes are for auto-joining teams */
 	repoId?: string;
 	commitHash?: string;
-
-	newOrg?: boolean; // indicates user is signing up with a new org
-	joinCompanyId?: string; // indicates user is joining this org
-	companyName?: string; // user will name the new org from this
 }
 
 export const Signup = (props: Props) => {
@@ -136,8 +130,6 @@ export const Signup = (props: Props) => {
 			selectedRegion,
 			forceRegion,
 			supportsMultiRegion,
-			originalEmail: props.email,
-			pendingProtocolHandlerUrl: state.context.pendingProtocolHandlerUrl,
 		};
 	});
 
@@ -269,9 +261,6 @@ export const Signup = (props: Props) => {
 				password,
 				inviteCode: props.inviteCode,
 				checkForWebmail: checkForWebmailArg,
-				companyName: props.companyName,
-				joinCompanyId: props.joinCompanyId,
-				originalEmail: derivedState.originalEmail,
 
 				// for auto-joining teams
 				commitHash: props.commitHash,
@@ -283,7 +272,6 @@ export const Signup = (props: Props) => {
 			const sendTelemetry = () => {
 				HostApi.instance.track("Account Created", {
 					email: email,
-					"Auth Provider": "Email",
 					"Git Email Match?": email === scmEmail,
 					Source: derivedState.pendingProtocolHandlerQuerySource,
 				});
@@ -381,8 +369,8 @@ export const Signup = (props: Props) => {
 	// 	[props.type]
 	// );
 
-	const buildSignupInfo = (fromSignup = true) => {
-		const info: any = {};
+	const buildSignupInfo = () => {
+		const info: any = { fronSignup: true };
 
 		if (props.inviteCode) {
 			info.type = SignupType.JoinTeam;
@@ -398,20 +386,18 @@ export const Signup = (props: Props) => {
 			info.type = SignupType.CreateTeam;
 		}
 
-		if (props.joinCompanyId) {
-			info.joinCompanyId = props.joinCompanyId;
-		}
+		info.fromSignup = true;
 
-		info.fromSignup = fromSignup;
 		return info;
 	};
 
 	const onClickNewRelicSignup = useCallback(
 		(event: React.SyntheticEvent) => {
 			event.preventDefault();
-			//@TODO: Change to idp signup page event
-			dispatch(startSSOSignin("newrelicidp", buildSignupInfo(false)));
-			//dispatch(goToNewRelicSignup({}));
+			HostApi.instance.track("Provider Auth Selected", {
+				Provider: "New Relic",
+			});
+			dispatch(goToNewRelicSignup({}));
 		},
 		[props.type]
 	);
@@ -419,12 +405,10 @@ export const Signup = (props: Props) => {
 	const onClickGithubSignup = useCallback(
 		(event: React.SyntheticEvent) => {
 			event.preventDefault();
-			HostApi.instance.track("Signup Method Selected", {
+			HostApi.instance.track("Provider Auth Selected", {
 				Provider: "GitHub",
-				Email: email,
 			});
-			if (false /*derivedState.isInVSCode*/) {
-				// per Unified Identity, IDE sign-in is deprecated
+			if (derivedState.isInVSCode) {
 				return dispatch(startIDESignin("github", buildSignupInfo()));
 			} else {
 				return dispatch(startSSOSignin("github", buildSignupInfo()));
@@ -436,9 +420,8 @@ export const Signup = (props: Props) => {
 	const onClickGitlabSignup = useCallback(
 		(event: React.SyntheticEvent) => {
 			event.preventDefault();
-			HostApi.instance.track("Signup Method Selected", {
+			HostApi.instance.track("Provider Auth Selected", {
 				Provider: "GitLab",
-				Email: email,
 			});
 			return dispatch(startSSOSignin("gitlab", buildSignupInfo()));
 		},
@@ -448,9 +431,8 @@ export const Signup = (props: Props) => {
 	const onClickBitbucketSignup = useCallback(
 		(event: React.SyntheticEvent) => {
 			event.preventDefault();
-			HostApi.instance.track("Signup Method Selected", {
+			HostApi.instance.track("Provider Auth Selected", {
 				Provider: "Bitbucket",
-				Email: email,
 			});
 			return dispatch(startSSOSignin("bitbucket", buildSignupInfo()));
 		},
@@ -459,9 +441,7 @@ export const Signup = (props: Props) => {
 
 	const onClickOktaSignup = useCallback(
 		(event: React.SyntheticEvent) => {
-			return dispatch(
-				goToOktaConfig({ fromSignup: true, inviteCode: props.inviteCode, email: email })
-			);
+			return dispatch(goToOktaConfig({ fromSignup: true, inviteCode: props.inviteCode }));
 		},
 		[props.type]
 	);
@@ -469,10 +449,6 @@ export const Signup = (props: Props) => {
 	const onClickEmailSignup = useCallback(
 		(event: React.SyntheticEvent) => {
 			event.preventDefault();
-			HostApi.instance.track("Signup Method Selected", {
-				Provider: "Email",
-				Email: email,
-			});
 			setShowEmailForm(true);
 		},
 		[props.type]
@@ -504,120 +480,104 @@ export const Signup = (props: Props) => {
 					<fieldset className="form-body" style={{ paddingTop: 0, paddingBottom: 0 }}>
 						<div id="controls">
 							<div className="border-bottom-box">
-								{(props.newOrg || props.joinCompanyId) && <h2>Create an account</h2>}
-								{!props.newOrg && !props.joinCompanyId && (
+								<h3>Create a CodeStream account, for free</h3>
+								<br />
+								{regionItems && !forceRegionName && (
 									<>
-										<h3>Sign in to CodeStream with your New Relic account</h3>
-										{!limitAuthentication && (
-											<Button
-												style={{ marginBottom: "30px" }}
-												className="row-button no-top-margin"
-												onClick={onClickNewRelicSignup}
-											>
-												<Icon name="newrelic" />
-												<div className="copy">Sign in to New Relic</div>
-												<Icon name="chevron-right" />
-											</Button>
-										)}
+										Region:{" "}
+										<Dropdown
+											selectedValue={selectedRegionName ?? ""}
+											items={regionItems}
+											noModal={true}
+										/>
+										<Tooltip
+											placement={"bottom"}
+											title={`Select the region where your CodeStream data should be stored.`}
+										>
+											<TooltipIconWrapper>
+												<Icon name="question" />
+											</TooltipIconWrapper>
+										</Tooltip>
 									</>
 								)}
-								{_isEmpty(derivedState.pendingProtocolHandlerUrl) && (
-									<>
-										<h3 style={{ marginBottom: regionItems || forceRegionName ? "5px" : "0px" }}>
-											{(props.newOrg || props.joinCompanyId) && (
-												<>How will you sign into this organization?</>
-											)}
-											{!props.newOrg && !props.joinCompanyId && (
-												<>Don't have a New Relic account? Sign up for free.</>
-											)}
-										</h3>
-										{regionItems && !forceRegionName && (
-											<>
-												Region:{" "}
-												<Dropdown
-													selectedValue={selectedRegionName ?? ""}
-													items={regionItems}
-													noModal={true}
-												/>
-												<Tooltip
-													placement={"bottom"}
-													title={`Select the region where your CodeStream data should be stored.`}
-												>
-													<TooltipIconWrapper>
-														<Icon name="question" />
-													</TooltipIconWrapper>
-												</Tooltip>
-											</>
-										)}
-										{forceRegionName && <>Region: {forceRegionName}</>}
-										<SignupButtonsContainer>
-											{(!limitAuthentication || authenticationProviders["github*com"]) && (
-												<SignupButtonContainer>
-													<Button
-														className="row-button no-top-margin"
-														onClick={onClickGithubSignup}
-													>
-														<Icon name="mark-github" />
-														<div className="copy">GitHub</div>
-														<Icon name="chevron-right" />
-													</Button>
-												</SignupButtonContainer>
-											)}
-											{(!limitAuthentication || authenticationProviders["gitlab*com"]) && (
-												<SignupButtonContainer>
-													<Button
-														className="row-button no-top-margin"
-														onClick={onClickGitlabSignup}
-													>
-														<Icon name="gitlab" />
-														<div className="copy">GitLab</div>
-														<Icon name="chevron-right" />
-													</Button>
-												</SignupButtonContainer>
-											)}
-											{(!limitAuthentication || authenticationProviders["bitbucket*org"]) && (
-												<SignupButtonContainer>
-													<Button
-														className="row-button no-top-margin"
-														onClick={onClickBitbucketSignup}
-													>
-														<Icon name="bitbucket" />
-														<div className="copy">Bitbucket</div>
-														<Icon name="chevron-right" />
-													</Button>
-												</SignupButtonContainer>
-											)}
-											{derivedState.oktaEnabled && (
-												<SignupButtonContainer>
-													<Button className="row-button no-top-margin" onClick={onClickOktaSignup}>
-														<Icon name="okta" />
-														<div className="copy">Okta</div>
-														<Icon name="chevron-right" />
-													</Button>
-												</SignupButtonContainer>
-											)}
-											{(!limitAuthentication || authenticationProviders["email"]) &&
-												!showEmailForm && (
-													<SignupButtonContainer>
-														<Button
-															className="row-button no-top-margin"
-															onClick={onClickEmailSignup}
-														>
-															<Icon name="codestream" />
-															<div className="copy">Email</div>
-															<Icon name="chevron-right" />
-														</Button>
-													</SignupButtonContainer>
-												)}
-										</SignupButtonsContainer>
-										{showOr && showEmailForm && (
-											<div className="separator-label">
-												<span className="or">
-													<FormattedMessage id="signUp.or" defaultMessage="or" />
-												</span>
-											</div>
-										)}
-									</>
+								{forceRegionName && <>Region: {forceRegionName}</>}
+								<SignupButtonsContainer>
+									{!limitAuthentication && (
+										<SignupButtonContainer>
+											<Button className="row-button no-top-margin" onClick={onClickNewRelicSignup}>
+												<Icon name="newrelic" />
+												<div className="copy">New Relic</div>
+												<Icon name="chevron-right" />
+											</Button>
+										</SignupButtonContainer>
+									)}
+									{(!limitAuthentication || authenticationProviders["github*com"]) && (
+										<SignupButtonContainer>
+											<Button className="row-button no-top-margin" onClick={onClickGithubSignup}>
+												<Icon name="mark-github" />
+												<div className="copy">GitHub</div>
+												<Icon name="chevron-right" />
+											</Button>
+										</SignupButtonContainer>
+									)}
+									{(!limitAuthentication || authenticationProviders["gitlab*com"]) && (
+										<SignupButtonContainer>
+											<Button className="row-button no-top-margin" onClick={onClickGitlabSignup}>
+												<Icon name="gitlab" />
+												<div className="copy">GitLab</div>
+												<Icon name="chevron-right" />
+											</Button>
+										</SignupButtonContainer>
+									)}
+									{(!limitAuthentication || authenticationProviders["bitbucket*org"]) && (
+										<SignupButtonContainer>
+											<Button className="row-button no-top-margin" onClick={onClickBitbucketSignup}>
+												<Icon name="bitbucket" />
+												<div className="copy">Bitbucket</div>
+												<Icon name="chevron-right" />
+											</Button>
+										</SignupButtonContainer>
+									)}
+									{derivedState.oktaEnabled && (
+										<SignupButtonContainer>
+											<Button className="row-button no-top-margin" onClick={onClickOktaSignup}>
+												<Icon name="okta" />
+												<div className="copy">Okta</div>
+												<Icon name="chevron-right" />
+											</Button>
+										</SignupButtonContainer>
+									)}
+									{(!limitAuthentication || authenticationProviders["email"]) && !showEmailForm && (
+										<SignupButtonContainer>
+											<Button className="row-button no-top-margin" onClick={onClickEmailSignup}>
+												<Icon name="codestream" />
+												<div className="copy">Email</div>
+												<Icon name="chevron-right" />
+											</Button>
+										</SignupButtonContainer>
+									)}
+								</SignupButtonsContainer>
+								<OnPremWrapper id={`on-prem-wrapper`}>
+									Codestream supports on-prem code hosts as well. {` `}
+									<Tooltip
+										key="on-prem"
+										title={`CodeStream supports both cloud and on-prem versions of GitHub, 
+										GitLab and Bitbucket. However, only the cloud versions are available 
+										to use for CodeStream authentication. If you use an on-prem version of 
+										these services, sign up for CodeStream using a different method and then 
+										connect to your code host from the Integrations page in CodeStream.`}
+										placement="bottom"
+									>
+										<OnPremTooltipCopy>Learn More</OnPremTooltipCopy>
+									</Tooltip>
+								</OnPremWrapper>
+
+								{showOr && showEmailForm && (
+									<div className="separator-label">
+										<span className="or">
+											<FormattedMessage id="signUp.or" defaultMessage="or" />
+										</span>
+									</div>
 								)}
 							</div>
 						</div>
@@ -694,14 +654,9 @@ export const Signup = (props: Props) => {
 										required
 										baseBorder={true}
 									/>
-									<Tooltip
-										placement="topRight"
-										content={<FormattedMessage id="signUp.password.tip" />}
-									>
-										<small className={cx("explainer", { "error-message": !passwordValidity })}>
-											<FormattedMessage id="signUp.password.help" />
-										</small>
-									</Tooltip>
+									<small className={cx("explainer", { "error-message": !passwordValidity })}>
+										<FormattedMessage id="signUp.password.help" />
+									</small>
 								</div>
 
 								<div className="small-spacer" />
@@ -734,30 +689,27 @@ export const Signup = (props: Props) => {
 									)}
 								</FormattedMessage>
 							</small>
+
+							<div>
+								<p>
+									Already have an account?{" "}
+									<Link
+										onClick={e => {
+											e.preventDefault();
+											dispatch(goToLogin());
+										}}
+									>
+										Sign In
+									</Link>
+								</p>
+								<p style={{ opacity: 0.5, fontSize: ".9em", textAlign: "center" }}>
+									CodeStream Version {derivedState.pluginVersion}
+									<br />
+									Connected to {derivedState.whichServer}.
+								</p>
+							</div>
 						</div>
 					</div>
-
-					<p style={{ opacity: 0.5, fontSize: ".9em", textAlign: "center" }}>
-						CodeStream Version {derivedState.pluginVersion}
-						<br />
-						Connected to {derivedState.whichServer}.
-					</p>
-					{false && ( // enable me if you need CodeStream login
-						<div>
-							<h2>(Remove me when New Relic sign-in is fully supported)</h2>
-							<p>
-								Already have an account?{" "}
-								<Link
-									onClick={e => {
-										e.preventDefault();
-										dispatch(goToOldLogin());
-									}}
-								>
-									Sign In
-								</Link>
-							</p>
-						</div>
-					)}
 				</fieldset>
 			</form>
 		</div>

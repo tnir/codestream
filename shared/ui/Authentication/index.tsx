@@ -1,9 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
-
 import { CodeStreamState } from "../store";
 import { Login } from "./Login";
-import { OldLogin } from "./OldLogin"; // TODO: remove this when New Relic login is fully supported
 import { ProviderAuth } from "./ProviderAuth";
 import { Signup } from "./Signup";
 import { JoinTeam } from "./JoinTeam";
@@ -31,9 +29,6 @@ export const UnauthenticatedRoutes = () => {
 			return <CompanyCreation {...props.params} />;
 		case Route.Login:
 			return <Login {...props.params} />;
-		// TODO: remove this when New Relic login is fully supported
-		case Route.OldLogin:
-			return <OldLogin {...props.params} />;
 		case Route.JoinTeam:
 			return <JoinTeam {...props.params} />;
 		case Route.EmailConfirmation:

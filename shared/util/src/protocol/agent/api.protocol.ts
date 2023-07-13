@@ -101,15 +101,9 @@ export interface CSEligibleJoinCompany {
 	teamId?: string;
 }
 
-export interface CSAccessTokenInfo {
-	refreshToken: string;
-	expiresAt: number;
-}
-
 export interface CSLoginResponse {
 	user: CSMe;
 	accessToken: string;
-	accessTokenInfo?: CSAccessTokenInfo;
 	pubnubKey: string;
 	pubnubToken: string;
 	broadcasterToken?: string;
@@ -132,7 +126,6 @@ export interface CSLoginResponse {
 		environment: string;
 		publicApiUrl: string;
 	};
-	forceCreateCompany?: boolean;
 }
 
 export interface CSRegisterRequest {
@@ -142,9 +135,6 @@ export interface CSRegisterRequest {
 	wantLink?: boolean;
 	inviteCode?: string;
 	machineId?: string;
-	companyName?: string;
-	joinCompanyId?: string;
-	originalEmail?: string;
 }
 
 export interface CSRegisterResponse {

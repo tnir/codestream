@@ -1,4 +1,4 @@
-import { EntityType, FunctionLocator } from "@codestream/protocols/agent";
+import { FunctionLocator } from "@codestream/protocols/agent";
 import { LanguageId } from "./clm/clmManager";
 
 export interface Directive {
@@ -82,7 +82,6 @@ export interface EntitySearchResult {
 					};
 					guid: string;
 					name: string;
-					entityType: EntityType;
 				}[];
 			};
 		};
