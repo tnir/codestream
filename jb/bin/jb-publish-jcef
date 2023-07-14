@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# special handling of jcef asset - tag and publish
+. $DT_TOP/lib/parse_opts.sh
+
+parse_defaults \
+	tagRepo    "--no-tag"     0  1
+parse_options "$@"
+eval set -- ${PARGS_POSITIONAL[@]}
+
+infoFileCount=`ls $JB_TOP/codestream-jb-jcef-*.info|wc -l`
+[ $infoFileCount -ne 1 ] && echo "$infoFileCount info files found" >&2 && exit 1
+infoFile=`echo $JB_TOP/codestream-jb-jcef-*.info`
+echo "infoFile=$infoFile"
+
+assetFileCount=`ls $JB_TOP/codestream-jb-jcef-*.zip|wc -l`
+[ $assetFileCount -ne 1 ] && echo "$assetFileCount assets found" >&2 && exit 1
+assetFileAndPath=`echo $JB_TOP/codestream-jb-jcef-*.zip`
+assetFile=`basename $assetFileAndPath`
+echo "assetFile=$assetFile"
+echo "##teamcity[setParameter name='env.TCBUILD_JCEF_ASSET' value='$assetFile']"
+
+if [ $tagRepo -eq 1 ]; then
+	echo "Tagging repo..."
+	commitId=`get-json-property -j $infoFile -p repoCommitId.codestream`
+	[ -z "$commitId" ] && echo "could not determine commit Id of JCEF asset" >&2 && exit 1
+	echo "JCEF commit Id=$commitId"
+	version=`get-json-property -j $infoFile -p version`
+	[ -z "$version" ] && echo "could not determine version of JCEF asset" >&2 && exit 1
+	echo "JCEF version=$version"
+	echo "cloning codestream and tagging $commitId with jb-jcef-$version"
+	tmpdir=/tmp/c$$
+	mkdir $tmpdir
+	(
+		cd $tmpdir && git clone git@github.com:teamcodestream/codestream && cd codestream && git tag jb-jcef-$version $commitId && git push origin jb-jcef-$version
+	)
+	/bin/rm -rf $tmpdir
+	[ $? -ne 0 ] && echo "git tag failed" >&2 && exit 1
+fi
+exit 0
