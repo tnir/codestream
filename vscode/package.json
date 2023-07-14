@@ -33,7 +33,7 @@
 	"keywords": [
 		"gitlab",
 		"collaboration",
-		"review",
+		"bitbucket",
 		"github",
 		"slack"
 	],
@@ -192,13 +192,13 @@
 				"codestream.goldenSignalsInEditor": {
 					"type": "boolean",
 					"default": true,
-					"description": "Specifies whether to show CodeStream golden signals in the editor",
+					"description": "Specifies whether to show code-level metrics in the editor",
 					"scope": "window"
 				},
 				"codestream.goldenSignalsInEditorFormat": {
 					"type": "string",
 					"default": "avg duration: ${averageDuration} | error rate: ${errorRate} - ${sampleSize} samples in the last ${since}",
-					"description": "Specifies how to format the CodeStream golden signals in the editor",
+					"description": "Specifies how to format the code-level metrics in the editor",
 					"scope": "window"
 				},
 				"codestream.promptToEnableCodeLensInDiffs": {
