@@ -655,7 +655,6 @@ export class CodeStreamSession implements Disposable {
 			}
 
 			if (Container.agent !== undefined) {
-				Logger.log("COLIN: AGENT LOGOUT...");
 				void (await Container.agent.logout(reason, newServerUrl));
 			}
 
@@ -667,7 +666,6 @@ export class CodeStreamSession implements Disposable {
 			// Clean up saved state
 			this._state = undefined;
 
-			Logger.log("COLIN: SESSION STATUS SignedOut");
 			setImmediate(() => this.setStatus(SessionStatus.SignedOut, reason, undefined, true));
 		}
 	}
