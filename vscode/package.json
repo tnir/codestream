@@ -198,7 +198,7 @@
 				"codestream.goldenSignalsInEditorFormat": {
 					"type": "string",
 					"default": "avg duration: ${averageDuration} | error rate: ${errorRate} - ${sampleSize} samples in the last ${since}",
-					"description": "Specifies how to format the code-level metrics in the editor",
+					"description": "Specifies how to format code-level metrics in the editor",
 					"scope": "window"
 				},
 				"codestream.promptToEnableCodeLensInDiffs": {
