@@ -22,13 +22,13 @@ Shift left by making code performance, code review and code discussion part of t
 
 See performance data, at the method level, right in your editor. Always-on view ensures that performance issues are factored into the work at hand. You can even see metrics for your lower environments, and head off performance issues before they hit production.
 
-![Code-Level Metrics](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/develop/images/marketplace-vsc-clm.png)
+![Code-Level Metrics](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/develop/images/marketplace-vs-clm.png)
 
 # Investigate Errors
 
 Discover errors happening in the code you’re responsible for. Quickly step through the stack trace, with CodeStream automatically taking you to the correct file and line number, then bring relevant teammates into the discussion so that you can resolve the issue as quickly as possible.
 
-![Investigate Errors](https://raw.githubusercontent.com/TeamCodeStream/codestream/develop/images/animated/Observability-VSC.gif)
+![Investigate Errors](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/develop/images/marketplace-vs-error.png)
 
 # Application Performance Monitoring (APM)
 
@@ -40,7 +40,7 @@ Get an in-IDE view of how the services built from your code are performing, in a
 
 Create and review pull requests from GitHub or GitLab, including on-prem versions of both, right from your IDE. Full-file side-by-side diffs give you all of the context you’ll need. Manage the PR’s details, assign reviewers and even merge the changes. 
 
-![Pull Request](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/PullRequest-VS.png)
+![Pull Request](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/develop/images/marketplace-vs-prs.png)
 
 # Simplified Code Discussion
 
