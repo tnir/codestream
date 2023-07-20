@@ -155,7 +155,7 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 	}
 
 	private checkPythonPlugin(): vscode.CodeLens[] | undefined {
-		return extensions.getExtension("ms-python.vscode-pylance")?.isActive === true
+		return extensions.getExtension("ms-python.python")?.isActive === true
 			? undefined
 			: this.missingPythonExtensionCodelens();
 	}
