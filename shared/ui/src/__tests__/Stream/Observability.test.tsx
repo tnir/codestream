@@ -475,7 +475,15 @@ describe("Observability", () => {
 		await waitFor(() => {
 			expect(screen.queryByTestId("observability-label-title")).toHaveTextContent("Observability");
 			expect(mockTrack).toHaveBeenCalledTimes(1);
-			expect(mockTrack).toHaveBeenCalledWith("O11y Rendered", { State: "No Services" });
+			expect(mockTrack).toHaveBeenCalledWith("O11y Rendered", {
+				State: "No Services",
+				Meta: {
+					currentEntityAccounts: 0,
+					hasEntities: true,
+					hasRepoForEntityAssociator: true,
+					observabilityRepoCount: 1,
+				},
+			});
 		});
 	});
 
