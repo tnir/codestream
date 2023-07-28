@@ -28,7 +28,10 @@ import {
 } from "@codestream/webview/ipc/host.protocol";
 import { LoadingMessage } from "@codestream/webview/src/components/LoadingMessage";
 import { CodeStreamState } from "@codestream/webview/store";
-import { closeAllPanels } from "@codestream/webview/store/context/actions";
+import {
+	closeAllPanels,
+	setCurrentObservabilityAnomaly,
+} from "@codestream/webview/store/context/actions";
 import { useDidMount, usePrevious } from "@codestream/webview/utilities/hooks";
 import { HostApi } from "@codestream/webview/webview-api";
 import { closePanel } from "../actions";
@@ -307,7 +310,12 @@ export const ObservabilityAnomalyPanel = () => {
 					<PanelHeader title={derivedState.currentObservabilityAnomaly.codeFunction}></PanelHeader>
 				</div>
 			)}
-			<CancelButton onClick={() => dispatch(closePanel())} />
+			<CancelButton
+				onClick={() => {
+					dispatch(setCurrentObservabilityAnomaly());
+					dispatch(closePanel());
+				}}
+			/>
 
 			<div className="plane-container" style={{ padding: "5px 20px 0px 10px" }}>
 				<div className="standard-form vscroll">

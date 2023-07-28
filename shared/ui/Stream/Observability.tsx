@@ -274,6 +274,7 @@ export const Observability = React.memo((props: Props) => {
 			anomaliesNeedRefresh: state.context.anomaliesNeedRefresh,
 			clmSettings,
 			recentErrorsTimeWindow: state.preferences.codeErrorTimeWindow,
+			currentObservabilityAnomalyEntityGuid: state.context.currentObservabilityAnomalyEntityGuid,
 		};
 	}, shallowEqual);
 
@@ -514,6 +515,28 @@ export const Observability = React.memo((props: Props) => {
 			handleClickCLMBroadcast(derivedState.currentMethodLevelTelemetry?.newRelicEntityGuid);
 		}
 	}, [derivedState.observabilityRepoEntities]);
+
+	useEffect(() => {
+		const entityGuid = derivedState.currentObservabilityAnomalyEntityGuid;
+		if (!_isEmpty(currentRepoId) && !_isEmpty(observabilityRepos) && !_isEmpty(entityGuid)) {
+			const _currentEntityAccounts = observabilityRepos.find(or => {
+				return or.repoId === currentRepoId;
+			})?.entityAccounts;
+
+			setCurrentEntityAccounts(_currentEntityAccounts);
+
+			if (_currentEntityAccounts && _currentEntityAccounts.length > 0 && currentRepoId) {
+				const userPrefExpanded = activeO11y?.[currentRepoId];
+				const _expandedEntity = userPrefExpanded
+					? userPrefExpanded
+					: _currentEntityAccounts[0].entityGuid;
+
+				if (_expandedEntity !== entityGuid) {
+					setExpandedEntity(entityGuid);
+				}
+			}
+		}
+	}, [derivedState.currentObservabilityAnomalyEntityGuid]);
 
 	// Update golden metrics every 5 minutes
 	useInterval(() => {

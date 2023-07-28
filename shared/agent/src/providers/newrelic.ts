@@ -1346,6 +1346,19 @@ export class NewRelicProvider
 		return this._lastObservabilityAnomaliesResponse;
 	}
 
+	private observabilityAnomaliesCacheKey(request: GetObservabilityAnomaliesRequest): string {
+		return [
+			request.entityGuid,
+			request.sinceDaysAgo,
+			request.baselineDays,
+			request.sinceLastRelease,
+			request.minimumErrorRate,
+			request.minimumResponseTime,
+			request.minimumSampleRate,
+			request.minimumRatio,
+		].join("|");
+	}
+
 	@lspHandler(GetObservabilityAnomaliesRequestType)
 	@log({
 		timed: true,
@@ -1353,7 +1366,8 @@ export class NewRelicProvider
 	async getObservabilityAnomalies(
 		request: GetObservabilityAnomaliesRequest
 	): Promise<GetObservabilityAnomaliesResponse> {
-		const cached = this._observabilityAnomaliesTimedCache.get(request);
+		const cacheKey = this.observabilityAnomaliesCacheKey(request);
+		const cached = this._observabilityAnomaliesTimedCache.get(cacheKey);
 		if (cached) {
 			this._lastObservabilityAnomaliesResponse = cached;
 			this.session.agent.sendNotification(DidChangeCodelensesNotificationType, undefined);
@@ -1365,11 +1379,9 @@ export class NewRelicProvider
 		let lastEx;
 		const fn = async () => {
 			try {
-				const { entityGuid } = request;
-				const { accountId } = NewRelicProvider.parseId(entityGuid)!;
 				const anomalyDetector = new AnomalyDetector(request, this);
 				const result = await anomalyDetector.execute();
-				this._observabilityAnomaliesTimedCache.put(request, result);
+				this._observabilityAnomaliesTimedCache.put(cacheKey, result);
 				return true;
 			} catch (ex) {
 				Logger.warn(ex.message);
@@ -1378,7 +1390,7 @@ export class NewRelicProvider
 			}
 		};
 		await Functions.withExponentialRetryBackoff(fn, 5, 1000);
-		const response = this._observabilityAnomaliesTimedCache.get(request) || {
+		const response = this._observabilityAnomaliesTimedCache.get(cacheKey) || {
 			responseTime: [],
 			errorRate: [],
 			error: lastEx,
