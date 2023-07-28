@@ -80,8 +80,7 @@ import Timestamp from "./Timestamp";
 import Tooltip from "./Tooltip";
 import { WarningBox } from "./WarningBox";
 import { ObservabilityAnomaliesWrapper } from "@codestream/webview/Stream/ObservabilityAnomaliesWrapper";
-import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { DEFAULT_CLM_SETTINGS } from "./CLMSettings";
+import { CLMSettings, DEFAULT_CLM_SETTINGS } from "@codestream/protocols/api";
 import { AnyObject } from "@codestream/webview/utils";
 
 interface Props {
@@ -274,7 +273,6 @@ export const Observability = React.memo((props: Props) => {
 			scmInfo: state.editorContext.scmInfo,
 			anomaliesNeedRefresh: state.context.anomaliesNeedRefresh,
 			clmSettings,
-			showAnomalies: isFeatureEnabled(state, "showAnomalies"),
 			recentErrorsTimeWindow: state.preferences.codeErrorTimeWindow,
 		};
 	}, shallowEqual);
@@ -299,6 +297,7 @@ export const Observability = React.memo((props: Props) => {
 		useState<GetObservabilityAnomaliesResponse>({
 			responseTime: [],
 			errorRate: [],
+			didNotifyNewAnomalies: false,
 		});
 	const [observabilityAssignments, setObservabilityAssignments] = useState<
 		ObservabilityErrorCore[]
@@ -678,42 +677,44 @@ export const Observability = React.memo((props: Props) => {
 
 	const fetchAnomalies = async (entityGuid: string, repoId) => {
 		dispatch(setRefreshAnomalies(false));
-		if (!derivedState.showAnomalies) {
-			return;
-		}
 		setCalculatingAnomalies(true);
 
 		try {
+			const clmSettings = derivedState?.clmSettings as CLMSettings;
 			const response = await HostApi.instance.send(GetObservabilityAnomaliesRequestType, {
 				entityGuid,
-				sinceDaysAgo: !_isNil(derivedState?.clmSettings?.compareDataLastValue)
-					? derivedState?.clmSettings?.compareDataLastValue
-					: DEFAULT_CLM_SETTINGS.compareDataLastValue,
-				baselineDays: !_isNil(derivedState?.clmSettings?.againstDataPrecedingValue)
-					? derivedState?.clmSettings?.againstDataPrecedingValue
-					: DEFAULT_CLM_SETTINGS.againstDataPrecedingValue,
-				sinceReleaseAtLeastDaysAgo: !_isNil(derivedState?.clmSettings?.compareDataLastReleaseValue)
-					? derivedState?.clmSettings?.compareDataLastReleaseValue
+				sinceDaysAgo: parseInt(
+					!_isNil(clmSettings?.compareDataLastValue)
+						? clmSettings?.compareDataLastValue
+						: DEFAULT_CLM_SETTINGS.compareDataLastValue
+				),
+				baselineDays: parseInt(
+					!_isNil(clmSettings?.againstDataPrecedingValue)
+						? clmSettings?.againstDataPrecedingValue
+						: DEFAULT_CLM_SETTINGS.againstDataPrecedingValue
+				),
+				sinceLastRelease: !_isNil(clmSettings?.compareDataLastReleaseValue)
+					? clmSettings?.compareDataLastReleaseValue
 					: DEFAULT_CLM_SETTINGS.compareDataLastReleaseValue,
 				minimumErrorRate: parseFloat(
-					!_isNil(derivedState?.clmSettings?.minimumErrorRateValue)
-						? derivedState?.clmSettings?.minimumErrorRateValue
+					!_isNil(clmSettings?.minimumErrorRateValue)
+						? clmSettings?.minimumErrorRateValue
 						: DEFAULT_CLM_SETTINGS.minimumErrorRateValue
 				),
 				minimumResponseTime: parseFloat(
-					!_isNil(derivedState?.clmSettings?.minimumAverageDurationValue)
-						? derivedState?.clmSettings?.minimumAverageDurationValue
+					!_isNil(clmSettings?.minimumAverageDurationValue)
+						? clmSettings?.minimumAverageDurationValue
 						: DEFAULT_CLM_SETTINGS.minimumAverageDurationValue
 				),
 				minimumSampleRate: parseFloat(
-					!_isNil(derivedState?.clmSettings?.minimumBaselineValue)
-						? derivedState?.clmSettings?.minimumBaselineValue
+					!_isNil(clmSettings?.minimumBaselineValue)
+						? clmSettings?.minimumBaselineValue
 						: DEFAULT_CLM_SETTINGS.minimumBaselineValue
 				),
 				minimumRatio:
 					parseFloat(
-						!_isNil(derivedState?.clmSettings?.minimumChangeValue)
-							? derivedState?.clmSettings?.minimumChangeValue
+						!_isNil(clmSettings?.minimumChangeValue)
+							? clmSettings?.minimumChangeValue
 							: DEFAULT_CLM_SETTINGS.minimumChangeValue
 					) /
 						100 +
@@ -1228,19 +1229,18 @@ export const Observability = React.memo((props: Props) => {
 																									errorMsg={serviceLevelObjectiveError}
 																								/>
 																							)}
-																							{derivedState.showAnomalies &&
-																								anomalyDetectionSupported && (
-																									<ObservabilityAnomaliesWrapper
-																										observabilityAnomalies={observabilityAnomalies}
-																										observabilityRepo={_observabilityRepo}
-																										entityGuid={ea.entityGuid}
-																										noAccess={noErrorsAccess}
-																										calculatingAnomalies={calculatingAnomalies}
-																										distributedTracingEnabled={
-																											ea?.distributedTracingEnabled
-																										}
-																									/>
-																								)}
+																							{anomalyDetectionSupported && (
+																								<ObservabilityAnomaliesWrapper
+																									observabilityAnomalies={observabilityAnomalies}
+																									observabilityRepo={_observabilityRepo}
+																									entityGuid={ea.entityGuid}
+																									noAccess={noErrorsAccess}
+																									calculatingAnomalies={calculatingAnomalies}
+																									distributedTracingEnabled={
+																										ea?.distributedTracingEnabled
+																									}
+																								/>
+																							)}
 
 																							{ea.domain === "APM" && (
 																								<>

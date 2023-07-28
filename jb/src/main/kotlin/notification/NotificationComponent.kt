@@ -3,15 +3,18 @@ package com.codestream.notification
 import com.codestream.CODESTREAM_TOOL_WINDOW_ID
 import com.codestream.agentService
 import com.codestream.appDispatcher
+import com.codestream.clmService
 import com.codestream.codeStream
 import com.codestream.protocols.agent.Codemark
 import com.codestream.protocols.agent.CreateReviewsForUnreviewedCommitsParams
 import com.codestream.protocols.agent.FollowReviewParams
+import com.codestream.protocols.agent.ObservabilityAnomaly
 import com.codestream.protocols.agent.Post
 import com.codestream.protocols.agent.PullRequestNotification
 import com.codestream.protocols.agent.Review
 import com.codestream.protocols.agent.TelemetryParams
 import com.codestream.protocols.webview.CodemarkNotifications
+import com.codestream.protocols.webview.ObservabilityAnomalyNotifications
 import com.codestream.protocols.webview.PullRequestNotifications
 import com.codestream.protocols.webview.ReviewNotifications
 import com.codestream.sessionService
@@ -166,6 +169,41 @@ class NotificationComponent(val project: Project) {
         notification.notify(project)
     }
 
+    fun didDetectObservabilityAnomalies(entityGuid: String, duration: List<ObservabilityAnomaly>, errorRate: List<ObservabilityAnomaly>) {
+        val count = duration.size + errorRate.size
+        val title = if (count == 1) {
+            "$count code-level performance issues found"
+        } else {
+            "Code-level performance issue found"
+        }
+        val allAnomalies = (duration + errorRate).sortedByDescending { it.ratio }
+        val firstAnomaly = allAnomalies.first()
+
+        val content = if (count == 1) {
+            firstAnomaly.notificationText
+        } else {
+            "Issue #1: " + firstAnomaly.notificationText
+        }
+
+        val notification = notificationGroup.createNotification(title, null, content, NotificationType.INFORMATION)
+        notification.addAction(NotificationAction.createSimple("Details") {
+            appDispatcher.launch {
+                project.codeStream?.show {
+                    project.webViewService?.postNotification(ObservabilityAnomalyNotifications.View(
+                        firstAnomaly,
+                        entityGuid
+                    ))
+                    notification.expire()
+                }
+                project.clmService?.revealSymbol(firstAnomaly.codeFilepath, firstAnomaly.codeNamespace, firstAnomaly.codeFunction)
+            }
+            telemetry(TelemetryEvent.TOAST_CLICKED, "CLM Anomaly")
+        })
+
+        telemetry(TelemetryEvent.TOAST_NOTIFICATION, "CLM Anomaly")
+        notification.notify(project)
+    }
+
     private suspend fun showNotification(post: Post, codemark: Codemark?, review: Review?) {
         val session = project.sessionService ?: return
         val sender =
@@ -219,5 +257,6 @@ class NotificationComponent(val project: Project) {
         val params = TelemetryParams(event.value, mapOf("Content" to content))
         project.agentService?.agent?.telemetry(params)
     }
+
 }
 

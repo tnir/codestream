@@ -401,12 +401,15 @@ export class ClmManager {
 			// is also based) is the name of the concrete class
 			const parts = duration.metricTimesliceName.split("/");
 			const altClassName = parts[parts.length - 2];
-			const anomaly = anomalies.find(
-				_ =>
-					(_.className === duration.className || _.className === altClassName) &&
-					_.functionName === duration.functionName
+			const anomalyMatch1 = anomalies.find(
+				_ => _.metricTimesliceName === duration.metricTimesliceName
 			);
-			duration.anomaly = anomaly;
+			const anomalyMatch2 = anomalies.find(
+				_ =>
+					(_.codeNamespace === duration.className || _.codeNamespace === altClassName) &&
+					_.codeFunction === duration.functionName
+			);
+			duration.anomaly = anomalyMatch1 || anomalyMatch2;
 		}
 	}
 }

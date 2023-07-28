@@ -104,7 +104,7 @@ import {
 	UpdateNewRelicOrgIdResponse,
 	DidChangeCodelensesNotificationType,
 } from "@codestream/protocols/agent";
-import { CSMe, CSNewRelicProviderInfo } from "@codestream/protocols/api";
+import { CSMe, CSNewRelicProviderInfo, DEFAULT_CLM_SETTINGS } from "@codestream/protocols/api";
 import { GraphQLClient } from "graphql-request";
 import {
 	flatten as _flatten,
@@ -175,6 +175,9 @@ export interface INewRelicProvider {
 	errorLogIfNotIgnored: (ex: Error, message: string, ...params: any[]) => void;
 	getDeployments(request: GetDeploymentsRequest): Promise<GetDeploymentsResponse>;
 	getLastObservabilityAnomaliesResponse(): GetObservabilityAnomaliesResponse | undefined;
+	getObservabilityRepos(
+		request: GetObservabilityReposRequest
+	): Promise<GetObservabilityReposResponse>;
 }
 
 @lspProvider("newrelic")
@@ -200,6 +203,7 @@ export class NewRelicProvider
 	});
 
 	private _clmManager = new ClmManager(this);
+	private _observabilityAnomaliesPollingInterval: NodeJS.Timer | undefined;
 
 	constructor(session: CodeStreamSession, config: ThirdPartyProviderConfig) {
 		super(session, config);
@@ -207,6 +211,11 @@ export class NewRelicProvider
 			this.buildRepoRemoteVariants,
 			(remotes: string[]) => remotes
 		);
+		this._observabilityAnomaliesPollingInterval = Functions.repeatInterval(
+			this.pollObservabilityAnomalies.bind(this),
+			60 * 1000,
+			24 * 60 * 60 * 1000
+		); // every 24 hours
 	}
 
 	get displayName() {
@@ -1294,6 +1303,45 @@ export class NewRelicProvider
 	});
 	private _lastObservabilityAnomaliesResponse: GetObservabilityAnomaliesResponse | undefined;
 
+	async pollObservabilityAnomalies() {
+		const { repos, error } = await this.getObservabilityRepos({});
+		if (error) {
+			Logger.warn("pollObservabilityAnomalies: " + (error.error.message || error.error.type));
+			return;
+		}
+		if (!repos?.length) {
+			Logger.log("pollObservabilityAnomalies: no observability repos");
+			return;
+		}
+		const entityGuids = new Set<string>();
+		for (const observabilityRepo of repos) {
+			for (const account of observabilityRepo.entityAccounts) {
+				entityGuids.add(account.entityGuid);
+			}
+		}
+
+		const me = await SessionContainer.instance().users.getMe();
+		const clmSettings = me.preferences?.clmSettings || DEFAULT_CLM_SETTINGS;
+		let didNotifyNewAnomalies = false;
+		for (const entityGuid of entityGuids) {
+			Logger.log("Getting observability anomalies for entity " + entityGuid);
+			const response = await this.getObservabilityAnomalies({
+				entityGuid,
+				sinceDaysAgo: parseInt(clmSettings.compareDataLastValue),
+				baselineDays: parseInt(clmSettings.againstDataPrecedingValue),
+				sinceLastRelease: clmSettings.compareDataLastReleaseValue,
+				minimumErrorRate: parseFloat(clmSettings.minimumErrorRateValue),
+				minimumResponseTime: parseFloat(clmSettings.minimumAverageDurationValue),
+				minimumSampleRate: parseFloat(clmSettings.minimumBaselineValue),
+				minimumRatio: parseFloat(clmSettings.minimumChangeValue) / 100 + 1,
+				notifyNewAnomalies: !didNotifyNewAnomalies,
+			});
+			if (response.didNotifyNewAnomalies) {
+				didNotifyNewAnomalies = true;
+			}
+		}
+	}
+
 	getLastObservabilityAnomaliesResponse() {
 		return this._lastObservabilityAnomaliesResponse;
 	}
@@ -1334,6 +1382,7 @@ export class NewRelicProvider
 			responseTime: [],
 			errorRate: [],
 			error: lastEx,
+			didNotifyNewAnomalies: false,
 		};
 
 		this._lastObservabilityAnomaliesResponse = response;

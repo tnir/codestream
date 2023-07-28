@@ -1325,17 +1325,17 @@ export interface GetObservabilityAnomaliesRequest {
 	entityGuid: string;
 	sinceDaysAgo: number;
 	baselineDays: number;
-	sinceReleaseAtLeastDaysAgo?: number;
+	sinceLastRelease: boolean;
 	minimumErrorRate: number;
 	minimumResponseTime: number;
 	minimumSampleRate: number;
 	minimumRatio: number;
+	notifyNewAnomalies?: boolean;
 }
 
-export interface ObservabilityAnomaly {
+export interface ObservabilityAnomaly extends CodeAttributes {
+	language: string;
 	name: string;
-	className: string;
-	functionName: string;
 	oldValue: number;
 	newValue: number;
 	ratio: number;
@@ -1347,6 +1347,7 @@ export interface ObservabilityAnomaly {
 	chartHeaderTexts: {
 		[key: string]: string;
 	};
+	notificationText: string;
 }
 
 export type DetectionMethod = "Release Based" | "Time Based";
@@ -1364,12 +1365,21 @@ export interface Comparison extends Named {
 	ratio: number;
 }
 
+export interface CodeAttributes {
+	codeFilepath?: string,
+	codeNamespace: string,
+	codeFunction: string
+}
+
+export interface SpanWithCodeAttrs extends NameValue, CodeAttributes {}
+
 export interface GetObservabilityAnomaliesResponse {
 	responseTime: ObservabilityAnomaly[];
 	errorRate: ObservabilityAnomaly[];
 	detectionMethod?: DetectionMethod;
 	error?: string;
 	isSupported?: boolean;
+	didNotifyNewAnomalies: boolean;
 	allOtherAnomalies?: ObservabilityAnomaly[];
 }
 
@@ -2225,3 +2235,14 @@ export const CheckTrunkRequestType = new RequestType<
 export const DidChangeCodelensesNotificationType = new NotificationType<void, void>(
 	"codestream/didChangeCodelenses"
 );
+
+export interface DidDetectObservabilityAnomaliesNotification {
+	entityGuid: string;
+	duration: ObservabilityAnomaly[];
+	errorRate: ObservabilityAnomaly[];
+}
+
+export const DidDetectObservabilityAnomaliesNotificationType = new NotificationType<DidDetectObservabilityAnomaliesNotification, void>(
+	"codestream/didDetectObservabilityAnomalies"
+);
+
