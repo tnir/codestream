@@ -1,26 +1,16 @@
 using CodeStream.VisualStudio.Core.Logging;
 
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis;
-using Microsoft.VisualStudio.Shell;
-
 using Serilog;
 
-using System;
 using System.ComponentModel.Composition;
 using System.Threading;
 using Task = System.Threading.Tasks.Task;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+
 using System.Linq;
 using CodeStream.VisualStudio.Core.Extensions;
-using EnvDTE;
-using Microsoft.CodeAnalysis.MSBuild;
-using Microsoft.VisualStudio.Shell.Interop;
-using System.Reflection.Metadata.Ecma335;
-using System.Threading.Tasks;
+
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.CodeAnalysis.FindSymbols;
-using VSLangProj80;
 
 namespace CodeStream.VisualStudio.Shared.Services
 {
