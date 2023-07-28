@@ -189,7 +189,7 @@ describe("Observability", () => {
 						},
 					],
 				};
-			},
+			}
 		);
 
 		mockGetObservabilityAnomalies.mockImplementation(
@@ -212,13 +212,14 @@ describe("Observability", () => {
 							sinceText: "some text",
 							chartHeaderTexts: {},
 							notificationText: "",
+							entityName: "",
 						},
 					],
 					errorRate: [],
 					detectionMethod: "Release Based",
 					didNotifyNewAnomalies: false,
 				};
-			},
+			}
 		);
 
 		mockGetObservabilityErrors.mockImplementation(
@@ -244,7 +245,7 @@ describe("Observability", () => {
 						},
 					],
 				};
-			},
+			}
 		);
 	}
 
@@ -273,7 +274,7 @@ describe("Observability", () => {
 						},
 					],
 				};
-			},
+			}
 		);
 
 		mockGetFileScmInfo.mockImplementation((_params: GetFileScmInfoRequest) => {
@@ -334,7 +335,7 @@ describe("Observability", () => {
 					items: [],
 				};
 				return response;
-			},
+			}
 		);
 
 		mockGetObservabilityAnomalies.mockImplementation(
@@ -346,7 +347,7 @@ describe("Observability", () => {
 					didNotifyNewAnomalies: false,
 				};
 				return response;
-			},
+			}
 		);
 
 		mockGetObservabilityErrors.mockImplementation((_params: GetObservabilityErrorsRequest) => {
@@ -372,7 +373,7 @@ describe("Observability", () => {
 				}
 				case GetObservabilityErrorAssignmentsRequestType: {
 					return mockGetObservabilityErrorAssignments(
-						params as GetObservabilityErrorAssignmentsRequest,
+						params as GetObservabilityErrorAssignmentsRequest
 					);
 				}
 				case GetServiceLevelObjectivesRequestType: {
@@ -406,9 +407,9 @@ describe("Observability", () => {
 						<ThemeProvider theme={lightTheme}>
 							<Observability paneState={PaneState.Open} />
 						</ThemeProvider>
-					</Provider>,
+					</Provider>
 				),
-				{ container },
+				{ container }
 			);
 		});
 
@@ -434,7 +435,7 @@ describe("Observability", () => {
 						<Observability paneState={PaneState.Open} />
 					</ThemeProvider>
 				</Provider>,
-				{ container },
+				{ container }
 			);
 		});
 
@@ -472,7 +473,7 @@ describe("Observability", () => {
 						<Observability paneState={PaneState.Open} />
 					</ThemeProvider>
 				</Provider>,
-				{ container },
+				{ container }
 			);
 		});
 
@@ -502,7 +503,7 @@ describe("Observability", () => {
 						<Observability paneState={PaneState.Open} />
 					</ThemeProvider>
 				</Provider>,
-				{ container },
+				{ container }
 			);
 		});
 
@@ -525,9 +526,9 @@ describe("Observability", () => {
 						<ThemeProvider theme={lightTheme}>
 							<Observability paneState={PaneState.Open} />
 						</ThemeProvider>
-					</Provider>,
+					</Provider>
 				),
-				{ container },
+				{ container }
 			);
 		});
 
@@ -561,9 +562,9 @@ describe("Observability", () => {
 						<ThemeProvider theme={lightTheme}>
 							<Observability paneState={PaneState.Open} />
 						</ThemeProvider>
-					</Provider>,
+					</Provider>
 				),
-				{ container },
+				{ container }
 			);
 		});
 
@@ -597,9 +598,9 @@ describe("Observability", () => {
 						<ThemeProvider theme={lightTheme}>
 							<Observability paneState={PaneState.Open} />
 						</ThemeProvider>
-					</Provider>,
+					</Provider>
 				),
-				{ container },
+				{ container }
 			);
 		});
 
@@ -636,9 +637,9 @@ describe("Observability", () => {
 						<ThemeProvider theme={lightTheme}>
 							<Observability paneState={PaneState.Open} />
 						</ThemeProvider>
-					</Provider>,
+					</Provider>
 				),
-				{ container },
+				{ container }
 			);
 		});
 

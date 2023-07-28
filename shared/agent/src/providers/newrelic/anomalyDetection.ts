@@ -1,16 +1,18 @@
 import { Container, SessionContainer } from "../../container";
 import {
 	AgentFilterNamespacesRequestType,
+	CodeAttributes,
+	Comparison,
 	DetectionMethod,
+	DidDetectObservabilityAnomaliesNotificationType,
+	EntityAccount,
 	GetObservabilityAnomaliesRequest,
 	GetObservabilityAnomaliesResponse,
-	ObservabilityAnomaly,
 	Named,
 	NameValue,
-	Comparison,
+	ObservabilityAnomaly,
+	ObservabilityRepo,
 	SpanWithCodeAttrs,
-	CodeAttributes,
-	DidDetectObservabilityAnomaliesNotificationType,
 } from "@codestream/protocols/agent";
 import { INewRelicProvider, NewRelicProvider } from "../newrelic";
 import { Logger } from "../../logger";
@@ -129,7 +131,7 @@ export class AnomalyDetector {
 			this.errorRateComparisonToAnomaly(_, languageSupport, benchmarkSpans, metricTimesliceNames)
 		);
 
-		this.addDisplayTexts(durationAnomalies, errorRateAnomalies);
+		void (await this.addDisplayTexts(durationAnomalies, errorRateAnomalies));
 
 		const symbolStrs = new Set();
 		for (const name of metricTimesliceNames) {
@@ -167,6 +169,7 @@ export class AnomalyDetector {
 				metricTimesliceName: "",
 				errorMetricTimesliceName: "",
 				notificationText: "",
+				entityName: "",
 			};
 			allOtherAnomalies.push(anomaly);
 		}
@@ -594,6 +597,7 @@ export class AnomalyDetector {
 				) || comparison.name,
 			chartHeaderTexts: {},
 			notificationText: "",
+			entityName: "",
 		};
 	}
 
@@ -623,25 +627,30 @@ export class AnomalyDetector {
 			errorMetricTimesliceName: comparison.name,
 			chartHeaderTexts: {},
 			notificationText: "",
+			entityName: "",
 		};
 	}
 
-	private addDisplayTexts(
+	private async addDisplayTexts(
 		durationAnomalies: ObservabilityAnomaly[],
 		errorRateAnomalies: ObservabilityAnomaly[]
 	) {
+		const entityAccount = await this.getEntityAccount();
+
 		// FIXME temporary solution for anomaly charts
 		for (const anomaly of durationAnomalies) {
 			const percentage = ((anomaly.ratio - 1) * 100).toFixed(2);
 			const text = `+${percentage}% since ${anomaly.sinceText}`;
 			anomaly.chartHeaderTexts["Average duration (ms)"] = text;
 			anomaly.notificationText = "Average duration (ms) " + text;
+			anomaly.entityName = entityAccount?.entityName || "";
 		}
 		for (const anomaly of errorRateAnomalies) {
 			const percentage = ((anomaly.ratio - 1) * 100).toFixed(2);
 			const text = `+${percentage}% since ${anomaly.sinceText}`;
 			anomaly.chartHeaderTexts["Errors (per minute)"] = text;
 			anomaly.notificationText = "Errors (per minute) " + text;
+			anomaly.entityName = entityAccount?.entityName || "";
 		}
 		for (const anomaly of durationAnomalies) {
 			const counterpart = errorRateAnomalies.find(
@@ -686,19 +695,38 @@ export class AnomalyDetector {
 		return undefined;
 	}
 
+	private _observabilityRepo: ObservabilityRepo | undefined;
+	private async getObservabilityRepo(): Promise<ObservabilityRepo | undefined> {
+		if (this._observabilityRepo) return this._observabilityRepo;
+
+		const { repos: observabilityRepos } = await this._provider.getObservabilityRepos({});
+		const { entityGuid } = this._request;
+
+		if (!observabilityRepos) return undefined;
+		const observabilityRepo = observabilityRepos.find(_ =>
+			_.entityAccounts.some(_ => _.entityGuid === entityGuid)
+		);
+		return (this._observabilityRepo = observabilityRepo);
+	}
+
+	private _entityAccount: EntityAccount | undefined;
+	private async getEntityAccount(): Promise<EntityAccount | undefined> {
+		if (this._entityAccount) return this._entityAccount;
+		const observabilityRepo = await this.getObservabilityRepo();
+		return (this._entityAccount = observabilityRepo?.entityAccounts?.find(
+			_ => _.entityGuid === this._request.entityGuid
+		));
+	}
+
 	private async notifyNewAnomalies(
 		durationAnomalies: ObservabilityAnomaly[],
 		errorRateAnomalies: ObservabilityAnomaly[]
 	): Promise<boolean> {
-		const { repos: observabilityRepos } = await this._provider.getObservabilityRepos({});
 		const { entityGuid } = this._request;
 		const { git } = SessionContainer.instance();
 		const now = Date.now();
 
-		if (!observabilityRepos) return false;
-		const observabilityRepo = observabilityRepos.find(_ =>
-			_.entityAccounts.some(_ => _.entityGuid === entityGuid)
-		);
+		const observabilityRepo = await this.getObservabilityRepo();
 		if (!observabilityRepo) return false;
 		const gitRepo = await git.getRepositoryById(observabilityRepo.repoId);
 		if (!gitRepo) return false;

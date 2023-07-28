@@ -171,21 +171,21 @@ class NotificationComponent(val project: Project) {
 
     fun didDetectObservabilityAnomalies(entityGuid: String, duration: List<ObservabilityAnomaly>, errorRate: List<ObservabilityAnomaly>) {
         val count = duration.size + errorRate.size
-        val title = if (count == 1) {
-            "$count code-level performance issues found"
-        } else {
-            "Code-level performance issue found"
-        }
         val allAnomalies = (duration + errorRate).sortedByDescending { it.ratio }
+        val title = if (count == 1) {
+            "Performance issue found"
+        } else {
+            "$count performance issues found"
+        }
         val firstAnomaly = allAnomalies.first()
 
         val content = if (count == 1) {
-            firstAnomaly.notificationText
+            "${firstAnomaly.notificationText} (${firstAnomaly.entityName})"
         } else {
-            "Issue #1: " + firstAnomaly.notificationText
+            "#1: ${firstAnomaly.notificationText} (${firstAnomaly.entityName})"
         }
 
-        val notification = notificationGroup.createNotification(title, null, content, NotificationType.INFORMATION)
+        val notification = notificationGroup.createNotification(title, "CodeStream", content, NotificationType.INFORMATION)
         notification.addAction(NotificationAction.createSimple("Details") {
             appDispatcher.launch {
                 project.codeStream?.show {

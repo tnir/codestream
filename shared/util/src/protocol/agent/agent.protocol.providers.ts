@@ -1348,6 +1348,7 @@ export interface ObservabilityAnomaly extends CodeAttributes {
 		[key: string]: string;
 	};
 	notificationText: string;
+	entityName: string;
 }
 
 export type DetectionMethod = "Release Based" | "Time Based";
