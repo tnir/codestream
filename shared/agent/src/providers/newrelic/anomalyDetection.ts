@@ -881,7 +881,7 @@ class RubyLanguageSupport implements LanguageSupport {
 				!(m.name.indexOf("Nested/Controller/Rack/") === 0) &&
 				!(m.name.indexOf("Controller/Sinatra/") === 0) &&
 				!(m.name.indexOf("Nested/Controller/Sinatra/") === 0) &&
-				!(m.name.indexOf("ActiveJob/Async/Queue/Consume/") === 0) &&
+				!(m.name.indexOf("ActiveJob/Async/Queue/Produce/") === 0) &&
 				(benchmarkSpans.find(s => s.name === m.name && s.codeFunction) ||
 					controllerRE.test(m.name) ||
 					nestedControllerRE.test(m.name) ||

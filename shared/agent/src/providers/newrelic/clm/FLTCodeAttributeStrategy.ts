@@ -355,7 +355,7 @@ export class FLTCodeAttributeStrategy implements FLTStrategy {
 					.filter(
 						span =>
 							!span.name?.startsWith("MessageBroker/") &&
-							!span.name?.startsWith("ActiveJob/Async/Queue/Consume/")
+							!span.name?.startsWith("ActiveJob/Async/Queue/Produce/")
 					)
 					.map(span => {
 						if (span.name?.startsWith("Nested/Controller")) {
