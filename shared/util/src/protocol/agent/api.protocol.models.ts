@@ -782,6 +782,7 @@ export interface CSMePreferences {
 	pullRequestView?: "auto" | "vertical" | "side-by-side";
 	reviewCreateOnCommit?: boolean;
 	reviewCreateOnDetectUnreviewedCommits?: boolean;
+	notifyPerformanceIssues?: boolean;
 	issueReposDefaultBranch?: {
 		[repoId: string]: string;
 	};

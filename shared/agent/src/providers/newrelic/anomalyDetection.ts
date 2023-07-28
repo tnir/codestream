@@ -198,10 +198,13 @@ export class AnomalyDetector {
 			Logger.warn("Error generating anomaly detection telemetry", e);
 		}
 
-		let hasNewAnomalies = false;
+		let didNotifyNewAnomalies = false;
 		if (this._request.notifyNewAnomalies) {
 			try {
-				hasNewAnomalies = await this.notifyNewAnomalies(durationAnomalies, errorRateAnomalies);
+				didNotifyNewAnomalies = await this.notifyNewAnomalies(
+					durationAnomalies,
+					errorRateAnomalies
+				);
 			} catch (e) {
 				Logger.warn("Error notifying newly detected observability anomalies", e);
 			}
@@ -212,7 +215,7 @@ export class AnomalyDetector {
 			errorRate: errorRateAnomalies,
 			allOtherAnomalies: allOtherAnomalies,
 			detectionMethod,
-			didNotifyNewAnomalies: hasNewAnomalies,
+			didNotifyNewAnomalies,
 			isSupported: true,
 		};
 	}
@@ -723,8 +726,11 @@ export class AnomalyDetector {
 		errorRateAnomalies: ObservabilityAnomaly[]
 	): Promise<boolean> {
 		const { entityGuid } = this._request;
-		const { git } = SessionContainer.instance();
+		const { git, users } = SessionContainer.instance();
+		const me = await users.getMe();
 		const now = Date.now();
+
+		if (me.preferences?.notifyPerformanceIssues === false) return false;
 
 		const observabilityRepo = await this.getObservabilityRepo();
 		if (!observabilityRepo) return false;
