@@ -1375,6 +1375,11 @@ export class NewRelicProvider
 			if (response.didNotifyNewAnomalies) {
 				didNotifyNewAnomalies = true;
 			}
+
+			const pause = new Promise(resolve => {
+				setTimeout(resolve, 2 * 60 * 1000);
+			});
+			void (await pause);
 		}
 	}
 
