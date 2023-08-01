@@ -1335,7 +1335,7 @@ export class NewRelicProvider
 	}
 
 	private _observabilityAnomaliesTimedCache = new Cache<GetObservabilityAnomaliesResponse>({
-		defaultTtl: 120 * 1000,
+		defaultTtl: 45 * 60 * 1000, // 45 minutes
 	});
 	private _lastObservabilityAnomaliesResponse: GetObservabilityAnomaliesResponse | undefined;
 
