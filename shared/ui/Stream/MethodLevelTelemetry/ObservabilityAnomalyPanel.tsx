@@ -541,7 +541,7 @@ export const ObservabilityAnomalyPanel = () => {
 																	([key, value]: [string, any]) => {
 																		return (
 																			<ReferenceLine
-																				x={key}
+																				x={parseInt(key)}
 																				stroke={value?.length ? colorPrimary : colorSubtle}
 																				label={e => renderCustomLabel(e, value.join(", "))}
 																			/>
