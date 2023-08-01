@@ -198,7 +198,9 @@ export interface INewRelicProvider {
 	) => EntityAccount;
 	errorLogIfNotIgnored: (ex: Error, message: string, ...params: any[]) => void;
 	getDeployments(request: GetDeploymentsRequest): Promise<GetDeploymentsResponse>;
-	getLastObservabilityAnomaliesResponse(): GetObservabilityAnomaliesResponse | undefined;
+	getLastObservabilityAnomaliesResponse(
+		entityGuid: string
+	): GetObservabilityAnomaliesResponse | undefined;
 	getObservabilityRepos(
 		request: GetObservabilityReposRequest
 	): Promise<GetObservabilityReposResponse>;
@@ -1334,10 +1336,15 @@ export class NewRelicProvider
 		return this._clmManager.getObservabilityResponseTimes(request);
 	}
 
-	private _observabilityAnomaliesTimedCache = new Cache<GetObservabilityAnomaliesResponse>({
-		defaultTtl: 45 * 60 * 1000, // 45 minutes
-	});
-	private _lastObservabilityAnomaliesResponse: GetObservabilityAnomaliesResponse | undefined;
+	private _observabilityAnomaliesTimedCache = new Cache<Promise<GetObservabilityAnomaliesResponse>>(
+		{
+			defaultTtl: 45 * 60 * 1000, // 45 minutes
+		}
+	);
+	private _lastObservabilityAnomaliesResponse = new Map<
+		string,
+		GetObservabilityAnomaliesResponse
+	>();
 
 	async pollObservabilityAnomalies() {
 		const { repos, error } = await this.getObservabilityRepos({});
@@ -1383,8 +1390,8 @@ export class NewRelicProvider
 		}
 	}
 
-	getLastObservabilityAnomaliesResponse() {
-		return this._lastObservabilityAnomaliesResponse;
+	getLastObservabilityAnomaliesResponse(entityGuid: string) {
+		return this._lastObservabilityAnomaliesResponse.get(entityGuid);
 	}
 
 	private observabilityAnomaliesCacheKey(request: GetObservabilityAnomaliesRequest): string {
@@ -1408,23 +1415,30 @@ export class NewRelicProvider
 		request: GetObservabilityAnomaliesRequest
 	): Promise<GetObservabilityAnomaliesResponse> {
 		const cacheKey = this.observabilityAnomaliesCacheKey(request);
-		const cached = this._observabilityAnomaliesTimedCache.get(cacheKey);
-		if (cached) {
-			this._lastObservabilityAnomaliesResponse = cached;
-			this.session.agent.sendNotification(DidChangeCodelensesNotificationType, undefined);
-			return cached;
+		try {
+			const cached = await this._observabilityAnomaliesTimedCache.get(cacheKey);
+			if (cached) {
+				this._lastObservabilityAnomaliesResponse.set(request.entityGuid, cached);
+				this.session.agent.sendNotification(DidChangeCodelensesNotificationType, undefined);
+				return cached;
+			}
+		} catch (e) {
+			// ignore
 		}
 
-		this._lastObservabilityAnomaliesResponse = undefined;
+		this._lastObservabilityAnomaliesResponse.delete(request.entityGuid);
 
 		let lastEx;
 		const fn = async () => {
 			try {
 				const anomalyDetector = new AnomalyDetector(request, this);
-				const result = await anomalyDetector.execute();
-				this._observabilityAnomaliesTimedCache.put(cacheKey, result);
+				const promise = anomalyDetector.execute();
+				this._observabilityAnomaliesTimedCache.put(cacheKey, promise);
+				const response = await promise;
+				this._lastObservabilityAnomaliesResponse.set(request.entityGuid, response);
 				return true;
 			} catch (ex) {
+				this._observabilityAnomaliesTimedCache.remove(cacheKey);
 				Logger.warn(ex.message);
 				lastEx = ex.message;
 				return false;
@@ -1438,7 +1452,6 @@ export class NewRelicProvider
 			didNotifyNewAnomalies: false,
 		};
 
-		this._lastObservabilityAnomaliesResponse = response;
 		this.session.agent.sendNotification(DidChangeCodelensesNotificationType, undefined);
 
 		return response;

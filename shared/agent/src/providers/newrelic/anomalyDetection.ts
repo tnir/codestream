@@ -79,14 +79,14 @@ export class AnomalyDetector {
 				const deploymentDate = new Date(deployment.seconds * 1000);
 				const now = new Date();
 				const timeSinceDeployment = now.getTime() - deploymentDate.getTime();
-				const daysSinceDeployment = Math.round(timeSinceDeployment / (1000 * 60 * 60 * 24));
+				const daysSinceDeployment = Math.ceil(timeSinceDeployment / (1000 * 60 * 60 * 24));
 				this._sinceDaysAgo = daysSinceDeployment;
 				this._releaseBased = true;
-				this._dataTimeFrame = `SINCE ${daysSinceDeployment} days AGO`;
+				this._dataTimeFrame = `SINCE ${deployment.seconds}`;
 				const baselineDays = parseInt(this._request.baselineDays as any);
-				this._baselineTimeFrame = `SINCE ${
-					daysSinceDeployment + baselineDays
-				} days AGO UNTIL ${daysSinceDeployment} days AGO`;
+				this._baselineTimeFrame = `SINCE ${daysSinceDeployment + baselineDays} days AGO UNTIL ${
+					deployment.seconds
+				}`;
 				this._totalDays = daysSinceDeployment + baselineDays;
 
 				const options: Intl.DateTimeFormatOptions = {

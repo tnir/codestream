@@ -143,7 +143,7 @@ export class ClmManager {
 			const errorRate = this.mergeResults(results.map(_ => _.errorRate));
 			const sampleSize = this.mergeResults(results.map(_ => _.sampleSize));
 
-			const anomalies = this.provider.getLastObservabilityAnomaliesResponse();
+			const anomalies = this.provider.getLastObservabilityAnomaliesResponse(newRelicEntityGuid);
 			if (anomalies) {
 				this.addAnomalies(averageDuration, anomalies.responseTime);
 				this.addAnomalies(errorRate, anomalies.errorRate);
