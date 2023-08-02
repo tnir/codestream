@@ -1,5 +1,21 @@
 # Change Log
 
+## [14.25.0] - 2023-07-03
+
+### Added
+- Adds a Code-Level Metrics section that highlights poorly performing methods in the code based on anomalous increases in error rate or average duration. Currently available for Java, .NET, Ruby and Pyhton.
+- Adds desktop notifications to call out poorly performing methods in the code
+
+### Changed
+- Updated the error grouping paradigm in the Errors section to align with the New Relic Errors Inbox
+
+### Fixed
+- Fixes an issue that was preventing codelenses from being displayed for C#
+- Fixes an issue that would result in you being prompted to select a repo when opening an error
+- Fixes an issue that would generate an error if you submitted a Bitbucket PR against a branch that already has an open PR
+- Fixes an issue preventing you from being able to open the local files from the changeset when opening a PR
+- Fixes an issue where adding a comment to a Bitbucket PR via the "Close and Comment" button wouldn't appear without reloading the PR details
+
 ## [14.24.0] - 2023-07-19
 
 ### Fixed
