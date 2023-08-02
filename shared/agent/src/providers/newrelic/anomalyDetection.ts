@@ -64,7 +64,7 @@ export class AnomalyDetector {
 
 		const sinceDaysAgo = parseInt(this._request.sinceDaysAgo as any);
 		this._totalDays = sinceDaysAgo + parseInt(this._request.baselineDays as any);
-		this._sinceText = `${sinceDaysAgo} days ago`;
+		this._sinceText = sinceDaysAgo === 1 ? `1 day ago` : `${sinceDaysAgo} days ago`;
 		let detectionMethod: DetectionMethod = "Time Based";
 		if (this._request.sinceLastRelease) {
 			const deployments = (
