@@ -6,6 +6,11 @@ import { ActionType } from "../common";
 import * as actions from "./actions";
 import { isPending, Post, PostsActionsType, PostsState } from "./types";
 import { PostPlus } from "@codestream/protocols/agent";
+import {
+	advanceRecombinedStream,
+	isGrokStreamDone,
+	RecombinedStream,
+} from "@codestream/webview/store/posts/recombinedStream";
 
 type PostsActions = ActionType<typeof actions>;
 
@@ -48,13 +53,18 @@ export function reducePosts(state: PostsState = initialState, action: PostsActio
 				byStream: { ...state.byStream },
 				streamingPosts: { ...state.streamingPosts },
 			};
-			const post = nextState.byStream[action.payload.streamId][action.payload.postId];
-			const existingText = nextState.streamingPosts[action.payload.postId] ?? "";
-			const nextText = existingText + action.payload.content;
-			// Post might not exist yet, so we accumulate the text in streamingPosts
-			nextState.streamingPosts[action.payload.postId] = nextText;
-			if (post) {
-				post.text = nextText;
+			const { streamId, postId } = action.payload[0];
+			const recombinedStream: RecombinedStream = nextState.streamingPosts[postId] ?? {
+				items: [],
+				receivedDoneEvent: false,
+				content: "",
+			};
+			advanceRecombinedStream(recombinedStream, action.payload);
+			// console.debug(`=== recombinedStream ${JSON.stringify(recombinedStream, null, 2)}`);
+			nextState.streamingPosts[postId] = recombinedStream;
+			const post = nextState.byStream[streamId][postId];
+			if (recombinedStream.content && post) {
+				post.text = recombinedStream.content;
 			}
 			return nextState;
 		}
@@ -116,6 +126,19 @@ export function reducePosts(state: PostsState = initialState, action: PostsActio
 			return state;
 	}
 }
+
+const _isGrokLoading = (state: PostsState) => {
+	const recombinedStreams = state.streamingPosts;
+	return Object.keys(recombinedStreams).some(postId => {
+		const stream = recombinedStreams[postId];
+		return !isGrokStreamDone(stream);
+	});
+};
+
+export const isGrokStreamLoading = createSelector(
+	(state: CodeStreamState) => state.posts,
+	_isGrokLoading
+);
 
 export const getPostsForStream = createSelector(
 	(state: CodeStreamState) => state.posts,
