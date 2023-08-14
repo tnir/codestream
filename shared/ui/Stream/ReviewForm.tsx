@@ -47,7 +47,7 @@ import { SelectPeople } from "@codestream/webview/src/components/SelectPeople";
 import HeadshotMenu from "@codestream/webview/src/components/HeadshotMenu";
 import { Headshot } from "@codestream/webview/src/components/Headshot";
 import { LabeledSwitch } from "@codestream/webview/src/components/controls/LabeledSwitch";
-import { WebviewPanels } from "@codestream/webview/ipc/webview.protocol.common";
+import { WebviewPanels } from "@codestream/protocols/api";
 import { ReviewShowLocalDiffRequestType } from "@codestream/protocols/webview";
 import { EditorRevealRangeRequestType } from "../ipc/host.protocol.editor";
 import { logError } from "../logger";

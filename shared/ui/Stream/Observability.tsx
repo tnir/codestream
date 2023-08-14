@@ -43,7 +43,7 @@ import {
 } from "@codestream/protocols/webview";
 import { SecurityIssuesWrapper } from "@codestream/webview/Stream/SecurityIssuesWrapper";
 import { ObservabilityServiceLevelObjectives } from "@codestream/webview/Stream/ObservabilityServiceLevelObjectives";
-import { WebviewPanels } from "../ipc/webview.protocol.common";
+import { WebviewPanels } from "@codestream/protocols/api";
 import { Button } from "../src/components/Button";
 import {
 	NoContent,
@@ -73,7 +73,7 @@ import Icon from "./Icon";
 import { Provider } from "./IntegrationsPanel";
 import { Link } from "./Link";
 import { ObservabilityAddAdditionalService } from "./ObservabilityAddAdditionalService";
-import { ObservabilityCurrentRepo } from "./ObservabilityCurrentRepo";
+import { CurrentRepoContext } from "./CurrentRepoContext";
 import { ObservabilityErrorWrapper } from "./ObservabilityErrorWrapper";
 import { ObservabilityGoldenMetricDropdown } from "./ObservabilityGoldenMetricDropdown";
 import Timestamp from "./Timestamp";
@@ -1056,7 +1056,7 @@ export const Observability = React.memo((props: Props) => {
 				title="Observability"
 				id={WebviewPanels.Observability}
 				subtitle={
-					<ObservabilityCurrentRepo
+					<CurrentRepoContext
 						observabilityRepos={observabilityRepos}
 						currentRepoCallback={setCurrentRepoId}
 					/>

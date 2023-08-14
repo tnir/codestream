@@ -46,7 +46,7 @@ function isResponseUrlError<T>(obj: unknown): obj is ResponseError<{ url: string
 	);
 }
 
-const CardTitle = styled.div`
+export const CardTitle = styled.div`
 	font-size: 16px;
 	line-height: 20px;
 	display: flex;
@@ -320,7 +320,7 @@ export const SecurityIssuesWrapper = React.memo((props: Props) => {
 			}
 			return unexpectedError;
 		},
-		[error]
+		[error],
 	);
 
 	useEffect(() => {
