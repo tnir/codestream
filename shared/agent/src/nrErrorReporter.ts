@@ -13,7 +13,7 @@ import StackMapper, { Callsite } from "stack-mapper";
 import { Parser } from "./managers/stackTraceParsers/javascriptStackTraceParser";
 import { CSStackTraceInfo } from "@codestream/protocols/api";
 import { md5 } from "@codestream/utils/system/string";
-import { InternalError } from "agentError";
+import { InternalError } from "./agentError";
 
 const STACK_INDENT = "    ";
 
