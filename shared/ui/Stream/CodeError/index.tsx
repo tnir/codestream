@@ -1646,7 +1646,7 @@ const AskGrok = (props: { setText: (text: string) => void; onClose: () => void }
 					But the conversation doesn't have to stop there! Mention Grok in any reply to ask followup
 					questions or have Grok do some work for you.
 				</p>
-				<MetaLabel>Examples</MetaLabel>
+				<MetaLabel data-testid="grok-examples">Examples</MetaLabel>
 				<GrokSuggestion query={"Write a test case for the suggested fix."} onSelect={onSelect} />
 				<GrokSuggestion
 					query={"Write a commit message for the suggested fix."}
@@ -1862,7 +1862,10 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 			// console.debug(`===--- length: ${currentGrokRepliesLength} isGrokLoading: ${isGrokLoading} ---===`);
 
 			return (
-				<Footer className="replies-to-review" style={{ borderTop: "none", marginTop: 0 }}>
+				<Footer
+					className={isGrokLoading ? "grok-loading" : "grok-not-loading" + " replies-to-review"}
+					style={{ borderTop: "none", marginTop: 0 }}
+				>
 					{props.codeError.postId && (
 						<>
 							{<MetaLabel>Activity</MetaLabel>}
