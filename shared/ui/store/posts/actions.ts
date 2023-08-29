@@ -28,6 +28,9 @@ export const cancelPendingPost = (pendingId: string) =>
 export const addPostsForStream = (streamId: string, posts: CSPost[]) =>
 	action(PostsActionsType.AddForStream, { posts, streamId });
 
+export const setPostThreadsLoading = (loading: boolean) =>
+	action(PostsActionsType.SetPostThreadsLoading, { loading });
+
 export const updatePost = (post: CSPost) => action(PostsActionsType.Update, post);
 
 export const deletePost = (post: CSPost) => action(PostsActionsType.Delete, post);

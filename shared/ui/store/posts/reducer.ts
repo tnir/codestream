@@ -18,6 +18,7 @@ const initialState: PostsState = {
 	byStream: {},
 	pending: [],
 	streamingPosts: {},
+	postThreadsLoading: false,
 };
 
 const addPost = (byStream, post: CSPost) => {
@@ -37,6 +38,7 @@ export function reducePosts(state: PostsState = initialState, action: PostsActio
 				pending: [...state.pending],
 				byStream: { ...state.byStream },
 				streamingPosts: state.streamingPosts,
+				postThreadsLoading: state.postThreadsLoading,
 			};
 			action.payload.forEach(post => {
 				if (isPending(post)) nextState.pending.push(post);
@@ -52,6 +54,7 @@ export function reducePosts(state: PostsState = initialState, action: PostsActio
 				pending: [...state.pending],
 				byStream: { ...state.byStream },
 				streamingPosts: { ...state.streamingPosts },
+				postThreadsLoading: state.postThreadsLoading,
 			};
 			const { streamId, postId } = action.payload[0];
 			const recombinedStream: RecombinedStream = nextState.streamingPosts[postId] ?? {
@@ -119,6 +122,9 @@ export function reducePosts(state: PostsState = initialState, action: PostsActio
 				...state,
 				byStream: { ...state.byStream, [streamId]: streamPosts },
 			};
+		}
+		case PostsActionsType.SetPostThreadsLoading: {
+			return { ...state, postThreadsLoading: action.payload.loading };
 		}
 		case "RESET":
 			return initialState;

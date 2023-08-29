@@ -1170,6 +1170,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	}, shallowEqual);
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
 	const { codeError, errorGroup } = derivedState;
+	const isPostThreadsLoading = useAppSelector(state => state.posts.postThreadsLoading === true);
 
 	const [currentSelectedLine, setCurrentSelectedLineIndex] = useState<number>(
 		derivedState.currentCodeErrorData?.lineIndex || 0
@@ -1210,13 +1211,17 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				// setText("");
 				// setAttachments([]);
 			};
-			if (currentGrokRepliesLength === 0 && (functionToEdit || functionToEditFailed)) {
+			if (
+				!isPostThreadsLoading &&
+				derivedState.replies.length === 0 &&
+				(functionToEdit || functionToEditFailed)
+			) {
 				// setIsLoading(true);
 				submitGrok(functionToEdit?.codeBlock).catch(e => {
 					console.error("submitGrok failed", e);
 				});
 			}
-		}, [functionToEdit, functionToEditFailed]);
+		}, [functionToEdit, functionToEditFailed, isPostThreadsLoading, derivedState.replies]);
 	}
 
 	const onClickStackLine = async (event, lineIndex) => {
