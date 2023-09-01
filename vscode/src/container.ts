@@ -21,7 +21,6 @@ import { CodeStreamCodeActionProvider } from "./providers/codeActionProvider";
 import { CodemarkDecorationProvider } from "./providers/markerDecorationProvider";
 import { CodemarkPatchContentProvider } from "./providers/patchContentProvider";
 import { SetServerUrlRequestType } from "@codestream/protocols/agent";
-import { BlameDecorationProvider } from "./providers/blameDecorationProvider";
 // import { WebviewSidebarActivator } from "./views/webviewSidebarActivator";
 
 export class Container {
@@ -56,7 +55,6 @@ export class Container {
 		context.subscriptions.push((this._diffContents = new ReviewDiffContentProvider()));
 		context.subscriptions.push((this._gitContents = new GitContentProvider()));
 		context.subscriptions.push((this._markerDecorations = new CodemarkDecorationProvider()));
-		context.subscriptions.push((this._blameDecorations = new BlameDecorationProvider()));
 		context.subscriptions.push(
 			(this._instrumentableCodeLensController = new InstrumentableCodeLensController())
 		);
@@ -170,11 +168,6 @@ export class Container {
 	private static _markerDecorations: CodemarkDecorationProvider;
 	static get markerDecorations() {
 		return this._markerDecorations;
-	}
-
-	private static _blameDecorations: BlameDecorationProvider;
-	static get blameDecorations() {
-		return this._blameDecorations;
 	}
 
 	private static _instrumentableCodeLensController: InstrumentableCodeLensController;
