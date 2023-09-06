@@ -56,44 +56,6 @@ class NotificationComponent(val project: Project) {
 
     init {
         project.sessionService?.onPostsChanged(this::didChangePosts)
-        project.sessionService?.onPullRequestsChanged(this::didChangePullRequests)
-    }
-
-    private fun didChangePullRequests(pullRequestNotifications: List<PullRequestNotification>) {
-        appDispatcher.launch {
-            pullRequestNotifications.forEach { didChangePullRequest(it) }
-        }
-    }
-
-    private fun didChangePullRequest(pullRequestNotification: PullRequestNotification) {
-        val session = project.sessionService ?: return
-        val userLoggedIn = session.userLoggedIn ?: return
-
-        if (!userLoggedIn.user.wantsToastNotifications()) {
-            return
-        }
-
-	    val verb = if (pullRequestNotification.pullRequest.providerId.contains("gitlab", ignoreCase = true)) "Merge" else "Pull"
-        val text = "${verb} Request \"${pullRequestNotification.pullRequest.title}\" ${pullRequestNotification.queryName}"
-
-        val notification = priorityNotificationGroup.createNotification(
-            null, null, text, NotificationType.INFORMATION
-        )
-
-        notification.addAction(NotificationAction.createSimple("Open") {
-            project.codeStream?.show {
-                project.webViewService?.run {
-                    postNotification(PullRequestNotifications.Show(
-                        pullRequestNotification.pullRequest.providerId,
-                        pullRequestNotification.pullRequest.id
-                    ))
-                    notification.expire()
-                    telemetry(TelemetryEvent.TOAST_CLICKED, "PR")
-                }
-            }
-        })
-        notification.notify(project)
-        telemetry(TelemetryEvent.TOAST_NOTIFICATION, "PR")
     }
 
     private fun didChangePosts(posts: List<Post>) {

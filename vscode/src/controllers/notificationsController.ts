@@ -1,5 +1,4 @@
 "use strict";
-import { PullRequestsChangedEvent } from "api/sessionEvents";
 import { Disposable, MessageItem, window } from "vscode";
 import { Post, PostsChangedEvent } from "../api/session";
 import { Container } from "../container";
@@ -18,41 +17,12 @@ export class NotificationsController implements Disposable {
 	constructor() {
 		this._disposable = Disposable.from(
 			Container.session.onDidChangePosts(this.onSessionPostsReceived, this),
-			Container.session.onDidChangePullRequests(this.onSessionPullRequestsReceived, this),
 			Container.agent.onDidDetectObservabilityAnomalies(this.onObservabilityAnomaliesDetected, this)
 		);
 	}
 
 	dispose() {
 		this._disposable && this._disposable.dispose();
-	}
-
-	private async onSessionPullRequestsReceived(e: PullRequestsChangedEvent) {
-		const { user } = Container.session;
-
-		if (!user.wantsToastNotifications()) return;
-
-		for (const pullRequestNotification of e.pullRequestNotifications()) {
-			const actions: MessageItem[] = [{ title: "Open" }];
-
-			Container.agent.telemetry.track("Toast Notification", { Content: "PR" });
-			const verb =
-				pullRequestNotification.pullRequest.providerId.indexOf("gitlab") > -1 ? "Merge" : "Pull";
-			const result = await window.showInformationMessage(
-				`${verb} Request "${pullRequestNotification.pullRequest.title}" ${pullRequestNotification.queryName}`,
-				...actions
-			);
-
-			if (result === actions[0]) {
-				Container.webview.openPullRequest(
-					pullRequestNotification.pullRequest.providerId,
-					pullRequestNotification.pullRequest.id
-				);
-				Container.agent.telemetry.track("Toast Clicked", { Content: "PR" });
-			}
-
-			return;
-		}
 	}
 
 	private async onSessionPostsReceived(e: PostsChangedEvent) {

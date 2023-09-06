@@ -3,7 +3,6 @@ import {
 	AddEnterpriseProviderRequest,
 	AddEnterpriseProviderRequestType,
 	AddEnterpriseProviderResponse,
-	ChangeDataType,
 	ConfigureThirdPartyProviderRequest,
 	ConfigureThirdPartyProviderRequestType,
 	ConfigureThirdPartyProviderResponse,
@@ -19,7 +18,6 @@ import {
 	DeleteThirdPartyPostRequest,
 	DeleteThirdPartyPostRequestType,
 	DeleteThirdPartyPostResponse,
-	DidChangeDataNotificationType,
 	DisconnectThirdPartyProviderRequest,
 	DisconnectThirdPartyProviderRequestType,
 	DisconnectThirdPartyProviderResponse,
@@ -64,7 +62,6 @@ import {
 	MoveThirdPartyCardRequestType,
 	MoveThirdPartyCardResponse,
 	PRProviderQueries,
-	PullRequestsChangedData,
 	QueryThirdPartyRequest,
 	QueryThirdPartyRequestType,
 	RemoveEnterpriseProviderRequest,
@@ -73,7 +70,7 @@ import {
 	UpdateThirdPartyStatusRequestType,
 	UpdateThirdPartyStatusResponse,
 } from "@codestream/protocols/agent";
-import { CSMe, CSMePreferences, CSNotificationDeliveryPreference } from "@codestream/protocols/api";
+import { CSMe } from "@codestream/protocols/api";
 import { differenceWith } from "lodash-es";
 import semver from "semver";
 import { URI } from "vscode-uri";
@@ -170,81 +167,6 @@ export class ThirdPartyProviderRegistry {
 		return this;
 	}
 
-	async pullRequestsStateHandler() {
-		try {
-			const user = await SessionContainer.instance().users.getMe();
-			if (!user) return;
-
-			const providers = this.getConnectedProviders(
-				user,
-				(p): p is ThirdPartyIssueProvider & ThirdPartyProviderSupportsViewingPullRequests => {
-					const thirdPartyIssueProvider = p as ThirdPartyIssueProvider;
-					const name = thirdPartyIssueProvider.getConfig().name;
-					return (
-						name === "github" ||
-						name === "github_enterprise" ||
-						name === "gitlab" ||
-						name === "gitlab_enterprise" ||
-						name === "bitbucket"
-					);
-				}
-			);
-			const providersPullRequests: ProviderPullRequests[] = [];
-
-			let succeededCount = 0;
-			for (const provider of providers) {
-				try {
-					if (provider.hasTokenError) {
-						Logger.debug(
-							`pullRequestsStateHandler: ignoring ${provider.name} because of tokenError`
-						);
-						continue;
-					}
-					const queries = PR_QUERIES[provider.getConfig().id];
-					if (queries.length) {
-						const pullRequests = await provider.getMyPullRequests({
-							prQueries: queries,
-						});
-
-						if (pullRequests) {
-							providersPullRequests.push({
-								providerId: provider.getConfig().id,
-								queriedPullRequests: pullRequests,
-							});
-							succeededCount++;
-						}
-					}
-				} catch (ex) {
-					Logger.warn(`pullRequestsStateHandler: ${typeof ex === "string" ? ex : ex.message}`);
-				}
-			}
-			if (succeededCount > 0) {
-				const newProvidersPRs = this.getProvidersPRsDiff(providersPullRequests);
-				this._lastProvidersPRs = providersPullRequests;
-				if (user.preferences && this.shouldToastNotify(user.preferences)) {
-					this.fireNewPRsNotifications(newProvidersPRs);
-				}
-			}
-		} catch (e) {
-			Logger.warn(`pullRequestsStateHandler error`, e);
-		}
-	}
-
-	private shouldToastNotify = (prefs: CSMePreferences): boolean => {
-		const notificationDelivery = prefs.notificationDelivery || CSNotificationDeliveryPreference.All;
-		const toastPrNotify = prefs.toastPrNotify === false ? false : true;
-		const result =
-			(notificationDelivery === CSNotificationDeliveryPreference.ToastOnly ||
-				notificationDelivery === CSNotificationDeliveryPreference.All) &&
-			toastPrNotify;
-		if (!result) {
-			Logger.log(
-				`Skipping PR toast notify due to user settings notificationDelivery: ${notificationDelivery}, toastPrNotify: ${toastPrNotify}`
-			);
-		}
-		return result;
-	};
-
 	private getProvidersPRsDiff = (providersPRs: ProviderPullRequests[]): ProviderPullRequests[] => {
 		const newProvidersPRs: ProviderPullRequests[] = [];
 		if (this._lastProvidersPRs === undefined) {
@@ -300,30 +222,6 @@ export class ThirdPartyProviderRegistry {
 
 		return newProvidersPRs;
 	};
-
-	fireNewPRsNotifications(providersPRs: ProviderPullRequests[]) {
-		const prNotificationMessages: PullRequestsChangedData[] = [];
-
-		providersPRs.map(_ =>
-			_.queriedPullRequests.map((pullRequests: GetMyPullRequestsResponse[], queryIndex: number) => {
-				prNotificationMessages.push(
-					...pullRequests.map(pullRequest => ({
-						queryName: PR_QUERIES[_.providerId][queryIndex].name!,
-						pullRequest,
-					}))
-				);
-			})
-		);
-
-		if (prNotificationMessages.length > 0) {
-			SessionContainer.instance().session.agent.sendNotification(DidChangeDataNotificationType, {
-				type: ChangeDataType.PullRequests,
-				data: prNotificationMessages,
-			});
-		} else {
-			Logger.log("Will not notify of new PRs - no changes detected");
-		}
-	}
 
 	@log()
 	@lspHandler(ConnectThirdPartyProviderRequestType)
