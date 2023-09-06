@@ -51,7 +51,8 @@
         <projectService serviceImplementation="com.codestream.editor.EditorService"/>
         <projectService serviceImplementation="com.codestream.review.ReviewService"/>
         <projectService serviceImplementation="com.codestream.telemetry.TelemetryService"/>
-        <projectService serviceImplementation="com.codestream.editor.LineLevelBlameService"/>
+<!--        Disabled for now - it may come back later in the o11y context -->
+<!--        <projectService serviceImplementation="com.codestream.editor.LineLevelBlameService"/>-->
         <projectService serviceImplementation="com.codestream.clm.CLMService"/>
 
         <applicationConfigurable groupId="tools" displayName="CodeStream" id="preferences.CodeStreamConfigurable"

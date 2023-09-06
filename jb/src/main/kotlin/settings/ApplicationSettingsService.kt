@@ -46,7 +46,6 @@ data class ApplicationSettingsServiceState(
     var showFeedbackSmiley: Boolean = true,
     var showMarkers: Boolean = true,
     var showNewCodemarkGutterIconOnHover: Boolean = true,
-    var showGitBlame: Boolean = true,
     var autoHideMarkers: Boolean = false,
     var proxySupport: ProxySupport = ProxySupport.ON,
     var proxyStrictSSL: Boolean = true,
@@ -120,11 +119,6 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
             state.showNewCodemarkGutterIconOnHover = value
         }
 
-    var showGitBlame
-        get() = state.showGitBlame
-        set(value) {
-            state.showGitBlame = value
-        }
     var serverUrl
         get() = state.serverUrl
         set(value) {

@@ -55,7 +55,6 @@ class CodeStreamConfigurable : SearchableConfigurable {
             settingsService.showFeedbackSmiley = gui.showFeedbackSmiley.isSelected
             settingsService.showMarkers = gui.showMarkers.isSelected
             settingsService.showNewCodemarkGutterIconOnHover = showNewCodemarkGutterIconOnHover
-            settingsService.showGitBlame = gui.showGitBlame.isSelected
             settingsService.autoHideMarkers = gui.autoHideMarkers.isSelected
             settingsService.setProxySupport(proxySupport)
             settingsService.proxyStrictSSL = gui.proxyStrictSSL.isSelected
@@ -104,7 +103,6 @@ class CodeStreamConfigurable : SearchableConfigurable {
                 showFeedbackSmiley.isSelected = it.showFeedbackSmiley
                 showMarkers.isSelected = it.showMarkers
                 showNewCodemarkGutterIconOnHover.isSelected = it.showNewCodemarkGutterIconOnHover
-                showGitBlame.isSelected = it.showGitBlame
                 autoHideMarkers.isSelected = it.autoHideMarkers
                 proxySupport.selectedItem = it.proxySupport
                 proxyStrictSSL.isSelected = it.proxyStrictSSL
