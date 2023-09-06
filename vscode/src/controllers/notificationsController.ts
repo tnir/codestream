@@ -5,10 +5,7 @@ import { Post, PostsChangedEvent } from "../api/session";
 import { Container } from "../container";
 import {
 	CodemarkPlus,
-	CreateReviewsForUnreviewedCommitsRequestType,
 	DidDetectObservabilityAnomaliesNotification,
-	DidDetectUnreviewedCommitsNotification,
-	FollowReviewRequestType,
 	ReviewPlus
 } from "@codestream/protocols/agent";
 import { Functions } from "../system";
@@ -22,7 +19,6 @@ export class NotificationsController implements Disposable {
 		this._disposable = Disposable.from(
 			Container.session.onDidChangePosts(this.onSessionPostsReceived, this),
 			Container.session.onDidChangePullRequests(this.onSessionPullRequestsReceived, this),
-			Container.agent.onDidDetectUnreviewedCommits(this.onUnreviewedCommitsDetected, this),
 			Container.agent.onDidDetectObservabilityAnomalies(this.onObservabilityAnomaliesDetected, this)
 		);
 	}
@@ -101,36 +97,6 @@ export class NotificationsController implements Disposable {
 			const isUserFollowing = (followerIds || []).includes(user.id);
 			if (isUserFollowing && (!isPostStreamVisible || mentioned)) {
 				this.showNotification(post, codemark, review);
-			}
-		}
-	}
-
-	private async onUnreviewedCommitsDetected(notification: DidDetectUnreviewedCommitsNotification) {
-		const actions: MessageItem[] = [
-			{ title: "Review" },
-			{ title: "Ignore", isCloseAffordance: true }
-		];
-
-		Container.agent.telemetry.track("Toast Notification", { Content: "Unreviewed Commit" });
-		const result = await window.showInformationMessage(`${notification.message}`, ...actions);
-
-		if (result === actions[0]) {
-			Container.agent.telemetry.track("Toast Clicked", { Content: "Unreviewed Commit" });
-			if (notification.openReviewId !== undefined) {
-				await Container.agent.sendRequest(FollowReviewRequestType, {
-					id: notification.openReviewId,
-					value: true
-				});
-				Container.webview.openReview(notification.openReviewId, { openFirstDiff: true });
-			} else {
-				const result = await Container.agent.sendRequest(
-					CreateReviewsForUnreviewedCommitsRequestType,
-					{ sequence: notification.sequence }
-				);
-				const reviewId = result.reviewIds[0];
-				if (reviewId) {
-					Container.webview.openReview(reviewId, { openFirstDiff: true });
-				}
 			}
 		}
 	}

@@ -6,7 +6,6 @@ import com.codestream.appDispatcher
 import com.codestream.clmService
 import com.codestream.codeStream
 import com.codestream.protocols.agent.Codemark
-import com.codestream.protocols.agent.CreateReviewsForUnreviewedCommitsParams
 import com.codestream.protocols.agent.FollowReviewParams
 import com.codestream.protocols.agent.ObservabilityAnomaly
 import com.codestream.protocols.agent.Post
@@ -143,29 +142,6 @@ class NotificationComponent(val project: Project) {
 
     fun showError(title: String, content: String) {
         val notification = notificationGroup.createNotification(title, null, content, NotificationType.ERROR)
-        notification.notify(project)
-    }
-
-    fun didDetectUnreviewedCommits(message: String, sequence: Int, openReviewId: String?) {
-        val notification = notificationGroup.createNotification("Unreviewed code", null, message, NotificationType.INFORMATION)
-
-        notification.addAction(NotificationAction.createSimple("Review") {
-            appDispatcher.launch {
-                if (openReviewId != null) {
-                    project.agentService?.followReview(FollowReviewParams(openReviewId, true))
-                    project.webViewService?.postNotification(ReviewNotifications.Show(openReviewId, null, true))
-                } else {
-                    val result = project.agentService?.createReviewsForUnreviewedCommits(CreateReviewsForUnreviewedCommitsParams(sequence))
-                    result?.reviewIds?.firstOrNull()?.let {
-                        project.webViewService?.postNotification(ReviewNotifications.Show(it, null, true))
-                    }
-                }
-            }
-            notification.expire()
-            telemetry(TelemetryEvent.TOAST_CLICKED, "Unreviewed Commit")
-        })
-
-        telemetry(TelemetryEvent.TOAST_NOTIFICATION, "Unreviewed Commit")
         notification.notify(project)
     }
 

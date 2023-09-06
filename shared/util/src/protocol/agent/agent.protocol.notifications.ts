@@ -423,17 +423,6 @@ export const DidChangeRepositoryCommitHashNotificationType = new NotificationTyp
 	void
 >("codestream/didChangeRepositoryCommitHash");
 
-export interface DidDetectUnreviewedCommitsNotification {
-	sequence: number;
-	openReviewId?: string;
-	message: string;
-}
-
-export const DidDetectUnreviewedCommitsNotificationType = new NotificationType<
-	DidDetectUnreviewedCommitsNotification,
-	void
->("codestream/didDetectUnreviewedCommits");
-
 export const DidSetEnvironmentNotificationType = new NotificationType<
 	CodeStreamEnvironmentInfo,
 	void
