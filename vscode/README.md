@@ -4,7 +4,7 @@ Shift left by making code performance, code review and code discussion part of t
 
 - Get performance data for individual methods in the code, as well as the services built from that code.
 - Review pull requests from GitHub and GitLab right in your IDE.
-- Discuss any block of code, with options for sharing to Slack or Teams, or creating a ticket on Jira, Trello and many other issue trackers.
+- Discuss any block of code, with options for sharing to Slack or Teams, or create a ticket on Jira, Trello and many other issue trackers.
 
 ### Integrations
 
