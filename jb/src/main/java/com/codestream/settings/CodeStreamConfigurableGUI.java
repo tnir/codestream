@@ -11,9 +11,6 @@ public class CodeStreamConfigurableGUI {
     private JTextField serverUrl;
     private JCheckBox disableStrictSSL;
     private JTextField extraCerts;
-    private JCheckBox showAvatars;
-    private JCheckBox showFeedbackSmiley;
-    private JCheckBox autoHideMarkers;
     private JCheckBox showMarkers;
     private JComboBox<ProxySupport> proxySupport;
     private JCheckBox proxyStrictSSL;
@@ -36,18 +33,6 @@ public class CodeStreamConfigurableGUI {
 
     public JCheckBox getDisableStrictSSL() {
         return disableStrictSSL;
-    }
-
-    public JCheckBox getShowAvatars() {
-        return showAvatars;
-    }
-
-    public JCheckBox getShowFeedbackSmiley() {
-        return showFeedbackSmiley;
-    }
-
-    public JCheckBox getAutoHideMarkers() {
-        return autoHideMarkers;
     }
 
     public JCheckBox getShowMarkers() {

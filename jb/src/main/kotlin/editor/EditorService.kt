@@ -310,7 +310,7 @@ class EditorService(val project: Project) {
 
     private val showGutterIcons: Boolean
         get() {
-            return !codeStreamVisible || !spatialViewActive || !appSettings.autoHideMarkers
+            return !codeStreamVisible || !spatialViewActive
         }
 
     inner class DocumentSynchronizer : DocumentListener {

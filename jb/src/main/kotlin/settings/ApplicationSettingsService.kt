@@ -42,11 +42,8 @@ data class ApplicationSettingsServiceState(
     var serverUrl: String = API_PROD,
     var disableStrictSSL: Boolean = false,
     var extraCerts: String? = null,
-    var avatars: Boolean = true,
-    var showFeedbackSmiley: Boolean = true,
     var showMarkers: Boolean = true,
     var showNewCodemarkGutterIconOnHover: Boolean = true,
-    var autoHideMarkers: Boolean = false,
     var proxySupport: ProxySupport = ProxySupport.ON,
     var proxyStrictSSL: Boolean = true,
     var firstRun: Boolean = true,
@@ -101,12 +98,6 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
 
     val isDebugging get() = DEBUG
 
-    var autoHideMarkers
-        get() = state.autoHideMarkers
-        set(value) {
-            state.autoHideMarkers = value
-        }
-
     var showMarkers
         get() = state.showMarkers
         set(value) {
@@ -139,22 +130,10 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
 
     val email get() = state.email
 
-    var showFeedbackSmiley
-        get() = state.showFeedbackSmiley
-        set(value) {
-            state.showFeedbackSmiley = value
-        }
-
     var autoSignIn
         get() = state.autoSignIn
         set(value) {
             state.autoSignIn = value
-        }
-
-    var avatars
-        get() = state.avatars
-        set(value) {
-            state.avatars = value
         }
 
     var jcef
@@ -253,9 +232,7 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
             "unknown",
             state.serverUrl,
             state.email,
-            state.avatars,
             isDebugging,
-            state.showFeedbackSmiley,
             state.showGoldenSignalsInEditor
         )
 }
