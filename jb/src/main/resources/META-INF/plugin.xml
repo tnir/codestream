@@ -70,10 +70,6 @@
             <className>com.codestream.actions.CreateIssue</className>
             <category>Other</category>
         </intentionAction>
-        <intentionAction>
-            <className>com.codestream.actions.GetPermalink</className>
-            <category>Other</category>
-        </intentionAction>
 
         <jbProtocolCommand implementation="com.codestream.commands.CodeStreamCommand"/>
         <ignoredFileProvider implementation="com.codestream.vcs.CodeStreamIgnoredFileProvider"/>
