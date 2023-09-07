@@ -875,7 +875,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 								className="input-text control"
 								type="text"
 								onChange={e => this.props.setQuery(e.target.value)}
-								placeholder="Search comments, issues and feedback requests"
+								placeholder="Search comments and issues"
 								autoFocus
 							/>
 						</div>
