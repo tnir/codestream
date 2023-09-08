@@ -5,10 +5,7 @@ import {
 import { isEmpty as _isEmpty, sortBy as _sortBy } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import {
-	WebviewModals,
-	OpenUrlRequestType,
-} from "@codestream/protocols/webview";
+import { WebviewModals, OpenUrlRequestType } from "@codestream/protocols/webview";
 import {
 	logout,
 	switchToForeignCompany,
@@ -409,11 +406,6 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 	// - Keybindings
 	// - FAQ
 	menuItems.push(
-		{ label: "-" },
-		{
-			label: "Feedback",
-			action: () => openUrl("https://github.com/TeamCodeStream/codestream/issues"),
-		},
 		{
 			label: "Help",
 			key: "help",
