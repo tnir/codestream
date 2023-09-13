@@ -153,6 +153,7 @@ import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
 import { ClmManager } from "./newrelic/clm/clmManager";
 import * as Dom from "graphql-request/dist/types.dom";
 import { makeHtmlLoggable } from "@codestream/utils/system/string";
+import semver from "semver";
 
 const ignoredErrors = [GraphqlNrqlTimeoutError];
 
@@ -183,6 +184,16 @@ function isHttpErrorResponse(ex: unknown): ex is HttpErrorResponse {
 }
 
 const ENTITY_CACHE_KEY = "entityCache";
+
+export const REQUIRED_AGENT_VERSIONS = {
+	go: "3.24.0",
+	java: "7.11.0",
+	".net": "10.2.0",
+	"node.js": "10.5.0",
+	php: "10.6.0 ",
+	python: "7.10.0.175",
+	ruby: "8.10.0 ",
+};
 
 export interface INewRelicProvider {
 	getProductUrl: () => string;
@@ -972,6 +983,7 @@ export class NewRelicProvider
 								alertSeverity: entity?.alertSeverity,
 								url: `${this.productUrl}/redirect/entity/${entity.guid}`,
 								distributedTracingEnabled: this.hasStandardOrInfiniteTracing(entity),
+								languageAndVersionValidation: this.languageAndVersionValidation(entity),
 							} as EntityAccount;
 						})
 						.filter(Boolean)
@@ -1006,6 +1018,44 @@ export class NewRelicProvider
 
 		// Values can be either 'standard' for head-based sampling or 'infinite' for tail-based sampling.
 		return tracingValue === "standard" || tracingValue === "infinite";
+	}
+
+	private languageAndVersionValidation(entity?: Entity): object {
+		const tags = entity?.tags || [];
+		const agentVersion = tags.find(tag => tag.key === "agentVersion");
+		const language = tags.find(tag => tag.key === "language");
+
+		if (!agentVersion || !language) {
+			return {};
+		}
+
+		const version = agentVersion?.values[0];
+		const languageValue = language?.values[0].toLowerCase();
+
+		if (
+			languageValue === "go" ||
+			languageValue === "java" ||
+			languageValue === ".net" ||
+			languageValue === "node.js" ||
+			languageValue === "php" ||
+			languageValue === "python" ||
+			languageValue === "ruby"
+		) {
+			if (
+				version &&
+				semver.lt(
+					semver.coerce(version) || version,
+					semver.coerce(REQUIRED_AGENT_VERSIONS[languageValue]) ||
+						REQUIRED_AGENT_VERSIONS[languageValue]
+				)
+			) {
+				return {
+					language: language.values[0],
+					required: REQUIRED_AGENT_VERSIONS[languageValue],
+				};
+			}
+		}
+		return {};
 	}
 
 	/**
