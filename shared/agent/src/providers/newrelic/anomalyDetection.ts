@@ -675,6 +675,9 @@ export class AnomalyDetector {
 			if (metric.name.indexOf("Python/") === 0) {
 				return new PythonLanguageSupport();
 			}
+			if (metric.name.indexOf("WebTransaction/Go/") === 0) {
+				return new GoLanguageSupport();
+			}
 		}
 
 		return undefined;
@@ -991,6 +994,56 @@ class PythonLanguageSupport implements LanguageSupport {
 		const errorPrefixRe = /^Errors\/WebTransaction\//;
 		name = name.replace(errorPrefixRe, "");
 		const span = benchmarkSpans.find(_ => _.name === name && _.name.endsWith(_.codeFunction));
+		if (span && span.codeFunction) {
+			return {
+				codeFilepath: span.codeFilepath,
+				codeNamespace: span.codeNamespace,
+				codeFunction: span.codeFunction,
+			};
+		}
+		return this.codeAttrsFromName(name);
+	}
+
+	displayName(codeAttrs: CodeAttributes, name: string) {
+		const errorPrefixRe = /^Errors\/WebTransaction\/Function\//;
+		const functionRe = /^Function\//;
+		return name.replace(errorPrefixRe, "").replace(functionRe, "");
+	}
+}
+class GoLanguageSupport implements LanguageSupport {
+	get language() {
+		return "go";
+	}
+
+	get metricNrqlPrefixes() {
+		return ["WebTransaction/Go"];
+	}
+
+	get spanNrqlPrefixes() {
+		return ["WebTransaction/Go"];
+	}
+
+	filterMetrics(metrics: NameValue[], benchmarkSpans: SpanWithCodeAttrs[]): NameValue[] {
+		const errorPrefixRe = /^Errors\//;
+		return metrics.filter(m => {
+			const name = m.name.replace(errorPrefixRe, "");
+			return benchmarkSpans.find(s => s.name === name && s.codeFunction);
+		});
+	}
+
+	codeAttrsFromName(name: string): CodeAttributes {
+		const errorPrefixRe = /^Errors\//;
+		const normalizedName = name.replace(errorPrefixRe, "");
+		return {
+			codeNamespace: "",
+			codeFunction: normalizedName,
+		};
+	}
+
+	codeAttrs(name: string, benchmarkSpans: SpanWithCodeAttrs[]): CodeAttributes {
+		const errorPrefixRe = /^Errors\/WebTransaction\//;
+		name = name.replace(errorPrefixRe, "");
+		const span = benchmarkSpans.find(_ => _.name === name);
 		if (span && span.codeFunction) {
 			return {
 				codeFilepath: span.codeFilepath,
