@@ -39,11 +39,6 @@ namespace CodeStream.VisualStudio.Shared.Packages
 		typeof(WebViewToolWindowPane),
 		UIContextGuids.SolutionHasSingleProject
 	)]
-	[SuppressMessage(
-		"StyleCop.CSharp.DocumentationRules",
-		"SA1650:ElementDocumentationMustBeSpelledCorrectly",
-		Justification = "pkgdef, VS and vsixmanifest are valid VS terms"
-	)]
 	public sealed class WebViewPackage : AsyncPackage
 	{
 		private static readonly ILogger Log = LogManager.ForContext<WebViewPackage>();

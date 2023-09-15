@@ -22,12 +22,6 @@ using Task = System.Threading.Tasks.Task;
 namespace CodeStream.VisualStudio.Shared.Packages
 {
 	[PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-	[InstalledProductRegistration(
-		"#111",
-		"#112",
-		Core.Properties.SolutionInfo.Version,
-		IconResourceID = 400
-	)]
 	[Guid(Guids.ProtocolPackagePackageId)]
 	[ProvideAppCommandLine(CliSwitch, typeof(ProtocolPackage), Arguments = "1", DemandLoad = 1)] // More info https://docs.microsoft.com/en-us/visualstudio/extensibility/adding-command-line-switches
 	public sealed class ProtocolPackage : AsyncPackage

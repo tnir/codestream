@@ -28,7 +28,7 @@ namespace CodeStream.VisualStudio.Shared.Packages
 	[ProvideService(typeof(SSettingsManagerAccessor))]
 	[ProvideOptionPage(typeof(OptionsDialogPage), "CodeStream", "Settings", 0, 0, true)]
 	[PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-	[InstalledProductRegistration("#110", "#112", SolutionInfo.Version, IconResourceID = 400)]
+	[InstalledProductRegistration("#110", "#112", SolutionInfo.Version)]
 	[Guid(Guids.CodeStreamSettingsPackageId)]
 	public sealed class SettingsPackage : AsyncPackage
 	{
