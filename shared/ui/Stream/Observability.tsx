@@ -1158,7 +1158,7 @@ export const Observability = React.memo((props: Props) => {
 															message: `Enable CodeLenses to see code-level metrics. 
 														Go to Tools > Options > Text Editor > All Languages > CodeLens or [learn more about code-level metrics]`,
 															helpUrl:
-																"https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring#code-level",
+																"https://docs.newrelic.com/docs/codestream/observability/code-level-metrics",
 														},
 													]}
 													dismissCallback={e => {
@@ -1400,7 +1400,7 @@ export const Observability = React.memo((props: Props) => {
 							<div className="filters" style={{ padding: "0 20px 10px 20px" }}>
 								<span>
 									Connect to New Relic to see how your code is performing and identify issues.{" "}
-									<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring/">
+									<Link href="https://docs.newrelic.com/docs/codestream/observability/performance-monitoring/">
 										Learn more.
 									</Link>
 									{/* <Tooltip title="Connect later on the Integrations page" placement="top">
