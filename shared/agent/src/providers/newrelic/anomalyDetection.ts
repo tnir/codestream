@@ -678,6 +678,9 @@ export class AnomalyDetector {
 			if (metric.name.indexOf("WebTransaction/Go/") === 0) {
 				return new GoLanguageSupport();
 			}
+			if (metric.name.indexOf("Supportability/PHP/") === 0) {
+				return new PhpLanguageSupport();
+			}
 		}
 
 		return undefined;
@@ -1058,6 +1061,66 @@ class GoLanguageSupport implements LanguageSupport {
 		const errorPrefixRe = /^Errors\/WebTransaction\/Function\//;
 		const functionRe = /^Function\//;
 		return name.replace(errorPrefixRe, "").replace(functionRe, "");
+	}
+}
+
+class PhpLanguageSupport implements LanguageSupport {
+	get language() {
+		return "php";
+	}
+
+	get metricNrqlPrefixes() {
+		return ["WebTransaction/", "OtherTransaction/"];
+	}
+
+	get spanNrqlPrefixes() {
+		return ["Custom/"];
+	}
+
+	filterMetrics(metrics: NameValue[], benchmarkSpans: SpanWithCodeAttrs[]): NameValue[] {
+		const errorPrefixRe = /^Errors\//;
+		return metrics.filter(m => {
+			const name = m.name.replace(errorPrefixRe, "");
+			return benchmarkSpans.find(s => s.name === name && s.codeFunction);
+		});
+	}
+
+	codeAttrsFromName(name: string): CodeAttributes {
+		const errorPrefixRe = /^Errors\//;
+		const normalizedName = name.replace(errorPrefixRe, "");
+		return {
+			codeNamespace: "",
+			codeFunction: normalizedName,
+		};
+	}
+
+	codeAttrs(name: string, benchmarkSpans: SpanWithCodeAttrs[]): CodeAttributes {
+		const errorPrefixRe = /^Errors\/WebTransaction\//;
+		name = name.replace(errorPrefixRe, "");
+		// WebTransaction/Action/Drupal\node\Controller\NodeViewController->view
+		// Custom/Drupal\node\Controller\NodeViewController::view
+		const webTransactionPrefixRe = /^WebTransaction\/Action\//;
+		const otherTransactionPrefixRe = /^OtherTransaction\/Action\//;
+		const customPrefix = "Custom/";
+		const spanName = name
+			.replace(webTransactionPrefixRe, customPrefix)
+			.replace(otherTransactionPrefixRe, customPrefix)
+			.replace("->", "::");
+		const span = benchmarkSpans.find(_ => _.name === spanName);
+		if (span && span.codeFunction) {
+			return {
+				codeFilepath: span.codeFilepath,
+				codeNamespace: span.codeNamespace,
+				codeFunction: span.codeFunction,
+			};
+		}
+		return this.codeAttrsFromName(name);
+	}
+
+	displayName(codeAttrs: CodeAttributes, name: string) {
+		const webTransactionPrefixRe = /^WebTransaction\/Action\//;
+		const otherTransactionPrefixRe = /^OtherTransaction\/Action\//;
+		return name.replace(webTransactionPrefixRe, "").replace(otherTransactionPrefixRe, "");
 	}
 }
 

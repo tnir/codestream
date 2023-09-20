@@ -924,6 +924,26 @@ export class WebviewController implements Disposable {
 			}
 		}
 
+		if (language === "php") {
+			const symbols: SymbolInformation[] = await commands.executeCommand(
+				"vscode.executeWorkspaceSymbolProvider",
+				codeNamespace + "::" + codeFunction
+			);
+			if (symbols?.length) {
+				const symbol = symbols[0];
+
+				void (await Editor.revealRange(
+					symbol.location.uri,
+					Editor.fromSerializableRange(symbol.location.range),
+					this._lastEditor,
+					{
+						preserveFocus: false,
+						atTop: false
+					}
+				));
+			}
+		}
+
 		if (language === "java") {
 			if (!codeNamespace) return;
 
