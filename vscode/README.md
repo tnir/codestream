@@ -36,7 +36,7 @@ Get an in-IDE view of how the services built from your code are performing, in a
 
 # Don't have New Relic? 
 
-Become a hands-on observability practitioner by [creating a free account](https://newrelic.com/signup?utm_source=codestream&utm_medium=referral&utm_campaign=global-fy-24-q2-ide-marketplace). Your free account includes 100 GB/month of free data ingestion, one free full-platform user, and unlimited free basic users. Learn how engineering teams are using New Relic free tier to monitor their stack.
+Become a hands-on observability practitioner by [creating a free account](https://newrelic.com/signup?utm_source=codestream&utm_medium=referral&utm_campaign=global-ever-green-ide-marketplace). Your free account includes 100 GB/month of free data ingestion, one free full-platform user, and unlimited free basic users. Learn how engineering teams are using New Relic free tier to monitor their stack.
 
 # Help & Feedback
 
