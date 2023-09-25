@@ -673,7 +673,7 @@ export class AnomalyDetector {
 		if (languageValue === "ruby") {
 			return new RubyLanguageSupport();
 		}
-		if (languageValue === "csharp") {
+		if (languageValue === "dotnet") {
 			return new CSharpLanguageSupport();
 		}
 		if (languageValue === "python") {
