@@ -43,8 +43,7 @@ export class AnomalyDetector {
 	private _releaseBased = false;
 
 	async execute(): Promise<GetObservabilityAnomaliesResponse> {
-		const benchmarkMetrics = await this.getBenchmarkSampleSizesMetric();
-		const languageSupport = this.getLanguageSupport(benchmarkMetrics);
+		const languageSupport = await this.getLanguageSupport();
 		if (!languageSupport) {
 			return {
 				responseTime: [],
@@ -54,6 +53,7 @@ export class AnomalyDetector {
 			};
 		}
 
+		const benchmarkMetrics = await this.getBenchmarkSampleSizesMetric(languageSupport);
 		const spanFilter = this.getSpanFilter(languageSupport);
 		const benchmarkSpans = await this.getBenchmarkSampleSizesSpans(spanFilter);
 		// Used to determine metric validity
@@ -233,10 +233,10 @@ export class AnomalyDetector {
 		return this.runNrql<SpanWithCodeAttrs>(query);
 	}
 
-	private async getBenchmarkSampleSizesMetric() {
+	private async getBenchmarkSampleSizesMetric(languageSupport: LanguageSupport) {
 		const benchmarkSampleSizesMetric = await this.getSampleSizeMetric(
 			this._benchmarkSampleSizeTimeFrame,
-			"metricTimesliceName IS NOT NULL"
+			this.getMetricFilter(languageSupport)
 		);
 		return benchmarkSampleSizesMetric;
 	}
@@ -658,29 +658,32 @@ export class AnomalyDetector {
 		}
 	}
 
-	private getLanguageSupport(benchmarkMetrics: NameValue[]): LanguageSupport | undefined {
-		for (const metric of benchmarkMetrics) {
-			if (metric.name.indexOf("Java/") === 0) {
-				return new JavaLanguageSupport();
-			}
-			if (metric.name.indexOf("Nodejs/") === 0) {
-				return new JavaScriptLanguageSupport();
-			}
-			if (metric.name.indexOf("Ruby/") === 0 || metric.name.indexOf("RubyVM/") === 0) {
-				return new RubyLanguageSupport();
-			}
-			if (metric.name.indexOf("DotNet/") === 0) {
-				return new CSharpLanguageSupport();
-			}
-			if (metric.name.indexOf("Python/") === 0) {
-				return new PythonLanguageSupport();
-			}
-			if (metric.name.indexOf("WebTransaction/Go/") === 0) {
-				return new GoLanguageSupport();
-			}
-			if (metric.name.indexOf("Supportability/PHP/") === 0) {
-				return new PhpLanguageSupport();
-			}
+	private async getLanguageSupport(): Promise<LanguageSupport | undefined> {
+		const entity = await this.getEntityAccount();
+		const tags = entity?.tags || [];
+		const languageTag = tags.find(tag => tag.key === "language");
+		const languageValue = languageTag?.values[0].toLowerCase();
+
+		if (languageValue === "java") {
+			return new JavaLanguageSupport();
+		}
+		if (languageValue === "nodejs") {
+			return new JavaScriptLanguageSupport();
+		}
+		if (languageValue === "ruby") {
+			return new RubyLanguageSupport();
+		}
+		if (languageValue === "csharp") {
+			return new CSharpLanguageSupport();
+		}
+		if (languageValue === "python") {
+			return new PythonLanguageSupport();
+		}
+		if (languageValue === "go") {
+			return new GoLanguageSupport();
+		}
+		if (languageValue === "php") {
+			return new PhpLanguageSupport();
 		}
 
 		return undefined;
