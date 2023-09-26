@@ -24,6 +24,7 @@ import {
 	MissingRubyExtension,
 	RubyPluginLanguageServer,
 } from "./MethodLevelTelemetry/MissingExtension";
+import { WarningBoxRoot } from "./WarningBox";
 
 interface Props {
 	observabilityAnomalies: GetObservabilityAnomaliesResponse;
@@ -169,17 +170,23 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 						props.languageAndVersionValidation?.required && (
 							<Row
 								style={{
-									padding: "2px 10px 2px 40px",
+									padding: "0px 0px 0px 0px",
 								}}
 								className={"pr-row"}
 							>
 								<span style={{ marginLeft: "2px", whiteSpace: "normal" }}>
-									Requires {props.languageAndVersionValidation?.language} agent version{" "}
-									{props.languageAndVersionValidation?.required} or higher.
+									<WarningBoxRoot style={{ margin: "0px 1px 0px 0px" }}>
+										<Icon name="alert" className="alert" />
+										<div className="message">
+											<div>
+												Requires {props.languageAndVersionValidation?.language} agent version{" "}
+												{props.languageAndVersionValidation?.required} or higher.
+											</div>
+										</div>
+									</WarningBoxRoot>
 								</span>
 							</Row>
 						)}
-					\
 				</>
 			)}
 
@@ -187,16 +194,23 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 			{expanded && !props.calculatingAnomalies && showDistributedTracingWarning && (
 				<Row
 					style={{
-						padding: "2px 10px 2px 40px",
+						padding: "0px 0px 0px 0px",
 					}}
 					className={"pr-row"}
 				>
 					<span style={{ marginLeft: "2px", whiteSpace: "normal" }}>
-						Enable{" "}
-						<Link href="https://docs.newrelic.com/docs/distributed-tracing/concepts/quick-start/">
-							distributed tracing
-						</Link>{" "}
-						for this service to see code-level metrics.
+						<WarningBoxRoot style={{ margin: "0px 1px 0px 0px" }}>
+							<Icon name="alert" className="alert" />
+							<div className="message">
+								<div>
+									Enable{" "}
+									<Link href="https://docs.newrelic.com/docs/distributed-tracing/concepts/quick-start/">
+										distributed tracing
+									</Link>{" "}
+									for this service to see code-level metrics.
+								</div>
+							</div>
+						</WarningBoxRoot>
 					</span>
 				</Row>
 			)}
