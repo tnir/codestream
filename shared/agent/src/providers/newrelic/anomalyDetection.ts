@@ -1073,18 +1073,26 @@ class PhpLanguageSupport implements LanguageSupport {
 	}
 
 	get metricNrqlPrefixes() {
-		return ["WebTransaction/", "OtherTransaction/"];
+		return ["WebTransaction", "OtherTransaction"];
 	}
 
 	get spanNrqlPrefixes() {
-		return ["Custom/"];
+		return ["Custom"];
 	}
 
 	filterMetrics(metrics: NameValue[], benchmarkSpans: SpanWithCodeAttrs[]): NameValue[] {
 		const errorPrefixRe = /^Errors\//;
+		const webTransactionPrefixRe = /^WebTransaction\/Action\//;
+		const otherTransactionPrefixRe = /^OtherTransaction\/Action\//;
+		const customPrefix = "Custom/";
 		return metrics.filter(m => {
-			const name = m.name.replace(errorPrefixRe, "");
-			return benchmarkSpans.find(s => s.name === name && s.codeFunction);
+			const spanName = m.name
+				.replace(errorPrefixRe, "")
+				.replace(webTransactionPrefixRe, customPrefix)
+				.replace(otherTransactionPrefixRe, customPrefix)
+				.replace("->", "::");
+
+			return benchmarkSpans.find(s => s.name === spanName && s.codeFunction);
 		});
 	}
 
@@ -1100,8 +1108,6 @@ class PhpLanguageSupport implements LanguageSupport {
 	codeAttrs(name: string, benchmarkSpans: SpanWithCodeAttrs[]): CodeAttributes {
 		const errorPrefixRe = /^Errors\/WebTransaction\//;
 		name = name.replace(errorPrefixRe, "");
-		// WebTransaction/Action/Drupal\node\Controller\NodeViewController->view
-		// Custom/Drupal\node\Controller\NodeViewController::view
 		const webTransactionPrefixRe = /^WebTransaction\/Action\//;
 		const otherTransactionPrefixRe = /^OtherTransaction\/Action\//;
 		const customPrefix = "Custom/";
