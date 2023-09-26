@@ -60,8 +60,8 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 			: `${totalAnomalyArray?.length} Anomalies`;
 
 	let missingExtension;
-	if (!_isEmpty(derivedState.currentMethodLevelTelemetry?.error?.type)) {
-		switch (derivedState.currentMethodLevelTelemetry?.error?.type) {
+	if (!_isEmpty(props.languageAndVersionValidation?.languageExtensionValidation)) {
+		switch (props.languageAndVersionValidation?.languageExtensionValidation) {
 			case "NO_RUBY_VSCODE_EXTENSION":
 				missingExtension = <MissingRubyExtension sidebarView />;
 				break;
@@ -85,6 +85,15 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 				break;
 		}
 	}
+
+	const showAgentWarning =
+		!_isEmpty(props.languageAndVersionValidation?.language) &&
+		!_isEmpty(props.languageAndVersionValidation?.required);
+	const showDistributedTracingWarning = !showAgentWarning && !props.distributedTracingEnabled;
+	const showExtensionWarning =
+		!showDistributedTracingWarning &&
+		!_isEmpty(props.languageAndVersionValidation?.languageExtensionValidation) &&
+		props.languageAndVersionValidation?.languageExtensionValidation !== "VALID";
 
 	// useEffect(() => {
 	// 	if (!_isEmpty(props.languageAndVersionValidation)) {
@@ -153,8 +162,29 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 				</>
 			)}
 
-			{/* Agent Version and Language check */}
-			{expanded && !props.calculatingAnomalies && !_isEmpty(props.languageAndVersionValidation) && (
+			{/* Agent Version Warning */}
+			{expanded && !props.calculatingAnomalies && showAgentWarning && (
+				<>
+					{props.languageAndVersionValidation?.language &&
+						props.languageAndVersionValidation?.required && (
+							<Row
+								style={{
+									padding: "2px 10px 2px 40px",
+								}}
+								className={"pr-row"}
+							>
+								<span style={{ marginLeft: "2px", whiteSpace: "normal" }}>
+									Requires {props.languageAndVersionValidation?.language} agent version{" "}
+									{props.languageAndVersionValidation?.required} or higher.
+								</span>
+							</Row>
+						)}
+					\
+				</>
+			)}
+
+			{/* Distrubuted Tracing Warning */}
+			{expanded && !props.calculatingAnomalies && showDistributedTracingWarning && (
 				<Row
 					style={{
 						padding: "2px 10px 2px 40px",
@@ -162,44 +192,25 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 					className={"pr-row"}
 				>
 					<span style={{ marginLeft: "2px", whiteSpace: "normal" }}>
-						Requires {props.languageAndVersionValidation?.language} agent version{" "}
-						{props.languageAndVersionValidation?.required} or higher.
+						Enable{" "}
+						<Link href="https://docs.newrelic.com/docs/distributed-tracing/concepts/quick-start/">
+							distributed tracing
+						</Link>{" "}
+						for this service to see code-level metrics.
 					</span>
 				</Row>
 			)}
 
-			{/* Distrubuted Tracing Warning */}
-			{expanded &&
-				!props.distributedTracingEnabled &&
-				!props.calculatingAnomalies &&
-				_isEmpty(props.languageAndVersionValidation) && (
-					<Row
-						style={{
-							padding: "2px 10px 2px 40px",
-						}}
-						className={"pr-row"}
-					>
-						<span style={{ marginLeft: "2px", whiteSpace: "normal" }}>
-							Enable{" "}
-							<Link href="https://docs.newrelic.com/docs/distributed-tracing/concepts/quick-start/">
-								distributed tracing
-							</Link>{" "}
-							for this service to see code-level metrics.
-						</span>
-					</Row>
-				)}
-
-			{expanded && missingExtension && !props.calculatingAnomalies && (
-				<>
-					<Row
-						style={{
-							padding: "2px 10px 2px 40px",
-						}}
-						className={"pr-row"}
-					>
-						<span style={{ marginLeft: "2px", whiteSpace: "normal" }}>{missingExtension}</span>
-					</Row>
-				</>
+			{/* Extension Warning */}
+			{expanded && !props.calculatingAnomalies && showExtensionWarning && (
+				<Row
+					style={{
+						padding: "0px 0px 0px 0px",
+					}}
+					className={"pr-row"}
+				>
+					<span style={{ marginLeft: "2px", whiteSpace: "normal" }}>{missingExtension}</span>
+				</Row>
 			)}
 
 			{expanded &&
@@ -238,8 +249,9 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 						)}
 
 						{!props.calculatingAnomalies &&
-							props.distributedTracingEnabled &&
-							_isEmpty(props.languageAndVersionValidation) && (
+							!showAgentWarning &&
+							!showDistributedTracingWarning &&
+							!showExtensionWarning && (
 								<>
 									<ObservabilityAnomaliesGroup
 										observabilityAnomalies={props.observabilityAnomalies.errorRate}

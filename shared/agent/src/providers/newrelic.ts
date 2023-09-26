@@ -82,6 +82,7 @@ import {
 	GetServiceLevelTelemetryResponse,
 	GoldenMetricUnitMappings,
 	isNRErrorResponse,
+	LanguageAndVersionValidation,
 	MethodGoldenMetrics,
 	MethodLevelGoldenMetricQueryResult,
 	MetricTimesliceNameMapping,
@@ -103,6 +104,7 @@ import {
 	UpdateNewRelicOrgIdRequest,
 	UpdateNewRelicOrgIdResponse,
 	DidChangeCodelensesNotificationType,
+	AgentValidateLanguageExtensionRequestType,
 } from "@codestream/protocols/agent";
 import {
 	CSBitbucketProviderInfo,
@@ -230,6 +232,7 @@ export class NewRelicProvider
 	private _newRelicUserId: number | undefined = undefined;
 	private _accountIds: number[] | undefined = undefined;
 	private _memoizedBuildRepoRemoteVariants: any;
+
 	private _clmSpanDataExistsCache = new Cache<ClmSpanData>({
 		defaultTtl: 120 * 1000,
 	});
@@ -961,35 +964,35 @@ export class NewRelicProvider
 						}
 					}
 				}
-				// const hasCodeLevelMetricSpanData = await this.checkHasCodeLevelMetricSpanData(
-				// 	hasRepoAssociation === true,
-				// 	uniqueEntities
-				// );
+				let mappedUniqueEntities = await Promise.all(
+					uniqueEntities.map(async entity => {
+						const languageAndVersionValidation = await this.languageAndVersionValidation(entity);
+
+						return {
+							accountId: entity.account?.id,
+							accountName: entity.account?.name || "Account",
+							entityGuid: entity.guid,
+							entityName: entity.name,
+							tags: entity.tags,
+							domain: entity.domain,
+							alertSeverity: entity?.alertSeverity,
+							url: `${this.productUrl}/redirect/entity/${entity.guid}`,
+							distributedTracingEnabled: this.hasStandardOrInfiniteTracing(entity),
+							languageAndVersionValidation: languageAndVersionValidation,
+						} as EntityAccount;
+					})
+				);
+				mappedUniqueEntities = mappedUniqueEntities.filter(Boolean);
+				mappedUniqueEntities.sort((a, b) =>
+					`${a?.accountName}-${a?.entityName}`.localeCompare(`${b?.accountName}-${b?.entityName}`)
+				);
 				response.repos?.push({
-					repoId: repo.id!,
+					repoId: repo.id,
 					repoName: folderName,
 					repoRemote: remote,
 					hasRepoAssociation,
 					hasCodeLevelMetricSpanData: true,
-					entityAccounts: uniqueEntities
-						.map(entity => {
-							return {
-								accountId: entity.account?.id,
-								accountName: entity.account?.name || "Account",
-								entityGuid: entity.guid,
-								entityName: entity.name,
-								tags: entity.tags,
-								domain: entity.domain,
-								alertSeverity: entity?.alertSeverity,
-								url: `${this.productUrl}/redirect/entity/${entity.guid}`,
-								distributedTracingEnabled: this.hasStandardOrInfiniteTracing(entity),
-								languageAndVersionValidation: this.languageAndVersionValidation(entity),
-							} as EntityAccount;
-						})
-						.filter(Boolean)
-						.sort((a, b) =>
-							`${a.accountName}-${a.entityName}`.localeCompare(`${b.accountName}-${b.entityName}`)
-						),
+					entityAccounts: mappedUniqueEntities,
 				});
 				ContextLogger.log(`getObservabilityRepos hasRepoAssociation=${hasRepoAssociation}`, {
 					repoId: repo.id,
@@ -1020,7 +1023,9 @@ export class NewRelicProvider
 		return tracingValue === "standard" || tracingValue === "infinite";
 	}
 
-	private languageAndVersionValidation(entity?: Entity): object {
+	private async languageAndVersionValidation(
+		entity?: Entity
+	): Promise<LanguageAndVersionValidation> {
 		const tags = entity?.tags || [];
 		const agentVersion = tags.find(tag => tag.key === "agentVersion");
 		const language = tags.find(tag => tag.key === "language");
@@ -1031,6 +1036,12 @@ export class NewRelicProvider
 
 		const version = agentVersion?.values[0];
 		const languageValue = language?.values[0].toLowerCase();
+		const extensionValidationResponse = await SessionContainer.instance().session.agent.sendRequest(
+			AgentValidateLanguageExtensionRequestType,
+			{
+				language: languageValue,
+			}
+		);
 
 		if (
 			languageValue === "go" ||
@@ -1051,11 +1062,12 @@ export class NewRelicProvider
 			) {
 				return {
 					language: language.values[0],
+					languageExtensionValidation: extensionValidationResponse.languageValidationString,
 					required: REQUIRED_AGENT_VERSIONS[languageValue],
 				};
 			}
 		}
-		return {};
+		return { languageExtensionValidation: extensionValidationResponse.languageValidationString };
 	}
 
 	/**
