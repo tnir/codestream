@@ -103,7 +103,7 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 				// Prevent dupe tracking call if user reloads IDE, can trigger rapid double mount
 				setTimeout(() => {
 					HostApi.instance.track("CLM Blocked", {
-						cause: "Unsupported Agent",
+						Cause: "Unsupported Agent",
 					});
 				}, 3000);
 			}
@@ -112,7 +112,7 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 				// Prevent dupe tracking call if user reloads IDE, can trigger rapid double mount
 				setTimeout(() => {
 					HostApi.instance.track("CLM Blocked", {
-						cause: "Missing Language Extension",
+						Cause: "Missing Language Extension",
 					});
 				}, 3000);
 			}
@@ -126,7 +126,7 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 				setTimeout(() => {
 					console.warn("distributedTracingEnabled", props.distributedTracingEnabled);
 					HostApi.instance.track("CLM Blocked", {
-						cause: "DT Not Enabled",
+						Cause: "DT Not Enabled",
 					});
 				}, 3000);
 			}
