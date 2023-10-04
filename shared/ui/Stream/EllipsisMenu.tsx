@@ -2,21 +2,17 @@ import {
 	UpdateTeamSettingsRequestType,
 	DeleteCompanyRequestType,
 } from "@codestream/protocols/agent";
-import { isEmpty as _isEmpty, sortBy as _sortBy } from "lodash-es";
+import { sortBy as _sortBy } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 import { WebviewModals, OpenUrlRequestType } from "@codestream/protocols/webview";
 import { multiStageConfirmPopup } from "./MultiStageConfirm";
-import {
-	logout,
-	switchToForeignCompany,
-	switchToTeam,
-} from "@codestream/webview/store/session/thunks";
+import { logout, switchToTeamSSO } from "@codestream/webview/store/session/thunks";
 import { useAppDispatch, useAppSelector } from "@codestream/webview/utilities/hooks";
 import { WebviewPanels, SidebarPanes } from "@codestream/protocols/api";
 import { CodeStreamState } from "../store";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { openModal, setCurrentOrganizationInvite, setProfileUser } from "../store/context/actions";
+import { openModal, setProfileUser } from "../store/context/actions";
 import { HostApi } from "../webview-api";
 import { openPanel } from "./actions";
 import Icon from "./Icon";
@@ -61,10 +57,17 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		const team = state.teams[teamId];
 		const user = state.users[state.session.userId!];
 		const onPrem = state.configs.isOnPrem;
-		const currentCompanyId = team.companyId;
+		const companies = state.companies;
 		const { environmentHosts, environment, isProductionCloud } = state.configs;
 		const currentHost = environmentHosts?.find(host => host.shortName === environment);
 		const supportsMultiRegion = isFeatureEnabled(state, "multiRegion");
+
+		let currentCompanyId;
+		for (const key in companies) {
+			if (companies[key].hasOwnProperty("linkedNROrgId")) {
+				currentCompanyId = companies[key].linkedNROrgId;
+			}
+		}
 
 		let sidebarPanes: SidebarPanes = state.preferences.sidebarPanes || (EMPTY_HASH as SidebarPanes);
 		let sidebarPaneOrder: WebviewPanels[] = state.preferences.sidebarPaneOrder || AVAILABLE_PANES;
@@ -106,6 +109,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			isProductionCloud,
 			supportsMultiRegion,
 			eligibleJoinCompanies: _sortBy(user?.eligibleJoinCompanies, "name"),
+			possibleAuthDomains: _sortBy(user?.possibleAuthDomains, "authentication_domain_name"),
 		};
 	});
 
@@ -117,27 +121,11 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		HostApi.instance.track("Switched Organizations", {});
 		// slight delay so tracking call completes
 		setTimeout(() => {
-			const { eligibleJoinCompanies } = derivedState;
+			const { possibleAuthDomains } = derivedState;
 			const isInvited = company.byInvite && !company.accessToken;
 			if (isCurrentCompany) return;
-			if (company.host && !isInvited) {
-				dispatch(switchToForeignCompany(company.id));
-			} else if (isInvited) {
-				dispatch(setCurrentOrganizationInvite(company.name, company.id, company.host));
-				dispatch(openModal(WebviewModals.AcceptCompanyInvite));
-			} else {
-				const eligibleCompany = eligibleJoinCompanies.find(_ => _.id === company.id);
-				if (eligibleCompany?.teamId) {
-					dispatch(
-						switchToTeam({
-							teamId: eligibleCompany.teamId,
-							accessTokenFromEligibleCompany: eligibleCompany?.accessToken,
-						})
-					);
-				} else {
-					console.error(`Could not switch to a team in company ${company.id}`);
-				}
-			}
+
+			dispatch(switchToTeamSSO({ loginUrl: company.login_url }));
 		}, 500);
 
 		return;
@@ -192,47 +180,39 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			currentHost,
 			hasMultipleEnvironments,
 			supportsMultiRegion,
+			possibleAuthDomains,
 		} = derivedState;
 
 		const buildSubmenu = () => {
-			const items = eligibleJoinCompanies
-				.filter(company => {
-					// Skip companys eligible to join by domain and are signed out with no invite
-					const domainJoining = company?.domainJoining;
-					const canJoinByDomain = !_isEmpty(domainJoining);
-					const isInvited = company.byInvite && !company.accessToken;
-					const isSignedOut = !company.byInvite && !company.accessToken;
-					if (canJoinByDomain || isSignedOut || isInvited) return false;
-					return true;
-				})
-				.map(company => {
-					const isCurrentCompany = company.id === currentCompanyId;
-					const companyHost = company.host || currentHost;
-					const companyRegion =
-						supportsMultiRegion && hasMultipleEnvironments && companyHost?.shortName;
+			const items = possibleAuthDomains.map(company => {
+				const isCurrentCompany = company.organization_id === currentCompanyId;
+				// const companyHost = company.organization_name || currentHost;
+				// const companyRegion =
+				// 	supportsMultiRegion && hasMultipleEnvironments && companyHost?.shortName;
+				const companyAuthType = company.authentication_type;
 
-					let checked: any;
-					if (isCurrentCompany) {
-						checked = true;
-					} else {
-						checked = false;
-					}
+				let checked: any;
+				if (isCurrentCompany) {
+					checked = true;
+				} else {
+					checked = false;
+				}
 
-					return {
-						key: company.id,
-						label: (
-							<>
-								{company.name}
-								<RegionSubtext>{companyRegion && <>{companyRegion}</>}</RegionSubtext>
-							</>
-						),
-						checked: checked,
-						noHover: isCurrentCompany,
-						action: () => {
-							trackSwitchOrg(isCurrentCompany, company);
-						},
-					};
-				}) as any;
+				return {
+					key: company.authentication_domain_id,
+					label: (
+						<>
+							{company.organization_name}
+							<RegionSubtext>{companyAuthType && <>{companyAuthType}</>}</RegionSubtext>
+						</>
+					),
+					checked: checked,
+					noHover: isCurrentCompany,
+					action: () => {
+						trackSwitchOrg(isCurrentCompany, company);
+					},
+				};
+			}) as any;
 
 			return items;
 		};
