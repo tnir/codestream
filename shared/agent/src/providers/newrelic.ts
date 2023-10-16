@@ -27,8 +27,6 @@ import {
 	ErrorGroupResponse,
 	ErrorGroupsResponse,
 	ErrorGroupStateType,
-	GetAlertViolationsQueryResult,
-	GetAlertViolationsResponse,
 	GetDeploymentsRequest,
 	GetDeploymentsRequestType,
 	GetDeploymentsResponse,
@@ -105,6 +103,8 @@ import {
 	UpdateNewRelicOrgIdResponse,
 	DidChangeCodelensesNotificationType,
 	AgentValidateLanguageExtensionRequestType,
+	GetIssuesResponse,
+	GetIssuesQueryResult,
 } from "@codestream/protocols/agent";
 import {
 	CSBitbucketProviderInfo,
@@ -2470,15 +2470,17 @@ export class NewRelicProvider
 			});
 			throw new ResponseError(ERROR_SLT_MISSING_ENTITY, "Missing entity");
 		}
+		let recentIssuesResponse;
 
-		let recentAlertViolations: GetAlertViolationsResponse | undefined | NRErrorResponse;
-		if (request.fetchRecentAlertViolations) {
-			recentAlertViolations = await this.getRecentAlertViolations(request.newRelicEntityGuid);
-		}
+		if (request.fetchRecentIssues) {
+			const accountId = NewRelicProvider.parseId(request.newRelicEntityGuid)?.accountId;
 
-		const validEntityGuid: string = entity?.entityGuid ?? request.newRelicEntityGuid;
+			if (accountId) {
+				recentIssuesResponse = await this.getIssues(accountId!, request.newRelicEntityGuid);
+			}
 
-		try {
+			const validEntityGuid: string = entity?.entityGuid ?? request.newRelicEntityGuid;
+
 			const entityGoldenMetrics = await this.getEntityLevelGoldenMetrics(validEntityGuid);
 
 			const response = {
@@ -2488,88 +2490,86 @@ export class NewRelicProvider
 				newRelicEntityName: entity?.entityName,
 				newRelicEntityGuid: validEntityGuid,
 				newRelicUrl: `${this.productUrl}/redirect/entity/${validEntityGuid}`,
-				recentAlertViolations: recentAlertViolations,
+				recentIssues: recentIssuesResponse,
 			};
 			return response;
-		} catch (ex) {
-			Logger.error(ex, "getServiceLevelTelemetry", {
-				request,
-			});
 		}
-
 		return undefined;
 	}
 
-	async getRecentAlertViolations(
+	async getIssues(
+		accountId: number,
 		entityGuid: string
-	): Promise<GetAlertViolationsResponse | NRErrorResponse> {
+	): Promise<GetIssuesResponse | NRErrorResponse | undefined> {
 		try {
-			const response = await this.query<GetAlertViolationsQueryResult>(
-				`query getRecentAlertViolations($entityGuid: EntityGuid!) {
+			const response = await this.query<GetIssuesQueryResult>(
+				`query getRecentIssues($id: id!, $entityGuids: [EntityGuid!]) {
 					actor {
-					  entity(guid: $entityGuid) {
-						name
-						guid
-						recentAlertViolations(count: 50) {
-						  agentUrl
-						  alertSeverity
-						  closedAt
-						  label
-						  level
-						  openedAt
-						  violationId
-						  violationUrl
+						account(id: $id) {
+						  aiIssues {
+							issues(filter: {entityGuids: $entityGuids, states: ACTIVATED}) {
+							  issues {
+								title
+								deepLinkUrl
+								closedAt
+								updatedAt
+								createdAt
+								priority
+							  }
+							}
+						  }
 						}
 					  }
-					}
 				  }				  
 				`,
 				{
-					entityGuid: entityGuid,
+					id: accountId,
+					entityGuids: entityGuid,
 				}
 			);
 
-			if (response?.actor?.entity) {
-				const entity = response?.actor?.entity;
-				const recentAlertViolationsArray = entity?.recentAlertViolations.filter(
-					_ => _.closedAt === null
+			if (response?.actor?.account?.aiIssues?.issues?.issues?.length) {
+				const issueArray = response.actor.account.aiIssues.issues.issues;
+				const recentIssuesArray = issueArray.filter(
+					_ => _.closedAt === null || _.closedAt === undefined
 				);
 
-				const ALERT_SEVERITY_SORTING_ORDER: string[] = [
-					"",
-					"CRITICAL",
-					"NOT_ALERTING",
-					"NOT_CONFIGURED",
-					"WARNING",
-					"UNKNOWN",
-				];
+				const ALERT_SEVERITY_SORTING_ORDER: string[] = ["", "CRITICAL", "HIGH", "MEDIUM", "LOW"];
 
+				const url = this.issueUrl(entityGuid);
 				// get unique labels
-				const recentAlertViolationsArrayUnique = _uniqBy(recentAlertViolationsArray, "label");
+				recentIssuesArray.forEach(issue => {
+					const firstTitle = issue.title![0]; //this gives me the first title
+					issue.title = firstTitle;
+					issue.url = url;
+				});
+
+				const recentIssuesArrayUnique = _uniqBy(recentIssuesArray, "title");
 
 				// sort based on openedAt time
-				recentAlertViolationsArrayUnique.sort((a, b) =>
-					a.openedAt > b.openedAt ? 1 : b.openedAt > a.openedAt ? -1 : 0
+				recentIssuesArrayUnique!.sort((a, b) =>
+					a.createdAt! > b.createdAt! ? 1 : b.createdAt! > a.createdAt! ? -1 : 0
 				);
 
 				// sort based on alert serverity defined in ALERT_SEVERITY_SORTING_ORDER
-				const recentAlertViolationsArraySorted = this.mapOrder(
-					recentAlertViolationsArray,
+				const recentIssuesArraySorted = this.mapOrder(
+					recentIssuesArrayUnique,
 					ALERT_SEVERITY_SORTING_ORDER,
-					"alertSeverity"
+					"priority"
 				);
 
 				// take top 2
-				const topTwoRecentAlertViolations = recentAlertViolationsArraySorted.slice(0, 2);
+				const topTwoRecentIssues = recentIssuesArraySorted.slice(0, 2);
 
-				entity.recentAlertViolations = topTwoRecentAlertViolations;
+				const recentIssues = topTwoRecentIssues;
 
-				return entity;
+				return { recentIssues };
 			}
-			return {};
+
+			return undefined;
 		} catch (ex) {
-			ContextLogger.warn("getRecentAlertViolations failure", {
-				entityGuid,
+			ContextLogger.warn("getIssues failure", {
+				accountId: accountId,
 				error: ex,
 			});
 			const accessTokenError = ex as {
@@ -4174,6 +4174,10 @@ export class NewRelicProvider
 
 	private productEntityRedirectUrl(entityGuid: string) {
 		return `${this.productUrl}/redirect/entity/${entityGuid}`;
+	}
+
+	private issueUrl(entityGuid: string) {
+		return `${this.productUrl}/nr1-core/alerts-ai/filtered-feed/${entityGuid}`;
 	}
 
 	private findRelatedReposFromServiceEntity(

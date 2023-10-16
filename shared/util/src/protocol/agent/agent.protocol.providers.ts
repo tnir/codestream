@@ -1641,7 +1641,7 @@ export interface GetServiceLevelTelemetryRequest {
 	metricTimesliceNameMapping?: MetricTimesliceNameMapping;
 	/** related service needs less data, skips redundant call */
 	skipRepoFetch?: boolean;
-	fetchRecentAlertViolations?: boolean;
+	fetchRecentIssues?: boolean;
 	force?: boolean;
 }
 
@@ -1730,13 +1730,18 @@ export interface GetServiceLevelTelemetryResponse {
 	newRelicAlertSeverity?: string;
 	newRelicEntityAccounts: EntityAccount[];
 	newRelicEntityName?: string;
-	recentAlertViolations?: GetAlertViolationsResponse | NRErrorResponse;
+	recentIssues?: GetIssuesResponse | NRErrorResponse;
 }
 
 export interface GetAlertViolationsResponse {
 	name?: string;
 	guid?: string;
+	permalink?: string;
 	recentAlertViolations?: RecentAlertViolation[];
+}
+
+export interface GetIssuesResponse {
+	recentIssues?: RecentIssue[];
 }
 
 export interface Deployment {
@@ -2052,7 +2057,58 @@ export interface GetAlertViolationsQueryResult {
 	actor: {
 		entity: {
 			name: string;
+			permalink: string;
 			recentAlertViolations: RecentAlertViolation[];
+		};
+	};
+}
+
+export interface GetIssuesQueryResult {
+	actor?: {
+		account?: {
+			aiIssues?: {
+				issues?: {
+					issues?: {
+						title?: string;
+						eventType?: string;
+						mergeReason?: string;
+						url?: string;
+						conditionName?: string[];
+						unAcknowledgedBy?: string | null;
+						totalIncidents?: number;
+						entityNames?: string[];
+						parentMergeId?: any;
+						entityTypes?: string[];
+						acknowledgedAt?: number;
+						correlationRuleDescriptions?: any;
+						unAcknowledgedAt?: number;
+						entityGuids?: [];
+						conditionProduct?: string[];
+						closedAt?: number;
+						updatedAt?: number;
+						accountIds?: string[];
+						closedBy?: string | null;
+						mutingState?: string;
+						createdAt?: number;
+						activatedAt?: number;
+						origins?: string[];
+						isCorrelated?: boolean;
+						isIdle?: boolean;
+						issueId?: string;
+						conditionFamilyId?: number[];
+						description?: string[];
+						correlationRuleNames?: any;
+						acknowledgedBy?: any;
+						policyIds?: string[];
+						priority?: string;
+						sources?: string[];
+						policyName?: string[];
+						correlationRuleIds?: any;
+						state?: string;
+						incidentIds?: string[];
+					}[];
+				};
+			};
 		};
 	};
 }
@@ -2066,6 +2122,15 @@ export interface RecentAlertViolation {
 	openedAt: string;
 	violationId: string;
 	violationUrl: string;
+}
+
+export interface RecentIssue {
+	title?: string;
+	url?: string;
+	closedAt?: number;
+	updatedAt?: number;
+	createdAt: number;
+	priority?: string;
 }
 
 export interface EntityGoldenMetricsQueries {

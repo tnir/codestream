@@ -1,9 +1,8 @@
-import { EntityGoldenMetrics, GetAlertViolationsResponse } from "@codestream/protocols/agent";
+import { EntityGoldenMetrics, GetIssuesResponse } from "@codestream/protocols/agent";
 import { isEmpty as _isEmpty } from "lodash-es";
 import React, { useState } from "react";
 import { Row } from "./CrossPostIssueControls/IssuesPane";
 import Icon from "./Icon";
-import { ObservabilityAlertViolations } from "./ObservabilityAlertViolations";
 import Tooltip from "./Tooltip";
 import { ObservabilityLoadingGoldenMetrics } from "@codestream/webview/Stream/ObservabilityLoading";
 
@@ -12,7 +11,7 @@ interface Props {
 	errors: string[];
 	loadingGoldenMetrics: boolean;
 	noDropdown?: boolean;
-	recentAlertViolations?: GetAlertViolationsResponse;
+	recentIssues?: GetIssuesResponse;
 	entityGuid: string;
 }
 
@@ -24,7 +23,7 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 		entityGoldenMetrics,
 		loadingGoldenMetrics,
 		noDropdown,
-		recentAlertViolations,
+		recentIssues,
 	} = props;
 
 	const errorTitle: string | undefined =
@@ -113,15 +112,7 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 			{expanded && loadingGoldenMetrics && <ObservabilityLoadingGoldenMetrics />}
 			{(noDropdown || expanded) &&
 				!loadingGoldenMetrics &&
-				!_isEmpty(entityGoldenMetrics?.metrics) && (
-					<>
-						{goldenMetricOutput()}
-						<ObservabilityAlertViolations
-							alertViolations={recentAlertViolations?.recentAlertViolations}
-							customPadding={"2px 10px 2px 42px"}
-						/>
-					</>
-				)}
+				!_isEmpty(entityGoldenMetrics?.metrics) && <>{goldenMetricOutput()}</>}
 		</>
 	);
 });
