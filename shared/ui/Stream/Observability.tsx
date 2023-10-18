@@ -1250,7 +1250,7 @@ export const Observability = React.memo((props: Props) => {
 																						<>
 																							<ObservabilityAlertViolations
 																								issues={recentIssues?.recentIssues}
-																								customPadding={"2px 10px 2px 42px"}
+																								customPadding={"2px 10px 2px 27px"}
 																								entityGuid={ea.entityGuid}
 																							/>
 																							<ObservabilityGoldenMetricDropdown
