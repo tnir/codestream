@@ -86,7 +86,7 @@ interface MessageInputProps {
 	onFocus?(): void;
 	selectedTags?: { [key: string]: boolean };
 	toggleTag?: Function;
-	relatedCodemarkIds?: string[];
+	relatedCodemarkIds?: { [id: string]: CodemarkPlus | undefined };
 	toggleCodemark?: Function;
 	autoFocus?: boolean;
 	className?: string;

@@ -21,7 +21,7 @@ import {
 	GetIssuesResponse,
 } from "@codestream/protocols/agent";
 import cx from "classnames";
-import { head as _head, isEmpty, isEmpty as _isEmpty, isNil as _isNil } from "lodash-es";
+import { head as _head, isEmpty as _isEmpty, isNil as _isNil } from "lodash-es";
 import React, { useEffect, useState } from "react";
 import { shallowEqual } from "react-redux";
 import styled from "styled-components";
@@ -263,10 +263,16 @@ export const Observability = React.memo((props: Props) => {
 			providers["newrelic*com"] && isConnected(state, { id: "newrelic*com" });
 		const activeO11y = preferences.activeO11y;
 		const clmSettings = state.preferences.clmSettings || {};
+
 		let isO11yPaneOnly = true;
 		if (isFeatureEnabled(state, "showCodeAnalyzers")) {
 			isO11yPaneOnly = false;
 		}
+
+		const team = state.teams[state.context.currentTeamId] || {};
+		const company =
+			!_isEmpty(state.companies) && !_isEmpty(team) ? state.companies[team.companyId] : undefined;
+
 		return {
 			sessionStart: state.context.sessionStart,
 			newRelicIsConnected,
@@ -285,6 +291,7 @@ export const Observability = React.memo((props: Props) => {
 			recentErrorsTimeWindow: state.preferences.codeErrorTimeWindow,
 			currentObservabilityAnomalyEntityGuid: state.context.currentObservabilityAnomalyEntityGuid,
 			isO11yPaneOnly,
+			company,
 		};
 	}, shallowEqual);
 
@@ -604,7 +611,7 @@ export const Observability = React.memo((props: Props) => {
 			telemetryStateValue = "Not Connected";
 		}
 
-		if (!isEmpty(telemetryStateValue)) {
+		if (!_isEmpty(telemetryStateValue)) {
 			console.debug("o11y: O11y Rendered", telemetryStateValue);
 			const properties: AnyObject = {
 				State: telemetryStateValue,
@@ -685,6 +692,9 @@ export const Observability = React.memo((props: Props) => {
 				filters,
 				force,
 				isVsCode: derivedState.isVsCode,
+				isMultiRegion: !_isEmpty(derivedState?.company)
+					? derivedState?.company?.isMultiRegion
+					: undefined,
 			});
 			if (response.repos) {
 				if (hasFilter) {
@@ -1116,6 +1126,7 @@ export const Observability = React.memo((props: Props) => {
 													</Button>
 												</GenericWrapper>
 											)}
+
 										{_isEmpty(currentRepoId) &&
 											_isEmpty(repoForEntityAssociator) &&
 											!genericError && (
@@ -1143,7 +1154,7 @@ export const Observability = React.memo((props: Props) => {
 															message: `Enable CodeLenses to see code-level metrics. 
 														Go to Tools > Options > Text Editor > All Languages > CodeLens or [learn more about code-level metrics]`,
 															helpUrl:
-																"https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring#code-level",
+																"https://docs.newrelic.com/docs/codestream/observability/code-level-metrics",
 														},
 													]}
 													dismissCallback={e => {
@@ -1388,7 +1399,7 @@ export const Observability = React.memo((props: Props) => {
 							<div className="filters" style={{ padding: "0 20px 10px 20px" }}>
 								<span>
 									Connect to New Relic to see how your code is performing and identify issues.{" "}
-									<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring/">
+									<Link href="https://docs.newrelic.com/docs/codestream/observability/performance-monitoring/">
 										Learn more.
 									</Link>
 									{/* <Tooltip title="Connect later on the Integrations page" placement="top">

@@ -7,7 +7,7 @@ import {
 	FetchProviderDefaultPullResponse,
 	ThirdPartyProviders,
 } from "./agent.protocol";
-import { CSEligibleJoinCompany, CSReviewCheckpoint } from "./api.protocol";
+import { CSEligibleJoinCompany, CSPossibleAuthDomain, CSReviewCheckpoint } from "./api.protocol";
 
 /* NOTE: there can be dynamic panel names that begin with configure-provider- or configure-enterprise- */
 export enum WebviewPanels {
@@ -525,6 +525,10 @@ export interface CSCompany extends CSEntity {
 	host?: EnvironmentHost;
 	switchToServerUrl?: string;
 	memberCount?: number;
+	codestreamOnly?: boolean;
+	orgOrigination?: string;
+	linkedNROrgId?: string;
+	isMultiRegion?: boolean;
 }
 
 export interface CSTeam extends CSEntity {
@@ -603,6 +607,7 @@ export interface CSProviderInfo {
 	expiresAt?: number;
 	userId?: string;
 	isApiToken?: boolean;
+	bearerToken?: boolean;
 	hosts?: { [host: string]: CSProviderInfos };
 	orgIds?: number[];
 	data?: {
@@ -730,6 +735,7 @@ export interface CSUser extends CSEntity {
 	externalUserId?: string;
 	status?: { [teamId: string]: CSMeStatus };
 	eligibleJoinCompanies?: CSEligibleJoinCompany[];
+	possibleAuthDomains?: CSPossibleAuthDomain[];
 	avatar?: {
 		image?: string;
 		image48?: string;
@@ -740,6 +746,7 @@ export interface CSUser extends CSEntity {
 	firstSessionStartedAt?: number;
 	hasGitLens?: boolean;
 	countryCode?: string;
+	nrUserId?: number;
 }
 
 export interface CSLastReads {
@@ -932,6 +939,9 @@ type CSMeProviderInfo = {
 		[key: string]: CSProviderInfos | undefined;
 	};
 };
+export interface CSNRUserInfo {
+	userTier?: string;
+}
 
 export interface CSMe extends CSUser {
 	lastReads: CSLastReads;
@@ -942,6 +952,8 @@ export interface CSMe extends CSUser {
 	providerInfo?: CSMeProviderInfo;
 	mustSetPassword?: boolean;
 	inMaintenanceMode?: boolean;
+	nrUserInfo?: CSNRUserInfo;
+	accessTokens?: { web: { token: string } };
 }
 
 export interface CSApiCapability {

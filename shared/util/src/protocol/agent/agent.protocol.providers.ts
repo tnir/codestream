@@ -1320,6 +1320,26 @@ export const UpdateNewRelicOrgIdRequestType = new RequestType<
 	void
 >("codestream/newrelic/orgid/update");
 
+export interface GetNewRelicUsersRequest {
+	search?: string;
+	nextCursor?: string;
+}
+
+export interface GetNewRelicUsersResponse {
+	users: {
+		email: string;
+		name: string;
+	}[];
+	nextCursor?: string;
+}
+
+export const GetNewRelicUsersRequestType = new RequestType<
+	GetNewRelicUsersRequest,
+	GetNewRelicUsersResponse,
+	void,
+	void
+>("codestream/newrelic/users");
+
 export interface GetObservabilityErrorsRequest {
 	filters: { repoId: string; entityGuid?: string }[];
 	timeWindow?: string;
@@ -1458,6 +1478,7 @@ export interface GetObservabilityReposRequest {
 	filters?: { repoId: string; entityGuid?: string }[];
 	force?: boolean;
 	isVsCode?: boolean;
+	isMultiRegion?: boolean;
 }
 
 export interface EntityAccount {
@@ -1502,7 +1523,7 @@ export interface GetObservabilityEntitiesRequest {
 
 export interface GetObservabilityEntitiesResponse {
 	totalResults: number;
-	entities: { guid: string; name: string }[];
+	entities: { guid: string; name: string; account: string; entityType: EntityType }[];
 	nextCursor?: string;
 }
 
@@ -1645,6 +1666,10 @@ export interface GetServiceLevelTelemetryRequest {
 	force?: boolean;
 }
 
+export interface UpdateAzureFullNameRequest {
+	fullName: string;
+}
+
 export interface GetServiceLevelObjectivesRequest {
 	/** entity id of the NewRelic entity */
 	entityGuid: string;
@@ -1723,6 +1748,10 @@ export interface GetMethodLevelTelemetryResponse {
 	newRelicEntityName: string;
 }
 
+export interface UpdateAzureFullNameResponse {
+	fullName: string;
+}
+
 export interface GetServiceLevelTelemetryResponse {
 	newRelicEntityGuid: string;
 	newRelicUrl?: string;
@@ -1785,6 +1814,13 @@ export const GetServiceLevelTelemetryRequestType = new RequestType<
 	void,
 	void
 >("codestream/newrelic/serviceLevelTelemetry");
+
+export const UpdateAzureFullNameRequestType = new RequestType<
+	UpdateAzureFullNameRequest,
+	UpdateAzureFullNameResponse,
+	void,
+	void
+>("codestream/newrelic/azureFullName");
 
 export const GetServiceLevelObjectivesRequestType = new RequestType<
 	GetServiceLevelObjectivesRequest,
@@ -1943,6 +1979,7 @@ export interface EntitySearchResponse {
 			};
 		};
 	};
+	region?: string;
 }
 
 export interface BuiltFromResult {
