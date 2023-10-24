@@ -96,11 +96,9 @@ export const ObservabilityAnomaliesGroup = React.memo((props: Props) => {
 			codeFunction: anomaly.codeFunction,
 			language: anomaly.language,
 		});
-		if (!props.noAnomaly) {
-			dispatch(closeAllPanels());
-			dispatch(setCurrentObservabilityAnomaly(anomaly, props.entityGuid!));
-			dispatch(openPanel(WebviewPanels.ObservabilityAnomaly));
-		}
+		dispatch(closeAllPanels());
+		dispatch(setCurrentObservabilityAnomaly(anomaly, props.entityGuid!));
+		dispatch(openPanel(WebviewPanels.ObservabilityAnomaly));
 	}
 
 	return (

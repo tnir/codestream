@@ -72,7 +72,6 @@ import {
 	ThirdPartyProviders,
 	TokenLoginRequest,
 	TokenLoginRequestType,
-	UIStateRequestType,
 	VerifyConnectivityRequestType,
 	VerifyConnectivityResponse,
 	PollForMaintenanceModeRequestType,
@@ -117,9 +116,15 @@ import {
 	VersionMiddlewareManager,
 } from "./api/middleware/versionMiddleware";
 import { Container, SessionContainer } from "./container";
-import { DocumentEventHandler } from "./documentEventHandler";
 import { Logger } from "./logger";
-import { log, memoize, registerDecoratedHandlers, registerProviders, Strings } from "./system";
+import {
+	Functions,
+	log,
+	memoize,
+	registerDecoratedHandlers,
+	registerProviders,
+	Strings,
+} from "./system";
 import { testGroups } from "./testGroups";
 import { ProxyAgent, setGlobalDispatcher } from "undici";
 
@@ -269,23 +274,11 @@ export class CodeStreamSession {
 	private readonly _httpsAgent: HttpsAgent | HttpsProxyAgent | undefined;
 	private readonly _httpAgent: HttpAgent | undefined; // used if api server is http
 	private readonly _readyPromise: Promise<void>;
-	// in-memory store of what UI the user is current looking at
-	private uiState: string | undefined;
-	private _documentEventHandler: DocumentEventHandler | undefined;
 
 	private _activeServerAlerts: string[] = [];
-	private _broadcasterRecoveryTimer: NodeJS.Timer | undefined;
-	private _echoTimer: NodeJS.Timer | undefined;
+	private _broadcasterRecoveryTimer: NodeJS.Timeout | undefined;
+	private _echoTimer: NodeJS.Timeout | undefined;
 	private _echoDidTimeout: boolean = false;
-
-	// HACK in certain scenarios the agent may want to use more performance-intensive
-	// operations when handling document change and saves. This is true for when
-	// a user is looking at the review screen, where we need to be able to live-update
-	// the view based on documents changing & saving, as well as git operations removing
-	// and/or squashing commits.
-	get useEnhancedDocumentChangeHandler(): boolean {
-		return this.uiState === "new-review" || this.uiState === "people";
-	}
 
 	constructor(
 		public readonly agent: CodeStreamAgent,
@@ -384,9 +377,7 @@ export class CodeStreamSession {
 					this._didEncounterMaintenanceMode();
 				}
 
-				let isMaintenanceMode = context.response?.headers.get("X-CS-API-Maintenance-Mode")
-					? true
-					: false;
+				const isMaintenanceMode = !!context.response?.headers.get("X-CS-API-Maintenance-Mode");
 				this._refreshMaintenanceModePoll(isMaintenanceMode);
 
 				const alerts = context.response?.headers.get("X-CS-API-Alerts");
@@ -436,14 +427,6 @@ export class CodeStreamSession {
 		// this.connection.onHover(e => MarkerHandler.onHover(e));
 
 		registerDecoratedHandlers(this.agent);
-
-		this.agent.registerHandler(UIStateRequestType, e => {
-			if (e && e.context && e.context.panelStack && e.context.panelStack[0]) {
-				this.uiState = e.context.panelStack[0];
-			} else {
-				this.uiState = undefined;
-			}
-		});
 
 		this.agent.registerHandler(VerifyConnectivityRequestType, () => this.verifyConnectivity());
 		this.agent.registerHandler(GetAccessTokenRequestType, e => {
@@ -552,12 +535,16 @@ export class CodeStreamSession {
 		});
 	}
 
-	private _refreshMaintenanceModePoll(isMaintenanceMode: boolean) {
-		this.agent.sendNotification(RefreshMaintenancePollNotificationType, {
-			isMaintenanceMode,
-			pollRefresh: true,
-		});
-	}
+	private _refreshMaintenanceModePoll = Functions.debounceMemoized(
+		(isMaintenanceMode: boolean) => {
+			this.agent.sendNotification(RefreshMaintenancePollNotificationType, {
+				isMaintenanceMode,
+				pollRefresh: true,
+			});
+		},
+		2000,
+		{ leading: true }
+	);
 
 	private async onRTMessageReceived(e: RTMessage) {
 		// if we are in broadcaster failure mode, and we received an RT message, we'll immediately
@@ -1263,11 +1250,6 @@ export class CodeStreamSession {
 		Logger.log(cc, `Subscribing to real-time events...`);
 		await this.api.subscribe();
 
-		this._documentEventHandler = new DocumentEventHandler(
-			this,
-			SessionContainer.instance().session.agent.documents
-		);
-
 		SessionContainer.instance().git.onRepositoryChanged(data => {
 			SessionContainer.instance().session.agent.sendNotification(DidChangeDataNotificationType, {
 				type: ChangeDataType.Commits,
@@ -1863,10 +1845,5 @@ export class CodeStreamSession {
 			return { files: [] };
 		}
 	}
-
-	dispose() {
-		if (this._documentEventHandler) {
-			this._documentEventHandler.dispose();
-		}
-	}
+	dispose() {}
 }
