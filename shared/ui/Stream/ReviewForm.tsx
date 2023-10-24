@@ -34,7 +34,6 @@ import React, { ReactElement } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { Range } from "vscode-languageserver-types";
-import { URI } from "vscode-uri";
 import { ReviewShowLocalDiffRequestType } from "@codestream/protocols/webview";
 import { WebviewPanels } from "@codestream/protocols/api";
 import { Headshot } from "@codestream/webview/src/components/Headshot";
@@ -2491,18 +2490,8 @@ class ReviewForm extends React.Component<Props, State> {
 const EMPTY_OBJECT = {};
 
 const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
-	const {
-		context,
-		editorContext,
-		users,
-		teams,
-		companies,
-		session,
-		preferences,
-		repos,
-		documents,
-		ide,
-	} = state;
+	const { context, editorContext, users, teams, companies, session, preferences, repos, ide } =
+		state;
 
 	const user = users[session.userId!] as CSMe;
 
