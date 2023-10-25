@@ -1,12 +1,8 @@
-import {
-	UpdateTeamSettingsRequestType,
-	DeleteCompanyRequestType,
-} from "@codestream/protocols/agent";
+import { UpdateTeamSettingsRequestType } from "@codestream/protocols/agent";
 import { sortBy as _sortBy } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 import { WebviewModals, OpenUrlRequestType } from "@codestream/protocols/webview";
-import { multiStageConfirmPopup } from "./MultiStageConfirm";
 import { logout, switchToTeamSSO } from "@codestream/webview/store/session/thunks";
 import { useAppDispatch, useAppSelector } from "@codestream/webview/utilities/hooks";
 import { WebviewPanels, SidebarPanes, CSPossibleAuthDomain } from "@codestream/protocols/api";
@@ -16,7 +12,6 @@ import { openModal, setProfileUser } from "../store/context/actions";
 import { HostApi } from "../webview-api";
 import { openPanel } from "./actions";
 import Icon from "./Icon";
-import { MarkdownText } from "./MarkdownText";
 import Menu from "./Menu";
 import { AVAILABLE_PANES } from "./Sidebar";
 import { EMPTY_STATUS } from "./StartWork";
@@ -115,6 +110,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			supportsMultiRegion,
 			eligibleJoinCompanies: _sortBy(user?.eligibleJoinCompanies, "name"),
 			possibleAuthDomains,
+			userNrUserId: user?.nrUserId,
 		};
 	});
 
@@ -126,8 +122,6 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		HostApi.instance.track("Switched Organizations", {});
 		// slight delay so tracking call completes
 		setTimeout(() => {
-			const { possibleAuthDomains } = derivedState;
-			const isInvited = company.byInvite && !company.accessToken;
 			if (isCurrentCompany) return;
 
 			dispatch(switchToTeamSSO({ loginUrl: company.login_url }));
@@ -136,57 +130,8 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		return;
 	};
 
-	const deleteOrganization = () => {
-		const { currentCompanyId } = derivedState;
-
-		multiStageConfirmPopup({
-			centered: true,
-			stages: [
-				{
-					title: "Confirm Deletion",
-					message:
-						"Note that this only deletes the CodeStream organization and does NOT delete the corresponding New Relic organization.",
-					buttons: [
-						{ label: "Cancel", className: "control-button" },
-						{
-							label: "Delete Organization",
-							className: "delete",
-							advance: true,
-						},
-					],
-				},
-				{
-					title: "Are you sure?",
-					message:
-						"Your CodeStream organization will be permanently deleted. This cannot be undone.",
-					buttons: [
-						{ label: "Cancel", className: "control-button" },
-						{
-							label: "Delete Organization",
-							className: "delete",
-							wait: true,
-							action: async () => {
-								await HostApi.instance.send(DeleteCompanyRequestType, {
-									companyId: currentCompanyId,
-								});
-								handleLogout();
-							},
-						},
-					],
-				},
-			],
-		});
-	};
-
 	const buildSwitchTeamMenuItem = () => {
-		const {
-			eligibleJoinCompanies,
-			currentCompanyId,
-			currentHost,
-			hasMultipleEnvironments,
-			supportsMultiRegion,
-			possibleAuthDomains,
-		} = derivedState;
+		const { currentCompanyId, possibleAuthDomains, userNrUserId } = derivedState;
 
 		if (possibleAuthDomains.length < 2) {
 			return null;
@@ -218,17 +163,9 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 
 		const buildSubmenu = () => {
 			const items = _possibleAuthDomains.map(company => {
-				const isCurrentCompany = company.organization_id === currentCompanyId;
-				// const companyHost = company.organization_name || currentHost;
-				// const companyRegion =
-				// 	supportsMultiRegion && hasMultipleEnvironments && companyHost?.shortName;
-				const companyAuthType = company.authentication_type;
-
-				let checked: any;
-				if (isCurrentCompany) {
-					checked = true;
-				} else {
-					checked = false;
+				let isCurrentCompany = company.organization_id === currentCompanyId;
+				if (company.useDomainName) {
+					isCurrentCompany = userNrUserId === company.user_id;
 				}
 
 				let subtext =
@@ -246,7 +183,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 							<RegionSubtext>{subtext}</RegionSubtext>
 						</>
 					),
-					checked: checked,
+					checked: isCurrentCompany,
 					noHover: isCurrentCompany,
 					action: () => {
 						trackSwitchOrg(isCurrentCompany, company);
@@ -323,25 +260,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		} else return null;
 	};
 
-	const { currentUserStatus } = derivedState;
-
 	const menuItems = [] as any;
-
-	if (false && currentUserStatus.label) {
-		menuItems.push({
-			label: (
-				<>
-					{currentUserStatus.ticketProvider ? (
-						<Icon name={currentUserStatus.ticketProvider} />
-					) : (
-						<Icon name="ticket" />
-					)}
-					<MarkdownText text={currentUserStatus.label} inline={true}></MarkdownText>
-				</>
-			),
-			key: "status",
-		});
-	}
 
 	interface SubmenuOption {
 		label: string;
