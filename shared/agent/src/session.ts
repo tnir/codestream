@@ -78,6 +78,7 @@ import {
 	PollForMaintenanceModeResponse,
 	RefreshMaintenancePollNotificationType,
 	VersionCompatibility,
+	DidRefreshAccessTokenNotificationType,
 } from "@codestream/protocols/agent";
 import {
 	CSApiCapabilities,
@@ -523,6 +524,18 @@ export class CodeStreamSession {
 		this.verifyConnectivity();
 	}
 
+	onAccessTokenChanged(token: string, refreshToken?: string) {
+		Logger.log("Session access token was changed, notifying extension...");
+		this._codestreamAccessToken = token;
+		this.agent.sendNotification(DidRefreshAccessTokenNotificationType, {
+			url: this._options.serverUrl,
+			email: this._email!,
+			teamId: this._teamId!,
+			token: token,
+			refreshToken,
+		});
+	}
+
 	private _didEncounterMaintenanceMode() {
 		this.agent.sendNotification(DidEncounterMaintenanceModeNotificationType, {
 			teamId: this._teamId,
@@ -675,13 +688,6 @@ export class CodeStreamSession {
 					if (me.inMaintenanceMode) {
 						return this._didEncounterMaintenanceMode();
 					}
-
-					const newToken = me.accessTokens?.web?.token;
-					if (newToken) {
-						this._codestreamAccessToken = newToken;
-						this._api?.setAccessToken(newToken);
-					}
-
 					this._onDidChangeCurrentUser.fire(me as CSMe);
 				}
 
@@ -964,6 +970,7 @@ export class CodeStreamSession {
 		Logger.log("Got environment from connectivity response:", this._environmentInfo);
 		this.agent.sendNotification(DidSetEnvironmentNotificationType, this._environmentInfo);
 		if (response.capabilities.serviceGatewayAuth) {
+			Logger.log("Service Gateway auth is enabled");
 			this._api.setUsingServiceGatewayAuth();
 		}
 		return response;
@@ -1183,6 +1190,9 @@ export class CodeStreamSession {
 		}
 
 		const token = response.token;
+		if (response.accessTokenInfo?.refreshToken) {
+			token.refreshToken = response.accessTokenInfo.refreshToken;
+		}
 		this._codestreamAccessToken = token.value;
 		this.api.setAccessToken(token.value, response.accessTokenInfo);
 		this._teamId = (this._options as any).teamId = token.teamId;

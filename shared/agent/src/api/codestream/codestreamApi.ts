@@ -262,6 +262,7 @@ import {
 	CSMeStatus,
 	CSMsTeamsConversationRequest,
 	CSMsTeamsConversationResponse,
+	CSNewRelicProviderInfo,
 	CSNRRegisterRequest,
 	CSNRRegisterResponse,
 	CSObjectStream,
@@ -272,7 +273,6 @@ import {
 	CSProviderShareResponse,
 	CSReactions,
 	CSReactToPostResponse,
-	CSRefreshableProviderInfos,
 	CSRegisterRequest,
 	CSRegisterResponse,
 	CSRemoveProviderHostResponse,
@@ -315,7 +315,7 @@ import { Team, User } from "../../api/extensions";
 import { HistoryFetchInfo } from "../../broadcaster/broadcaster";
 import { Container, SessionContainer } from "../../container";
 import { Logger } from "../../logger";
-import { isDirective, resolve, safeDecode, safeEncode } from "../../managers/operations";
+import { safeDecode, safeEncode } from "../../managers/operations";
 import { NewRelicProvider } from "../../providers/newrelic";
 import { getProvider, log, lsp, lspHandler, Objects, Strings } from "../../system";
 import { customFetch, fetchCore } from "../../system/fetchCore";
@@ -365,6 +365,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	private _features: CSApiFeatures | undefined;
 	private _messageProcessingPromise: Promise<void> | undefined;
 	private _usingServiceGatewayAuth: boolean = false;
+	private _refreshNRTokenPromise: Promise<CSNewRelicProviderInfo> | undefined;
 
 	readonly capabilities: Capabilities = {
 		channelMute: true,
@@ -412,6 +413,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 		};
 	}
 
+	get usingServiceGatewayAuth() {
+		return this._usingServiceGatewayAuth;
+	}
+
 	setUsingServiceGatewayAuth() {
 		this._usingServiceGatewayAuth = true;
 	}
@@ -457,7 +462,29 @@ export class CodeStreamApiProvider implements ApiProvider {
 					);
 				}
 
-				response = await this.put<{}, CSLoginResponse>("/login", {}, options.token.value);
+				let triedRefresh = false;
+				while (!response) {
+					try {
+						response = await this.put<{}, CSLoginResponse>("/login", {}, options.token.value);
+					} catch (ex) {
+						if (ex.info?.error.match(/id token expired/) && !triedRefresh) {
+							Logger.log("Attempted token login with an expired token, attempting to refresh...");
+							let tokenInfo;
+							try {
+								tokenInfo = await this.refreshNewRelicToken(options.token.refreshToken!);
+							} catch (refreshEx) {
+								Logger.warn("Exception thrown refreshing NR access token", refreshEx);
+								// rethrow the original exception, more meaningful than the exception on refresh
+								throw ex;
+							}
+							Logger.log("Expired token successfully refreshed");
+							options.token.value = tokenInfo.accessToken;
+							triedRefresh = true;
+						} else {
+							throw ex;
+						}
+					}
+				}
 
 				response.provider = options.token.provider;
 				response.providerAccess = options.token.providerAccess;
@@ -704,6 +731,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	setAccessToken(token: string, tokenInfo?: CSAccessTokenInfo) {
 		this._token = token;
 		this._tokenInfo = tokenInfo;
+		Logger.log("CodeStream API access token was set");
 	}
 
 	@log()
@@ -2411,47 +2439,41 @@ export class CodeStreamApiProvider implements ApiProvider {
 		}
 	}
 
-	@log({
-		args: { 1: () => false },
-	})
-	async refreshAuthProvider<T extends CSRefreshableProviderInfos>(
-		providerId: string,
-		providerInfo: T
-	): Promise<T> {
+	@log()
+	refreshNewRelicToken(refreshToken: string): Promise<CSNewRelicProviderInfo> {
 		const cc = Logger.getCorrelationContext();
 
-		try {
-			// For refresh of token behind Service Gateway, use a separate no-auth request to pass through
-			// Service Gateway without authentication
-			let response;
-			if (providerId === "newrelic" && this._usingServiceGatewayAuth) {
-				const url = "/no-auth/provider-refresh/newrelic";
-				response = await this.put<{ teamId: string; refreshToken: string }, { user: any }>(url, {
-					teamId: this.teamId,
-					refreshToken: providerInfo.refreshToken,
-				});
-			} else {
-				const url = `/provider-refresh/${providerId}?teamId=${this.teamId}&refreshToken=${providerInfo.refreshToken}`;
-				response = await this.get<{ user: any }>(url, this._token);
-			}
-
-			// Since we are dealing with identity auth don't try to resolve this with the users
-			// The "me" user will get updated via the pubnub message
-			let user: Partial<CSMe>;
-			if (isDirective(response.user)) {
-				user = {
-					id: response.user.id,
-					providerInfo: { [this.teamId]: { [providerId]: { ...providerInfo } } },
-				};
-				user = resolve(user as any, response.user);
-			} else {
-				user = response.user;
-			}
-			return user.providerInfo![this.teamId][providerId] as T;
-		} catch (ex) {
-			Logger.error(ex, cc);
-			throw ex;
+		if (this._refreshNRTokenPromise) {
+			return this._refreshNRTokenPromise;
 		}
+		this._refreshNRTokenPromise = new Promise((resolve, reject) => {
+			const url = "/no-auth/provider-refresh/newrelic";
+			this.put<{ refreshToken: string }, CSNewRelicProviderInfo>(url, {
+				refreshToken,
+			})
+				.then(response => {
+					if (response.accessToken) {
+						Logger.log("New Relic access token successfully refreshed, setting...");
+						this.setAccessToken(response.accessToken, {
+							expiresAt: response.expiresAt!,
+							refreshToken: response.refreshToken!,
+						});
+						if (SessionContainer.isInitialized()) {
+							SessionContainer.instance().session.onAccessTokenChanged(
+								response.accessToken,
+								response.refreshToken
+							);
+						}
+					}
+					delete this._refreshNRTokenPromise;
+					resolve(response);
+				})
+				.catch(ex => {
+					Logger.error(ex, cc);
+					reject(ex);
+				});
+		});
+		return this._refreshNRTokenPromise;
 	}
 
 	@log({
@@ -2758,8 +2780,40 @@ export class CodeStreamApiProvider implements ApiProvider {
 			let id;
 			let resp;
 			let retryCount = 0;
+			let triedRefresh = false;
 			if (json === undefined) {
-				[resp, retryCount] = await fetchCore(0, absoluteUrl, init);
+				while (!resp) {
+					[resp, retryCount] = await fetchCore(0, absoluteUrl, init);
+					if (
+						!triedRefresh &&
+						!resp.ok &&
+						resp.status === 403 &&
+						this._tokenInfo &&
+						this._tokenInfo.refreshToken &&
+						init?.headers instanceof Headers
+					) {
+						const resp2 = resp.clone();
+						const jsonData = (await resp2.json()) as { error: string };
+						if (jsonData?.error && jsonData.error.match(/service gateway: id token expired/)) {
+							Logger.log(
+								"On CodeStream API request, token was found to be expired, attempting to refresh..."
+							);
+							let tokenInfo;
+							try {
+								tokenInfo = await this.refreshNewRelicToken(this._tokenInfo.refreshToken!);
+								Logger.log("NR access token successfully refreshed, trying request again...");
+								token = tokenInfo.accessToken;
+								init.headers.set("Authorization", `Bearer ${token}`);
+								triedRefresh = true;
+								resp = undefined;
+							} catch (ex) {
+								Logger.warn("Exception thrown refreshing NR access token:", ex);
+								// allow the original (failed) flow to continue, more meaningful than throwing an exception on refresh
+							}
+						}
+					}
+				}
+
 				if (context !== undefined) {
 					context.response = resp;
 				}
