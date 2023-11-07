@@ -572,21 +572,22 @@ namespace CodeStream.VisualStudio.Shared.LanguageServer
 		{
 			try
 			{
-				var notification = new DidRefreshAccessTokenNotificationType(
-					e.ToObject<DidRefreshAccessTokenNotification>()
-				);
+				var token = e.ToObject<DidRefreshAccessTokenNotification>();
 
-				await _credentialManager.DeleteCredentialAsync(
-					notification.Params.Url,
-					notification.Params.Email,
-					notification.Params.TeamId
-				);
+				var newToken = new
+				{
+					token.Url,
+					token.Email,
+					token.TeamId,
+					token.RefreshToken,
+					Value = token.Token,
+				};
 
 				await _credentialManager.StoreCredentialAsync(
-					notification.Params.Url,
-					notification.Params.Email,
-					notification.Params.TeamId,
-					e
+					token.Url,
+					token.Email,
+					token.TeamId,
+					newToken.ToJToken()
 				);
 			}
 			catch (Exception ex)

@@ -55,10 +55,18 @@ namespace CodeStream.VisualStudio.Shared.Authentication
 			}
 		}
 
-		private static string FormatKey(string serverUrl, string email, string teamId = null) =>
-			string.IsNullOrEmpty(teamId)
-				? $"{serverUrl}|{email}"
-				: $"{serverUrl}|{email}|{teamId}".ToLowerInvariant();
+		private static string FormatKey(string serverUrl, string email, string teamId = null)
+		{
+			var key = (
+				string.IsNullOrEmpty(teamId)
+					? $"{serverUrl}|{email}"
+					: $"{serverUrl}|{email}|{teamId}"
+			).ToLowerInvariant();
+
+			var keyBytes = Encoding.UTF8.GetBytes(key);
+
+			return Convert.ToBase64String(keyBytes);
+		}
 
 		public async Task StoreCredentialAsync(
 			string serverUrl,
@@ -120,7 +128,7 @@ namespace CodeStream.VisualStudio.Shared.Authentication
 
 				var tokenString = Encoding.UTF8.GetString(decryptedToken);
 
-				return JToken.Parse(tokenString);
+				return tokenString.FromJson<JToken>();
 			}
 			catch (Exception ex)
 			{

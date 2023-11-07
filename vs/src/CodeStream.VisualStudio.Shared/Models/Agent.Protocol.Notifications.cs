@@ -11,7 +11,7 @@ namespace CodeStream.VisualStudio.Shared.Models
 		public DidRefreshAccessTokenNotificationType(DidRefreshAccessTokenNotification @params) =>
 			Params = @params;
 
-		public const string MethodName = "codestream/didRefreshAccessTokenNotification";
+		public const string MethodName = "codestream/didRefreshAccessToken";
 		public override string Method => MethodName;
 	}
 
@@ -31,7 +31,7 @@ namespace CodeStream.VisualStudio.Shared.Models
 		/// the notification type in the agent uses "Token". Remapping here for ease.
 		/// </summary>
 		[JsonProperty("token", NullValueHandling = NullValueHandling.Ignore)]
-		public string Value { get; set; }
+		public string Token { get; set; }
 
 		[JsonProperty("refreshToken", NullValueHandling = NullValueHandling.Ignore)]
 		public string RefreshToken { get; set; }
