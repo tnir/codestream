@@ -211,7 +211,7 @@ export function GlobalNav() {
 									<h1>Activity Feed</h1>
 									Latest comments, issues,
 									<br />
-									feedback requests and replies.
+									and replies.
 									<Link
 										className="learn-more"
 										href="https://docs.newrelic.com/docs/codestream/code-discussion/activity-feed-search"
@@ -241,9 +241,7 @@ export function GlobalNav() {
 							title={
 								<TipTitle>
 									<h1>Filter &amp; Search</h1>
-									Search code comments, feedback
-									<br />
-									requests, and codestream content.
+									Search comments and issues.
 									<Link
 										className="learn-more"
 										href="https://docs.newrelic.com/docs/codestream/code-discussion/activity-feed-search/#filtersearch"
