@@ -30,7 +30,6 @@ import com.codestream.webViewService
 import com.codestream.workaround.HintsPresentationWorkaround
 import com.intellij.codeInsight.hints.InlayPresentationFactory
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -268,9 +267,9 @@ abstract class CLMEditorManager(
                     }
                     metricsBySymbol = updatedMetrics.toImmutableMap()
 
-                        clmResult = project.agentService?.clm(ClmParams(
-                            result.newRelicEntityGuid!!
-                        ))
+                    clmResult = project.agentService?.clm(ClmParams(
+                        result.newRelicEntityGuid!!
+                    ))
 
                     updateInlays()
                 } catch (ex: Exception) {
@@ -406,7 +405,7 @@ abstract class CLMEditorManager(
             RenderElements(range, referenceOnHoverPresentation, anomaly != null, null)
         }
 
-        val clmPresentationFactory = PresentationFactory(editor)
+        val clmPresentationFactory = HintsPresentationWorkaround.newPresentationFactory(editor)
         val clmToRender: List<RenderElements> = clmElements.map {
             val textPresentation = clmPresentationFactory.text(it.text)
             val smallPresentation = clmPresentationFactory.roundWithBackgroundAndSmallInset(textPresentation)
