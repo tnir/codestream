@@ -97,12 +97,14 @@ export class NotificationsController implements Disposable {
 				anomaly: firstAnomaly,
 				entityGuid: notification.entityGuid
 			});
-			Container.sidebar.goToClassMethodDefinition(
-				firstAnomaly.codeFilepath,
-				firstAnomaly.codeNamespace,
-				firstAnomaly.codeFunction,
-				firstAnomaly.language
-			);
+			if (firstAnomaly.codeAttrs) {
+				Container.sidebar.goToClassMethodDefinition(
+					firstAnomaly.codeAttrs.codeFilepath,
+					firstAnomaly.codeAttrs.codeNamespace,
+					firstAnomaly.codeAttrs.codeFunction,
+					firstAnomaly.language
+				);
+			}
 		}
 	}
 
