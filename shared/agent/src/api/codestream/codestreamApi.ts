@@ -468,7 +468,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 					try {
 						response = await this.put<{}, CSLoginResponse>("/login", {}, options.token);
 					} catch (ex) {
-						if (ex.info?.error.match(/id token expired/) && !triedRefresh) {
+						if (ex.info?.error.match(/token expired/) && !triedRefresh) {
 							Logger.log("Attempted token login with an expired token, attempting to refresh...");
 							let tokenInfo;
 							try {
@@ -2821,7 +2821,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 					) {
 						const resp2 = resp.clone();
 						const jsonData = (await resp2.json()) as { error: string };
-						if (jsonData?.error && jsonData.error.match(/service gateway: id token expired/)) {
+						if (jsonData?.error && jsonData.error.match(/token expired/)) {
 							Logger.log(
 								"On CodeStream API request, token was found to be expired, attempting to refresh..."
 							);

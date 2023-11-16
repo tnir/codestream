@@ -115,7 +115,7 @@ export async function fetchCore(
 		if (ex instanceof InternalRateError) {
 			throw ex;
 		}
-		if (ex.info?.error.match(/id token expired/)) {
+		if (ex.info?.error.match(/token expired/)) {
 			// expired access token is handled by caller
 			throw ex;
 		}
