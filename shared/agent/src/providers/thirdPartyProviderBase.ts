@@ -75,6 +75,10 @@ export abstract class ThirdPartyProviderBase<
 		return this._providerInfo && this._providerInfo.accessToken;
 	}
 
+	get tokenType() {
+		return this._providerInfo && this._providerInfo.tokenType;
+	}
+
 	get apiPath() {
 		return "";
 	}
