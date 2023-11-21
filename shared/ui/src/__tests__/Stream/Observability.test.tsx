@@ -203,6 +203,7 @@ describe("Observability", () => {
 								codeNamespace: "myclassname",
 								codeFunction: "myfunctionname",
 							},
+							type: "duration",
 							language: "java",
 							newValue: 500,
 							oldValue: 300,
