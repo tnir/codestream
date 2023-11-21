@@ -155,6 +155,12 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 		);
 	};
 
+	const anomalies = [
+		...props.observabilityAnomalies.responseTime,
+		...props.observabilityAnomalies.errorRate,
+	];
+	anomalies.sort((a, b) => b.ratio - a.ratio);
+
 	return (
 		<>
 			<Row
@@ -319,26 +325,10 @@ export const ObservabilityAnomaliesWrapper = React.memo((props: Props) => {
 							!showExtensionWarning && (
 								<>
 									<ObservabilityAnomaliesGroup
-										observabilityAnomalies={props.observabilityAnomalies.errorRate}
+										observabilityAnomalies={anomalies}
 										observabilityRepo={props.observabilityRepo}
 										entityGuid={props.entityGuid}
-										title="Error Rate Increase"
-										detectionMethod={props.observabilityAnomalies.detectionMethod}
-									/>
-									<ObservabilityAnomaliesGroup
-										observabilityAnomalies={props.observabilityAnomalies.responseTime}
-										observabilityRepo={props.observabilityRepo}
-										entityGuid={props.entityGuid}
-										title="Average Duration Increase"
-										detectionMethod={props.observabilityAnomalies.detectionMethod}
-									/>
-									<ObservabilityAnomaliesGroup
-										observabilityAnomalies={props.observabilityAnomalies.allOtherAnomalies || []}
-										observabilityRepo={props.observabilityRepo}
-										entityGuid={props.entityGuid}
-										title="All other methods"
-										noAnomaly={true}
-										collapseDefault={true}
+										title="Anomalies"
 										detectionMethod={props.observabilityAnomalies.detectionMethod}
 									/>
 								</>

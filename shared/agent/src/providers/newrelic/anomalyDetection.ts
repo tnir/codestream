@@ -155,34 +155,34 @@ export class AnomalyDetector {
 			...durationAnomalies.map(_ => _.name),
 			...errorRateAnomalies.map(_ => _.name),
 		];
-		const allOtherAnomalies: ObservabilityAnomaly[] = [];
-		const allMetrics = languageSupport.filterMetrics(benchmarkMetrics, benchmarkSpans);
-		for (const { name } of allMetrics) {
-			if (anomalousMetricNames.find(_ => _ === name)) continue;
-
-			const codeAttrs = languageSupport.codeAttrs(name, benchmarkSpans);
-			const text = languageSupport.displayName(codeAttrs, name);
-			if (allOtherAnomalies.find(_ => _.text === text)) continue;
-
-			const anomaly: ObservabilityAnomaly = {
-				name,
-				text,
-				...codeAttrs,
-				language: languageSupport.language,
-				oldValue: 0,
-				newValue: 0,
-				ratio: 1,
-				sinceText: this._sinceText,
-				totalDays: this._totalDays,
-				chartHeaderTexts: {},
-				metricTimesliceName: name,
-				errorMetricTimesliceName: "Errors/" + name,
-				notificationText: "",
-				entityName: "",
-			};
-			allOtherAnomalies.push(anomaly);
-		}
-		allOtherAnomalies.sort((a, b) => a.name.localeCompare(b.name));
+		// const allOtherAnomalies: ObservabilityAnomaly[] = [];
+		// const allMetrics = languageSupport.filterMetrics(benchmarkMetrics, benchmarkSpans);
+		// for (const { name } of allMetrics) {
+		// 	if (anomalousMetricNames.find(_ => _ === name)) continue;
+		//
+		// 	const codeAttrs = languageSupport.codeAttrs(name, benchmarkSpans);
+		// 	const text = languageSupport.displayName(codeAttrs, name);
+		// 	if (allOtherAnomalies.find(_ => _.text === text)) continue;
+		//
+		// 	const anomaly: ObservabilityAnomaly = {
+		// 		name,
+		// 		text,
+		// 		...codeAttrs,
+		// 		language: languageSupport.language,
+		// 		oldValue: 0,
+		// 		newValue: 0,
+		// 		ratio: 1,
+		// 		sinceText: this._sinceText,
+		// 		totalDays: this._totalDays,
+		// 		chartHeaderTexts: {},
+		// 		metricTimesliceName: name,
+		// 		errorMetricTimesliceName: "Errors/" + name,
+		// 		notificationText: "",
+		// 		entityName: "",
+		// 	};
+		// 	allOtherAnomalies.push(anomaly);
+		// }
+		// allOtherAnomalies.sort((a, b) => a.name.localeCompare(b.name));
 
 		try {
 			const telemetry = Container.instance().telemetry;
@@ -223,7 +223,6 @@ export class AnomalyDetector {
 		return {
 			responseTime: durationAnomalies,
 			errorRate: errorRateAnomalies,
-			allOtherAnomalies: allOtherAnomalies,
 			detectionMethod,
 			didNotifyNewAnomalies,
 			isSupported: true,
@@ -588,6 +587,7 @@ export class AnomalyDetector {
 		const codeAttrs = languageSupport.codeAttrs(comparison.name, benchmarkSpans);
 		return {
 			...comparison,
+			type: "duration",
 			codeAttrs,
 			language: languageSupport.language,
 			text: languageSupport.displayName(codeAttrs, comparison.name),
@@ -616,6 +616,7 @@ export class AnomalyDetector {
 		const codeAttrs = languageSupport.codeAttrs(comparison.name, benchmarkSpans);
 		return {
 			...comparison,
+			type: "errorRate",
 			codeAttrs,
 			language: languageSupport.language,
 			text: languageSupport.displayName(codeAttrs, comparison.name),

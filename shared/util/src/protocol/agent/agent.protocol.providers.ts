@@ -1404,6 +1404,7 @@ export interface GetObservabilityAnomaliesRequest {
 export interface ObservabilityAnomaly {
 	language: string;
 	name: string;
+	type: "duration" | "errorRate";
 	codeAttrs?: CodeAttributes;
 	oldValue: number;
 	newValue: number;
@@ -1450,7 +1451,6 @@ export interface GetObservabilityAnomaliesResponse {
 	error?: string;
 	isSupported?: boolean;
 	didNotifyNewAnomalies: boolean;
-	allOtherAnomalies?: ObservabilityAnomaly[];
 }
 
 export const GetObservabilityAnomaliesRequestType = new RequestType<
