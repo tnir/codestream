@@ -124,19 +124,6 @@ export const Notifications = props => {
 								</RadioGroup>
 							</div>
 						)}
-						<h3>Email Notifications</h3>
-						{
-							<div style={{ marginTop: "20px" }}>
-								<Checkbox
-									name="weeklyEmails"
-									checked={derivedState.weeklyEmailDelivery}
-									onChange={handleChangeWeeklyEmailDelivery}
-									loading={loadingWeeklyEmailDelivery}
-								>
-									Send me weekly emails summarizing my activity
-								</Checkbox>
-							</div>
-						}
 						{derivedState.hasDesktopNotifications && derivedState.notificationDeliverySupported && (
 							<div>
 								<h3>Desktop Notifications</h3>
