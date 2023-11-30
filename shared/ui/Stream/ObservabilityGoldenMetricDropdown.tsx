@@ -24,13 +24,10 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 	const derivedState = useAppSelector((state: CodeStreamState) => {
 		const { preferences } = state;
 
-		const goldenMetricsDropdownExpanded =
-			preferences?.goldenMetricsDropdownExpanded && props?.entityGuid
-				? preferences.goldenMetricsDropdownExpanded[props?.entityGuid]
-				: true;
+		const goldenMetricsDropdownIsExpanded = preferences?.goldenMetricsDropdownIsExpanded ?? true;
 
 		return {
-			goldenMetricsDropdownExpanded,
+			goldenMetricsDropdownIsExpanded,
 		};
 	});
 
@@ -75,12 +72,12 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 	};
 
 	const handleRowOnClick = () => {
-		const { goldenMetricsDropdownExpanded } = derivedState;
+		const { goldenMetricsDropdownIsExpanded } = derivedState;
 
 		dispatch(
 			setUserPreference({
-				prefPath: ["goldenMetricsDropdownExpanded", entityGuid],
-				value: !goldenMetricsDropdownExpanded,
+				prefPath: ["goldenMetricsDropdownIsExpanded"],
+				value: !goldenMetricsDropdownIsExpanded,
 			})
 		);
 	};
@@ -97,8 +94,8 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 						onClick={() => handleRowOnClick()}
 						data-testid={`golden-metrics-dropdown`}
 					>
-						{derivedState.goldenMetricsDropdownExpanded && <Icon name="chevron-down-thin" />}
-						{!derivedState.goldenMetricsDropdownExpanded && <Icon name="chevron-right-thin" />}
+						{derivedState.goldenMetricsDropdownIsExpanded && <Icon name="chevron-down-thin" />}
+						{!derivedState.goldenMetricsDropdownIsExpanded && <Icon name="chevron-right-thin" />}
 						<span data-testid={`golden-metrics-${entityGuid}`} style={{ margin: "0 5px 0 2px" }}>
 							Golden Metrics
 						</span>
@@ -130,10 +127,10 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 				</>
 			)}
 
-			{derivedState.goldenMetricsDropdownExpanded && loadingGoldenMetrics && (
+			{derivedState.goldenMetricsDropdownIsExpanded && loadingGoldenMetrics && (
 				<ObservabilityLoadingGoldenMetrics />
 			)}
-			{(noDropdown || derivedState.goldenMetricsDropdownExpanded) &&
+			{(noDropdown || derivedState.goldenMetricsDropdownIsExpanded) &&
 				!loadingGoldenMetrics &&
 				!_isEmpty(entityGoldenMetrics?.metrics) && <>{goldenMetricOutput()}</>}
 		</>
