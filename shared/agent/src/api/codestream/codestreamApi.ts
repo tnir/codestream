@@ -2740,11 +2740,14 @@ export class CodeStreamApiProvider implements ApiProvider {
 					init.headers.append("Content-Type", "application/json");
 
 					if (token !== undefined) {
-						//init.headers.append("Authorization", `Bearer ${token}`);
-						if (tokenType === CSAccessTokenType.ACCESS_TOKEN) {
-							init.headers.append("x-access-token", token);
+						if (tokenType) {
+							if (tokenType === CSAccessTokenType.ACCESS_TOKEN) {
+								init.headers.append("x-access-token", token);
+							} else {
+								init.headers.append("x-id-token", token);
+							}
 						} else {
-							init.headers.append("x-id-token", token);
+							init.headers.append("Authorization", `Bearer ${token}`);
 						}
 					}
 
