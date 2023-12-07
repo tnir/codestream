@@ -100,7 +100,7 @@ import {
 	LoginResult,
 } from "@codestream/protocols/api";
 
-import HttpsProxyAgent from "https-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { CodeStreamAgent } from "./agent";
 import { AgentError, ServerError } from "./agentError";
 import {
@@ -269,11 +269,11 @@ export class CodeStreamSession {
 		return this._onDidChangeSessionStatus.event;
 	}
 
-	get proxyAgent(): HttpsAgent | HttpsProxyAgent | undefined {
+	get proxyAgent(): HttpsAgent | HttpsProxyAgent<string> | undefined {
 		return this._httpsAgent;
 	}
 
-	private readonly _httpsAgent: HttpsAgent | HttpsProxyAgent | undefined;
+	private readonly _httpsAgent: HttpsAgent | HttpsProxyAgent<string> | undefined;
 	private readonly _httpAgent: HttpAgent | undefined; // used if api server is http
 	private readonly _readyPromise: Promise<void>;
 
@@ -310,10 +310,9 @@ export class CodeStreamSession {
 				Logger.log(
 					`Proxy support is in override with url=${redactedUrl}, strictSSL=${_options.proxy.strictSSL}`
 				);
-				this._httpsAgent = new HttpsProxyAgent({
-					...url.parse(_options.proxy.url),
+				this._httpsAgent = new HttpsProxyAgent(_options.proxy.url, {
 					rejectUnauthorized: _options.proxy.strictSSL,
-				} as any);
+				});
 				// Set proxy for fetchCore (undici and future native fetch)
 				const dispatcher = new ProxyAgent({ uri: new URL(_options.proxy.url).toString() });
 				setGlobalDispatcher(dispatcher);
@@ -333,10 +332,7 @@ export class CodeStreamSession {
 				} catch {}
 
 				if (proxyUri) {
-					this._httpsAgent = new HttpsProxyAgent({
-						...proxyUri,
-						rejectUnauthorized: this.rejectUnauthorized,
-					} as any);
+					this._httpsAgent = new HttpsProxyAgent(proxyUrl, { rejectUnauthorized: strictSSL });
 				}
 			} else {
 				Logger.log("Proxy support is on, but no proxy url was found");

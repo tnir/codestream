@@ -27,7 +27,7 @@ async function webBuild(args: Args) {
 			},
 			{
 				from: path.resolve(target, "index.js.map"),
-				to: dist
+				to: `${dist}/index.js.map`
 			}
 		]
 	});
@@ -52,7 +52,8 @@ async function extensionBuild(args: Args) {
 	const postBuildCopy: CopyStuff[] = [
 		{
 			from: path.resolve(__dirname, "../shared/agent/dist/**"),
-			to: dist
+			to: dist,
+			options: { ignore: ["**/agent-vs*"] }
 		},
 		{
 			from: path.resolve(__dirname, "codestream-*.info"),
@@ -61,7 +62,7 @@ async function extensionBuild(args: Args) {
 		},
 		{
 			from: path.resolve(__dirname, "../shared/webviews/newrelic-browser.js"),
-			to: dist
+			to: `${dist}/newrelic-browser.js`
 		}
 	];
 
