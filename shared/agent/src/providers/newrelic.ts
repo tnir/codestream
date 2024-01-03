@@ -2696,7 +2696,10 @@ export class NewRelicProvider
 
 			const validEntityGuid: string = entity?.entityGuid ?? request.newRelicEntityGuid;
 
-			const entityGoldenMetrics = await this.getEntityLevelGoldenMetrics(validEntityGuid);
+			const entityGoldenMetrics = await this.getEntityLevelGoldenMetrics(
+				validEntityGuid,
+				accountId
+			);
 
 			const response = {
 				entityGoldenMetrics: entityGoldenMetrics,
@@ -3055,8 +3058,161 @@ export class NewRelicProvider
 		return response;
 	}
 
+	async getPillsData(entityGuid: string, accountId?: number): Promise<any> {
+		if (entityGuid && accountId) {
+			try {
+				const countQuery = [
+					"SELECT",
+					"latest(deploymentId) AS 'deploymentId',",
+					"latest(timestamp) AS 'timestamp'",
+					"FROM Deployment",
+					`WHERE entity.guid = '${entityGuid}'`,
+					"SINCE 13 months ago",
+				].join(" ");
+
+				const countResponse = await this.query<{
+					actor: {
+						account: {
+							nrql: {
+								results: {
+									deploymentId: string;
+									timestamp: number;
+								}[];
+							};
+						};
+						entity: {
+							permalink: string;
+						};
+					};
+				}>(
+					`query fetchErrorRate($accountId:Int!, $entityGuid:EntityGuid!) {
+				actor {
+					account(id: $accountId) {
+						nrql(
+							options: { eventNamespaces: "Marker" }
+							query: "${countQuery}"
+						) { nrql results }
+					}
+					entity(guid: $entityGuid) {
+						permalink
+					}
+				}
+			}`,
+					{
+						accountId: accountId,
+						entityGuid: entityGuid,
+					}
+				);
+
+				const countResults = countResponse.actor.account.nrql?.results[0];
+
+				const permalinkUrl = countResponse.actor.entity.permalink;
+
+				const { deploymentId, timestamp } = countResults;
+
+				if (!deploymentId || !timestamp) return undefined;
+
+				const threeHoursLater = timestamp + 10800000;
+
+				const comparisonQuery = [
+					"FROM Metric",
+					"SELECT",
+					"average(newrelic.goldenmetrics.apm.application.responseTimeMs) AS 'responseTimeMs',",
+					"average(newrelic.goldenmetrics.apm.application.errorRate) AS 'errorRate'",
+					`WHERE entity.guid = '${entityGuid}'`,
+					`SINCE ${timestamp} UNTIL ${threeHoursLater}`,
+					`COMPARE WITH 3 hours ago`,
+				].join(" ");
+
+				const comparisonQueryData = await this.query<{
+					actor: {
+						account: {
+							nrql: {
+								results: {
+									beginTimeSeconds: number;
+									endTimeSeconds: number;
+									responseTimeMs: number;
+									errorRate: number;
+								}[];
+							};
+						};
+					};
+				}>(
+					`query fetchErrorRate($accountId:Int!) {
+					actor {
+						account(id: $accountId) {
+							nrql(
+								
+								query: "${comparisonQuery}"
+							) { nrql results }
+						}
+					}
+				}`,
+					{
+						accountId: accountId,
+					}
+				);
+
+				const currentMetrics = comparisonQueryData.actor.account.nrql?.results[0];
+				const previousMetrics = comparisonQueryData.actor.account.nrql?.results[1];
+
+				if (!currentMetrics || !previousMetrics) return undefined;
+
+				const errorRatePercentageChange =
+					((currentMetrics.errorRate - previousMetrics.errorRate) / previousMetrics.errorRate) *
+					100;
+				const responseTimePercentageChange =
+					((currentMetrics.responseTimeMs - previousMetrics.responseTimeMs) /
+						previousMetrics.responseTimeMs) *
+					100;
+
+				const pillsErrorChange = errorRatePercentageChange
+					? Math.floor(errorRatePercentageChange)
+					: undefined;
+				const pillsResponseTimeChange = responseTimePercentageChange
+					? Math.floor(responseTimePercentageChange)
+					: undefined;
+
+				function getPillsSeverityColor(num: number) {
+					if (num >= 0) {
+						if (num >= 0 && num <= 5) {
+							return "#FFD23D";
+						} else {
+							return "#DF2D24";
+						}
+					} else {
+						return undefined;
+					}
+				}
+
+				return {
+					errorRateData: {
+						isDisplayErrorChange:
+							pillsErrorChange && getPillsSeverityColor(pillsErrorChange) ? true : false,
+						percentChange: pillsErrorChange,
+						color: pillsErrorChange && getPillsSeverityColor(pillsErrorChange),
+						permalinkUrl: permalinkUrl,
+					},
+					responseTimeData: {
+						isDisplayTimeResponseChange:
+							pillsResponseTimeChange && getPillsSeverityColor(pillsResponseTimeChange)
+								? true
+								: false,
+						percentChange: pillsResponseTimeChange,
+						color: pillsResponseTimeChange && getPillsSeverityColor(pillsResponseTimeChange),
+						permalinkUrl: permalinkUrl,
+					},
+				};
+			} catch (err) {
+				Logger.error(err, entityGuid);
+			}
+		}
+		return undefined;
+	}
+
 	async getEntityLevelGoldenMetrics(
-		entityGuid: string
+		entityGuid: string,
+		accountId?: number
 	): Promise<EntityGoldenMetrics | NRErrorResponse | undefined> {
 		try {
 			const entityGoldenMetricsQuery = `
@@ -3154,10 +3310,13 @@ export class NewRelicProvider
 				};
 			});
 
+			const pillsData = await this.getPillsData(entityGuid, accountId);
+
 			return {
 				lastUpdated: new Date().toLocaleString(),
 				since: since.toLowerCase().replace("minutes", "min"),
 				metrics: metrics,
+				pillsData: pillsData,
 			};
 		} catch (ex) {
 			Logger.warn("getEntityGoldenMetrics no response", {

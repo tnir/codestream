@@ -1,6 +1,6 @@
 import { EntityGoldenMetrics, GetIssuesResponse } from "@codestream/protocols/agent";
 import { isEmpty as _isEmpty } from "lodash-es";
-import React from "react";
+import React, { useState } from "react";
 import { Row } from "./CrossPostIssueControls/IssuesPane";
 import Icon from "./Icon";
 import Tooltip from "./Tooltip";
@@ -8,6 +8,8 @@ import { ObservabilityLoadingGoldenMetrics } from "@codestream/webview/Stream/Ob
 import { useAppSelector, useAppDispatch } from "../utilities/hooks";
 import { CodeStreamState } from "@codestream/webview/store";
 import { setUserPreference } from "./actions";
+import { HostApi } from "../webview-api";
+import { OpenUrlRequestType } from "../ipc/host.protocol";
 
 interface Props {
 	entityGoldenMetrics: EntityGoldenMetrics | undefined;
@@ -20,6 +22,8 @@ interface Props {
 
 export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 	const dispatch = useAppDispatch();
+	const [isPillsErrorHover, setPillsErrorHover] = useState<boolean>(false);
+	const [isPillsResponseTimeHover, setPillsResponseTimeHover] = useState<boolean>(false);
 
 	const derivedState = useAppSelector((state: CodeStreamState) => {
 		const { preferences } = state;
@@ -32,6 +36,88 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 	});
 
 	const { errors, entityGuid, entityGoldenMetrics, loadingGoldenMetrics, noDropdown } = props;
+
+	const pillsData = entityGoldenMetrics?.pillsData;
+
+	function getErrorPillsJSX(displayValue, displayUnits) {
+		return (
+			<span
+				onMouseLeave={e => {
+					setPillsErrorHover(false);
+				}}
+				onMouseEnter={e => {
+					setPillsErrorHover(true);
+				}}
+			>
+				{isPillsErrorHover && pillsData?.errorRateData?.isDisplayErrorChange ? (
+					<>{getGlobeIcon()} </>
+				) : (
+					<>
+						<>
+							{displayValue}
+							{displayUnits && <>{displayUnits} </>}
+						</>
+						<span style={{ color: pillsData?.errorRateData?.color }}>
+							{pillsData?.errorRateData?.isDisplayErrorChange && (
+								<>(+{pillsData?.errorRateData?.percentChange}%)</>
+							)}
+						</span>
+					</>
+				)}
+			</span>
+		);
+	}
+
+	function getResponseTimePillsJSX(displayValue, displayUnits) {
+		return (
+			<span
+				onMouseLeave={e => {
+					setPillsResponseTimeHover(false);
+				}}
+				onMouseEnter={e => {
+					setPillsResponseTimeHover(true);
+				}}
+			>
+				{isPillsResponseTimeHover && pillsData?.responseTimeData?.isDisplayTimeResponseChange ? (
+					<>{getGlobeIcon()} </>
+				) : (
+					<>
+						<>
+							{displayValue}
+							{displayUnits && <>{displayUnits} </>}
+						</>
+						<span style={{ color: pillsData?.responseTimeData?.color }}>
+							{pillsData?.responseTimeData?.isDisplayTimeResponseChange && (
+								<>(+{pillsData?.responseTimeData?.percentChange}%)</>
+							)}
+						</span>
+					</>
+				)}
+			</span>
+		);
+	}
+
+	function getGlobeIcon() {
+		return (
+			<Icon
+				name="globe"
+				className="clickable"
+				title="View on New Relic"
+				placement="bottomLeft"
+				delay={1}
+				onClick={e => {
+					e.preventDefault();
+					e.stopPropagation();
+					HostApi.instance.send(OpenUrlRequestType, {
+						url:
+							pillsData?.responseTimeData?.permalinkUrl ||
+							pillsData?.errorRateData?.permalinkUrl ||
+							"",
+					});
+				}}
+			/>
+		);
+	}
 
 	const errorTitle: string | undefined =
 		errors.length === 0 ? undefined : `Last request failed:\n${errors.join("\n")}`;
@@ -57,7 +143,15 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 								<span className={"details"}>
 									{gm.value || gm.value === 0 ? (
 										<>
-											{gm.displayValue} {gm.displayUnit && <>{gm.displayUnit}</>}
+											{gm.name === "errorRate" ? (
+												<> {getErrorPillsJSX(gm.displayValue, gm.displayUnit)}</>
+											) : gm.name === "responseTimeMs" ? (
+												<> {getResponseTimePillsJSX(gm.displayValue, gm.displayUnit)}</>
+											) : (
+												<>
+													{gm.displayValue} {gm.displayUnit && <>{gm.displayUnit}</>}
+												</>
+											)}
 										</>
 									) : (
 										<>No Data</>
