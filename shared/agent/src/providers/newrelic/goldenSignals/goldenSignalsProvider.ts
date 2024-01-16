@@ -139,11 +139,11 @@ export class GoldenSignalsProvider {
 
 				const countResults = countResponse.actor.account.nrql?.results[0];
 
-				const permalinkUrl = countResponse.actor.entity.permalink;
-
 				const { deploymentId, timestamp } = countResults;
 
 				if (!deploymentId || !timestamp) return undefined;
+
+				const deployListUrl = this.deltaUrl(entityGuid);
 
 				const threeHoursLater = timestamp + 10800000;
 
@@ -200,19 +200,17 @@ export class GoldenSignalsProvider {
 					100;
 
 				const pillsErrorChange = errorRatePercentageChange
-					? Math.floor(errorRatePercentageChange)
+					? Math.round(errorRatePercentageChange)
 					: undefined;
 				const pillsResponseTimeChange = responseTimePercentageChange
-					? Math.floor(responseTimePercentageChange)
+					? Math.round(responseTimePercentageChange)
 					: undefined;
 
 				function getPillsSeverityColor(num: number) {
-					if (num >= 0) {
-						if (num >= 0 && num <= 5) {
-							return "#FFD23D";
-						} else {
-							return "#DF2D24";
-						}
+					if (num >= 0 && num <= 5) {
+						return "#FFD23D";
+					} else if (num > 5) {
+						return "#DF2D24";
 					} else {
 						return undefined;
 					}
@@ -224,7 +222,7 @@ export class GoldenSignalsProvider {
 							pillsErrorChange && getPillsSeverityColor(pillsErrorChange) ? true : false,
 						percentChange: pillsErrorChange,
 						color: pillsErrorChange && getPillsSeverityColor(pillsErrorChange),
-						permalinkUrl: permalinkUrl,
+						permalinkUrl: deployListUrl,
 					},
 					responseTimeData: {
 						isDisplayTimeResponseChange:
@@ -233,7 +231,7 @@ export class GoldenSignalsProvider {
 								: false,
 						percentChange: pillsResponseTimeChange,
 						color: pillsResponseTimeChange && getPillsSeverityColor(pillsResponseTimeChange),
-						permalinkUrl: permalinkUrl,
+						permalinkUrl: deployListUrl,
 					},
 				};
 			} catch (err) {
@@ -345,6 +343,23 @@ export class GoldenSignalsProvider {
 		}
 
 		return `${bUrl}/accounts/${accountId}/issues/${issueId}?notifierType=codestream`;
+	}
+
+	private deltaUrl(entityGuid: string) {
+		let bUrl = "";
+
+		if (this.nrApiConfig.productUrl.includes("staging")) {
+			// Staging
+			bUrl = "https://staging-one.newrelic.com";
+		} else if (this.nrApiConfig.productUrl.includes("eu")) {
+			// EU
+			bUrl = "https://one.eu.newrelic.com";
+		} else {
+			// Prod:
+			bUrl = "https://one.newrelic.com";
+		}
+
+		return `${bUrl}/nr1-core/deployment-markers/list/${entityGuid}`;
 	}
 
 	// Map array of objects based on order of array of strings
