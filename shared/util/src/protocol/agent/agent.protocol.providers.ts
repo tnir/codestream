@@ -2536,6 +2536,7 @@ export interface GetLogsResponse {
 	logs?: LogResult[];
 	messageAttribute?: string;
 	severityAttribute?: string;
+	accountId: number;
 	error?: NRErrorResponse;
 }
 
