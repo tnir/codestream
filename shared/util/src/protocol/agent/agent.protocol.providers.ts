@@ -2585,7 +2585,8 @@ export const GetLogFieldDefinitionsRequestType = new RequestType<
 >("codestream/newrelic/logs/fieldDefinitions");
 
 export interface GetNRQLRequest {
-	entityGuid: string;
+	accountId?: number;
+	entityGuid?: string;
 	query: string;
 }
 
