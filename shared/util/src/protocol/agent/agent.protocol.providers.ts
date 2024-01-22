@@ -2598,6 +2598,7 @@ export interface GetNRQLResponse {
 	results?: NRQLResult[];
 	accountId: number;
 	error?: NRErrorResponse;
+	resultsType: "table" | "json" | "billboard";
 }
 
 export const GetNRQLRequestType = new RequestType<GetNRQLRequest, GetNRQLResponse, void, void>(
