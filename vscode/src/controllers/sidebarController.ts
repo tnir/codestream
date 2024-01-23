@@ -248,9 +248,7 @@ export class SidebarController implements Disposable {
 						e.reason === SessionSignedOutReason.UserSignedOutFromExtension) ||
 					e.reason === SessionSignedOutReason.InvalidRefreshToken
 				) {
-					if (this._sidebar !== undefined) {
-						this._sidebar.notify(HostDidLogoutNotificationType, {});
-					}
+					this._sidebar.notify(HostDidLogoutNotificationType, {});
 					break;
 				}
 
