@@ -1401,7 +1401,11 @@ export const Observability = React.memo((props: Props) => {
 																											data-testid={`view-logs-${ea.entityGuid}`}
 																											style={{ marginLeft: "2px" }}
 																										>
-																											<Icon name="logs" title="View Logs" />
+																											<Icon
+																												style={{ marginRight: "4px" }}
+																												name="logs"
+																												title="View Logs"
+																											/>
 																											View Logs
 																										</span>
 																									</Row>
