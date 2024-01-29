@@ -2652,6 +2652,8 @@ export interface NRQLResult {
 export interface GetNRQLResponse {
 	results?: NRQLResult[];
 	accountId: number;
+	eventType?: string;
+	since?: string;
 	error?: NRErrorResponse;
 	resultsTypeGuess: "table" | "json" | "billboard" | "line" | "bar";
 }
