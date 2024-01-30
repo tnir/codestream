@@ -1581,14 +1581,6 @@ export const GetObservabilityEntitiesRequestType = new RequestType<
 	void
 >("codestream/newrelic/entities");
 
-// reusing request/response types - internally we're just omitting a filter
-export const GetAllEntitiesRequestType = new RequestType<
-	GetObservabilityEntitiesRequest,
-	GetObservabilityEntitiesResponse,
-	void,
-	void
->("codestream/newrelic/entities/all");
-
 export interface GetAllAccountsRequest {
 	force?: boolean;
 }
@@ -2571,6 +2563,14 @@ export const DidDetectObservabilityAnomaliesNotificationType = new NotificationT
 	DidDetectObservabilityAnomaliesNotification,
 	void
 >("codestream/didDetectObservabilityAnomalies");
+
+// reusing request/response types - internally we're just omitting a filter
+export const GetLoggingEntitiesRequestType = new RequestType<
+	GetObservabilityEntitiesRequest,
+	GetObservabilityEntitiesResponse,
+	void,
+	void
+>("codestream/newrelic/logs/entities");
 
 export interface GetLogsRequest {
 	entityGuid: string;
