@@ -30,8 +30,9 @@ import {
 	ResolveStackTraceRequest,
 	ResolveStackTraceRequestType,
 	ResolveStackTraceResponse,
-	WarningOrError,
 	SourceMapEntry,
+	TelemetryData,
+	WarningOrError,
 } from "@codestream/protocols/agent";
 import { CSStackTraceInfo, CSStackTraceLine } from "@codestream/protocols/api";
 import { structuredPatch } from "diff";
@@ -129,8 +130,10 @@ export class NRManager {
 	@lspHandler(ParseStackTraceRequestType)
 	@log()
 	async parseStackTrace({
+		entityGuid,
 		errorGroupGuid,
 		stackTrace,
+		occurrenceId,
 	}: ParseStackTraceRequest): Promise<ParseStackTraceResponse> {
 		const lines: string[] = typeof stackTrace === "string" ? stackTrace.split("\n") : stackTrace;
 		const whole = lines.join("\n");
@@ -149,15 +152,22 @@ export class NRManager {
 				const telemetry = Container.instance().telemetry;
 				const parsed = parseId(errorGroupGuid || "");
 
+				const properties: TelemetryData = {
+					meta_data: `error_group_id: ${errorGroupGuid!}`,
+					event_type: "response",
+				};
+				if (occurrenceId) {
+					properties.meta_data_2 = `trace_id: ${occurrenceId}`;
+				}
+				if (entityGuid) {
+					properties.entity_guid = entityGuid;
+				}
+				if (parsed?.accountId) {
+					properties.account_id = parsed.accountId;
+				}
 				telemetry.track({
 					eventName: "codestream/errors/error_group error_parsing_stack_trace",
-					properties: {
-						entity_guid: "",
-						account_id: "",
-						meta_data: `error_group_id: ${errorGroupGuid!}`,
-						meta_data_2: `trace_id: ${parsed?.accountId || 0}`,
-						event_type: "response",
-					},
+					properties: properties,
 				});
 			} catch (ex) {
 				// ignore
@@ -191,6 +201,7 @@ export class NRManager {
 	@lspHandler(ResolveStackTraceRequestType)
 	@log()
 	async resolveStackTrace({
+		entityGuid,
 		errorGroupGuid,
 		stackTrace,
 		repoId,
@@ -267,8 +278,10 @@ export class NRManager {
 		}
 
 		const parsedStackInfo = await this.parseStackTrace({
+			entityGuid,
 			errorGroupGuid,
 			stackTrace,
+			occurrenceId,
 		});
 		if (parsedStackInfo.parseError) {
 			return { error: parsedStackInfo.parseError };
