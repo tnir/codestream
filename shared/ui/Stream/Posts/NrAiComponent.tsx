@@ -123,7 +123,7 @@ export function NrAiComponent(props: NrAiComponentProps) {
 	};
 
 	return (
-		<>
+		<section className="nrai-post">
 			{showGrokLoader && <NrAiLoading />}
 			{hasIntro && <Markdown text={parts?.intro ?? ""} />}
 			{showCodeBlockLoader && <NrAiCodeBlockLoading />}
@@ -156,6 +156,6 @@ export function NrAiComponent(props: NrAiComponentProps) {
 					<NrAiFeedback postId={props.post.id} errorId={props.codeErrorId!} />
 				</>
 			)}
-		</>
+		</section>
 	);
 }
