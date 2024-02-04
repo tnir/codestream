@@ -135,13 +135,15 @@ export function NrAiComponent(props: NrAiComponentProps) {
 						<DiffEditor
 							original={props.functionToEdit?.codeBlock}
 							modified={normalizedCodeFix}
-							height={300}
+							className="customDiffEditor"
 							options={{
 								renderSideBySide: false,
 								renderOverviewRuler: false,
 								folding: false,
 								lineNumbers: "off",
 								readOnly: true,
+								scrollBeyondLastLine: false,
+								automaticLayout: true,
 							}}
 							theme={isTheThemeDark ? "vs-dark" : "vs"}
 						/>
