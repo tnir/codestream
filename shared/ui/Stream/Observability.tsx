@@ -87,6 +87,7 @@ import { throwIfError } from "@codestream/webview/store/common";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { ObservabilityAlertViolations } from "./ObservabilityAlertViolations";
 import { parseId } from "../utilities/newRelic";
+import { bootstrapNrCapabilities } from "../store/nrCapabilities/thunks";
 
 interface Props {
 	paneState: PaneState;
@@ -460,6 +461,10 @@ export const Observability = React.memo((props: Props) => {
 		}
 	};
 
+	const _bootstrapNrCapabilities = async () => {
+		dispatch(bootstrapNrCapabilities());
+	};
+
 	const getEntityCount = async (force = false) => {
 		try {
 			const { entityCount } = await HostApi.instance.send(GetEntityCountRequestType, { force });
@@ -479,7 +484,12 @@ export const Observability = React.memo((props: Props) => {
 		setGenericError(undefined);
 		setLoadingEntities(true);
 		try {
-			await Promise.all([loadAssignments(), fetchObservabilityRepos(force), getEntityCount(true)]);
+			await Promise.all([
+				loadAssignments(),
+				fetchObservabilityRepos(force),
+				getEntityCount(true),
+				_bootstrapNrCapabilities(),
+			]);
 			console.debug(`o11y: Promise.all finished`);
 		} finally {
 			setLoadingEntities(false);

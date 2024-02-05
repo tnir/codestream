@@ -87,8 +87,6 @@ export class ObservabilityErrorsProvider {
 
 			if (!filteredRepos || !filteredRepos.length) return response;
 
-			const showAI = await this.nraiProvider.getAIEligibility();
-
 			for (const repo of filteredRepos) {
 				if (!repo.remotes || !repo.id) continue;
 
@@ -175,7 +173,6 @@ export class ObservabilityErrorsProvider {
 											count: errorTrace.count,
 											lastOccurrence: errorTrace.lastOccurrence,
 											errorGroupUrl: response.actor.errorsInbox.errorGroup.url,
-											showAI,
 										});
 										if (observabilityErrors.length > 4) {
 											gotoEnd = true;
