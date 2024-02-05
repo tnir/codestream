@@ -83,6 +83,7 @@ import { ConditionalNewRelic } from "./ConditionalComponent";
 import { isFeatureEnabled } from "../../store/apiVersioning/reducer";
 import { FunctionToEdit } from "@codestream/webview/store/codeErrors/types";
 import { isEmpty } from "lodash-es";
+import { getNrCapability } from "@codestream/webview/store/nrCapabilities/thunks";
 
 interface SimpleError {
 	/**
@@ -1174,7 +1175,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 		const codeError: CSCodeError = state.codeErrors[props.codeError.id] || props.codeError;
 		const codeAuthorId = (props.codeError.codeAuthorIds || [])[0];
 		const currentCodeErrorData = state.context.currentCodeErrorData;
-		const showGrok = currentCodeErrorData?.showAI || isFeatureEnabled(state, "showGrok");
+		const showGrok = state.nrCapabilities.nrai || isFeatureEnabled(state, "showGrok");
 
 		return {
 			providers: state.providers,
@@ -1741,8 +1742,7 @@ const ReplyInput = (props: { codeError: CSCodeError; setGrokRequested: () => voi
 	const [isLoading, setIsLoading] = useState(false);
 	const teamMates = useAppSelector((state: CodeStreamState) => getTeamMates(state));
 	const showGrok = useAppSelector(
-		(state: CodeStreamState) =>
-			state.context.currentCodeErrorData?.showAI || isFeatureEnabled(state, "showGrok")
+		(state: CodeStreamState) => state.nrCapabilities.nrai || isFeatureEnabled(state, "showGrok")
 	);
 
 	const submit = async () => {
@@ -1861,6 +1861,7 @@ function isPropsWithId(props: PropsWithId | PropsWithCodeError): props is PropsW
 export type CodeErrorProps = PropsWithId | PropsWithCodeError;
 
 const CodeErrorForCodeError = (props: PropsWithCodeError) => {
+	const dispatch = useAppDispatch();
 	const { codeError, ...baseProps } = props;
 	const derivedState = useAppSelector((state: CodeStreamState) => {
 		const post =
@@ -1911,6 +1912,10 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 			// console.debug("===--- scrollToNew no target", scrollNewTarget);
 		}
 	}
+
+	useDidMount(() => {
+		dispatch(getNrCapability("nrai"));
+	});
 
 	useEffect(() => {
 		if ((isGrokRequested || isGrokLoading) && currentGrokRepliesLength > 0) {
