@@ -27,6 +27,7 @@ import { NRQLResultsTable } from "./NRQLResultsTable";
 import { parseId } from "@codestream/webview/utilities/newRelic";
 import Icon from "../Icon";
 import { fuzzyTimeAgoinWords } from "../Timestamp";
+import { useResizeDetector } from "react-resize-detector";
 
 const QueryWrapper = styled.div`
 	width: 100%;
@@ -49,6 +50,8 @@ const DropdownContainer = styled.div`
 
 const ButtonContainer = styled.div`
 	display: flex;
+	margin-bottom: 8px;
+	justify-content: space-between;
 `;
 
 const ResultsRow = styled.div`
@@ -99,6 +102,8 @@ export const NRQLPanel = (props: {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [nrqlError, setNRQLError] = useState<string | undefined>("");
 	const nrqlEditorRef = useRef<any>(null);
+	const { width, height, ref } = useResizeDetector();
+	const trimmedHeight: number = (height ?? 0) - (height ?? 0) * 0.05;
 
 	const disposables: Disposable[] = [];
 	let accountsPromise;
@@ -312,33 +317,12 @@ export const NRQLPanel = (props: {
 						</Button>
 					</ButtonContainer>
 				</ActionRow>
-				<ActionRow>
+				{/* <ActionRow>
 					<DropdownContainer></DropdownContainer>
-					<ButtonContainer>
-						<a
-							style={{ cursor: "pointer" }}
-							href="#"
-							onClick={e => {
-								e.preventDefault();
-
-								HostApi.instance.track("codestream/nrql/export downloaded", {
-									account_id: selectedAccount?.value || accountId,
-									event_type: "submit",
-									meta_data: `format: json`,
-								});
-
-								HostApi.instance.send(OpenInBufferRequestType, {
-									contentType: "json",
-									data: results,
-								});
-							}}
-						>
-							<Icon name="download" title="Open Results as JSON" />
-						</a>
-					</ButtonContainer>
-				</ActionRow>
+				</ActionRow> */}
 			</PanelHeader>
 			<div
+				ref={ref}
 				style={{
 					padding: "0px 20px 0px 20px",
 					marginBottom: "20px",
@@ -348,16 +332,46 @@ export const NRQLPanel = (props: {
 			>
 				<ResultsRow>
 					{since && (
-						<div>
-							<small>Since {since}</small>
-						</div>
+						<ButtonContainer>
+							<div>
+								<small>Since {since}</small>
+							</div>
+							<div>
+								<a
+									style={{ cursor: "pointer" }}
+									href="#"
+									onClick={e => {
+										e.preventDefault();
+
+										HostApi.instance.track("codestream/nrql/export downloaded", {
+											account_id: selectedAccount?.value || accountId,
+											event_type: "submit",
+											meta_data: `format: json`,
+										});
+
+										HostApi.instance.send(OpenInBufferRequestType, {
+											contentType: "json",
+											data: results,
+										});
+									}}
+								>
+									<Icon name="download" title="Open Results as JSON" />
+								</a>
+							</div>
+						</ButtonContainer>
 					)}
 					<div>
 						{!nrqlError &&
 							!isLoading &&
 							results &&
 							results.length > 0 &&
-							resultsTypeGuess === "table" && <NRQLResultsTable results={results} />}
+							resultsTypeGuess === "table" && (
+								<NRQLResultsTable
+									width={width || "100%"}
+									height={trimmedHeight}
+									results={results}
+								/>
+							)}
 						{!nrqlError &&
 							!isLoading &&
 							results &&

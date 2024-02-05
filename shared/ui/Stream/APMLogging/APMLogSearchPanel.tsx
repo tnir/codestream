@@ -31,7 +31,6 @@ interface SelectedOption {
 }
 
 const LogFilterBarContainer = styled.div`
-	padding-top: 10px;
 	padding-bottom: 10px;
 
 	.log-filter-bar-row {
@@ -97,7 +96,7 @@ const OptionAccount = styled.div`
 const HeaderContainer = styled.div`
 	display: flex;
 	overflow: hidden;
-	overflow-y: scroll;
+	// overflow-y: scroll;
 `;
 
 const TimestampHeader = styled.div`
@@ -458,9 +457,10 @@ export const APMLogSearchPanel = (props: {
 	const formatRowResults = () => {
 		if (results) {
 			let _results: LogResult[] = results;
-			if (_results[_results.length - 1]?.showMore !== "true") {
-				_results.push({ showMore: "true" });
-			}
+			// @TODO: eventually hook up "Show More"
+			// if (_results[_results.length - 1]?.showMore !== "true") {
+			// 	_results.push({ showMore: "true" });
+			// }
 			return _results.map((r, index) => {
 				const timestamp = r?.timestamp;
 				const message = messageAttribute ? r[messageAttribute] : "";
