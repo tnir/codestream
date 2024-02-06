@@ -164,9 +164,9 @@ export class SegmentTelemetryService {
 
 		const payload: { [key: string]: any } = { ...data, ...this._superProps };
 
-		if (this._distinctId != null) {
-			payload["distinct_id"] = this._distinctId;
-		}
+		//if (this._distinctId != null) {
+		//	payload["distinct_id"] = this._distinctId;
+		//}
 
 		Logger.debug(
 			`Tracking userId=${this._distinctId} anonymousId=${this._anonymousId}:`,

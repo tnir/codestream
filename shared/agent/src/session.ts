@@ -1596,7 +1596,7 @@ export class CodeStreamSession {
 		}
 
 		const props: { [key: string]: any } = {
-			user_id: user.nrUserId,
+			//user_id: user.nrUserId,
 			platform: "codestream",
 			path: "N/A (codestream)",
 			section: "N/A (codestream)",
