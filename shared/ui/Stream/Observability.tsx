@@ -229,20 +229,17 @@ export const ErrorRow = (props: {
 						onClick={e => {
 							e.preventDefault();
 							e.stopPropagation();
+							HostApi.instance.track("codestream/link_to_newrelic clicked", {
+								meta_data: "destination: error_group",
+								meta_data_2: `codestream_section: code_level_metrics`,
+								event_type: "click",
+							});
 							HostApi.instance.send(OpenUrlRequestType, {
-								url:
-									props.url +
-									`&utm_source=codestream&utm_medium=ide-${derivedState.ideName}&utm_campaign=error_group_link`,
+								url: `${props.url}&utm_source=codestream&utm_medium=ide-${derivedState.ideName}&utm_campaign=error_group_link`,
 							});
 						}}
 					>
-						<Icon
-							name="globe"
-							className="clickable"
-							title="View on New Relic"
-							placement="bottomLeft"
-							delay={1}
-						/>
+						<Icon name="globe" title="View on New Relic" placement="bottomLeft" delay={1} />
 					</span>
 				)}
 
@@ -1322,6 +1319,7 @@ export const Observability = React.memo((props: Props) => {
 																								errors={entityGoldenMetricsErrors}
 																								recentIssues={recentIssues ? recentIssues : {}}
 																								entityGuid={ea.entityGuid}
+																								accountId={ea.accountId}
 																							/>
 																							{hasServiceLevelObjectives &&
 																								ea?.domain !== "INFRA" && (

@@ -520,29 +520,43 @@ function trackPostCreation(
 						}
 					}
 
+					let entryPoint = "global_nav";
+					if (request.entryPoint != null) {
+						switch (request.entryPoint) {
+							case "Gutter":
+								entryPoint = "gutter";
+								break;
+							case "Global Nav":
+								entryPoint = "global_nav";
+								break;
+							case "Shortcut":
+								entryPoint = "shortcut";
+								break;
+							case "Lightbulb Menu":
+								entryPoint = "lightbulb_menu";
+								break;
+							case "Action List":
+								entryPoint = "action_list";
+								break;
+							case "Hover Icons":
+								entryPoint = "hover_icons";
+								break;
+							case "Advanced Link":
+								entryPoint = "advanced_link";
+								break;
+						}
+					}
+
 					if (request.codemark) {
 						// this is a standard codemark -- note its event name includes "created" rather than "reply"
 						const { markers = [] } = request.codemark;
 						const codemarkProperties: TelemetryData = {
-							meta_data: `entry_point: ${
-								request.entryPoint === "Gutter"
-									? "gutter"
-									: "Global Nav"
-									? "global_nav"
-									: "Shortcut"
-									? "shortcut"
-									: "Lightbulb Menu"
-									? "lightbulb_menu"
-									: "Action List"
-									? "action_list"
-									: "Hover Icons"
-									? "hover_icons"
-									: "Advanced Link"
-									? "advanced_link"
-									: ""
-							}`,
+							meta_data: `entry_point: ${entryPoint ?? ""}`,
 							meta_data_2: `linked_service: ${request.codemark.externalProvider}`,
-							meta_data_3: `false`,
+							meta_data_3: `error_group: false`,
+							meta_data_4: `codemark_type: ${
+								markerType === "Comment" ? "comment" : markerType === "Issue" ? "issue" : ""
+							}`,
 							event_type: "response",
 						};
 						if (request.codemark.codeErrorId) {
