@@ -36,7 +36,6 @@ import { RecentQueries } from "./RecentQueries";
 
 const QueryWrapper = styled.div`
 	width: 100%;
-	max-height: 200px;
 	padding: 0px;
 `;
 
@@ -90,6 +89,21 @@ const OptionName = styled.div`
 	overflow: hidden;
 `;
 
+const ResultsContainer = styled.div`
+	padding: 0px 20px 13px 20px;
+	width: 100%;
+	overflow: hidden;
+`;
+
+const ResizeEditorContainer = styled.div`
+	resize: vertical;
+	overflow: auto;
+	min-height: 120px;
+	max-height: 40vh;
+	border: var(--base-border-color) solid 1px;
+	padding: 8px;
+`;
+
 const Option = (props: OptionProps) => {
 	const children = (
 		<>
@@ -139,6 +153,7 @@ export const NRQLPanel = (props: {
 		number | undefined
 	>(undefined);
 	const nrqlEditorRef = useRef<any>(null);
+	const { height: editorHeight, ref: editorRef } = useResizeDetector();
 	const { width, height, ref } = useResizeDetector();
 	const trimmedHeight: number = (height ?? 0) - (height ?? 0) * 0.05;
 
@@ -354,12 +369,11 @@ export const NRQLPanel = (props: {
 								</RecentContainer>
 							</AccountRecentContainer>
 						</div>
-
-						<div style={{ border: "var(--base-border-color) solid 1px", padding: "8px" }}>
+						<ResizeEditorContainer ref={editorRef}>
 							<NRQLEditor
 								className="input-text control"
 								defaultValue={props.query || DEFAULT_QUERY}
-								height="10vh"
+								height={`${editorHeight}px`}
 								onChange={e => {
 									setUserQuery(e.value || "");
 								}}
@@ -369,40 +383,32 @@ export const NRQLPanel = (props: {
 								}}
 								ref={nrqlEditorRef}
 							/>
-						</div>
+						</ResizeEditorContainer>
+						<ActionRow>
+							<DropdownContainer></DropdownContainer>
+							<ButtonContainer>
+								<Button
+									style={{ padding: "0 10px", marginRight: "5px" }}
+									isSecondary={true}
+									onClick={() => {
+										resetQuery();
+									}}
+								>
+									Clear
+								</Button>
+								<Button
+									style={{ padding: "0 10px" }}
+									onClick={() => executeNRQL(selectedAccount?.value, props.entityGuid!)}
+									loading={isLoading}
+								>
+									Run
+								</Button>
+							</ButtonContainer>
+						</ActionRow>
 					</div>
 				</QueryWrapper>
-				<ActionRow>
-					<DropdownContainer></DropdownContainer>
-					<ButtonContainer>
-						<Button
-							style={{ padding: "0 10px", marginRight: "5px" }}
-							isSecondary={true}
-							onClick={() => {
-								resetQuery();
-							}}
-						>
-							Clear
-						</Button>
-						<Button
-							style={{ padding: "0 10px" }}
-							onClick={() => executeNRQL(selectedAccount?.value, props.entityGuid!)}
-							loading={isLoading}
-						>
-							Run
-						</Button>
-					</ButtonContainer>
-				</ActionRow>
 			</PanelHeader>
-			<div
-				ref={ref}
-				style={{
-					padding: "0px 20px 0px 20px",
-					marginBottom: "20px",
-					width: "100%",
-					height: "100%",
-				}}
-			>
+			<ResultsContainer ref={ref}>
 				<ResultsRow>
 					{since && (
 						<SinceContainer>
@@ -503,7 +509,7 @@ export const NRQLPanel = (props: {
 						)}
 					</div>
 				</ResultsRow>
-			</div>
+			</ResultsContainer>
 		</>
 	);
 };
