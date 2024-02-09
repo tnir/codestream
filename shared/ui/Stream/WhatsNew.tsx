@@ -78,6 +78,35 @@ export const WhatsNewPanel = () => {
 			<TimelineContent>
 				<TimelineHeader>
 					<TimelineMarker />
+					<TimelineTitle>15.3.0</TimelineTitle>
+					<TimelineDate>February 14, 2024</TimelineDate>
+				</TimelineHeader>
+				<div className="tl-body">
+					<Update>
+						<UpdateTitle>Log Search</UpdateTitle>
+						<ListContainer>
+							No need to slow down your investigation by context switching between your IDE and your browser to search logs. CodeStream brings the New Relic log-search experience right into your IDE! 
+							
+							Click on the "View Logs" entry for any service listed in the CodeStream pane, or on the "View Logs" icon in CodeStream's global navigation. You can also right-click on a log line in your code and select "Find in logs" to look for entries from that specific log line.
+							
+							CodeStream's log search is currently available for logs collected by a New Relic APM agent or the OTel integration.
+						</ListContainer>
+					</Update>
+					<Update>
+						<UpdateTitle>Query Builder</UpdateTitle>
+						<ListContainer>
+							The ability to run NRQL queries right from your IDE gives you powerful access to all of the performance data New Relic has about your services.
+
+							Click on the "Query your data" icon in CodeStream's global navigation to access the query builder.
+
+							Add a file with a `.nrql` extension to your repository to save and share queries. Just click the "Run" link in the CodeLense above each query to run the query.
+						</ListContainer>
+					</Update>
+				</div>
+			</TimelineContent>
+			<TimelineContent>
+				<TimelineHeader>
+					<TimelineMarker />
 					<TimelineTitle>15.2.0</TimelineTitle>
 					<TimelineDate>February 7, 2024</TimelineDate>
 				</TimelineHeader>
