@@ -85,21 +85,35 @@ export const WhatsNewPanel = () => {
 					<Update>
 						<UpdateTitle>Log Search</UpdateTitle>
 						<ListContainer>
-							No need to slow down your investigation by context switching between your IDE and your browser to search logs. CodeStream brings the New Relic log-search experience right into your IDE! 
-							
-							Click on the "View Logs" entry for any service listed in the CodeStream pane, or on the "View Logs" icon in CodeStream's global navigation. You can also right-click on a log line in your code and select "Find in logs" to look for entries from that specific log line.
-							
-							CodeStream's log search is currently available for logs collected by a New Relic APM agent or the OTel integration.
+							<UpdateItem>
+								No need to slow down your investigation by context switching between your IDE and your browser to search logs. CodeStream brings the New Relic log-search experience right into your IDE! 
+							</UpdateItem>
+							<UpdateItem>
+								<img src="https://images.codestream.com/misc/WN-log-search.png">
+							</UpdateItem>
+							<UpdateItem>
+								Click on the "View Logs" entry for any service listed in the CodeStream pane, or on the "View Logs" icon in CodeStream's global navigation. You can also right-click on a log line in your code and select "Find in logs" to look for entries from that specific log line.
+							</UpdateItem>
+							<UpdateItem>
+								CodeStream's log search is currently available for logs collected by a New Relic APM agent or the OTel integration.
+							</UpdateItem>
 						</ListContainer>
 					</Update>
 					<Update>
 						<UpdateTitle>Query Builder</UpdateTitle>
 						<ListContainer>
-							The ability to run NRQL queries right from your IDE gives you powerful access to all of the performance data New Relic has about your services.
-
-							Click on the "Query your data" icon in CodeStream's global navigation to access the query builder.
-
-							Add a file with a `.nrql` extension to your repository to save and share queries. Just click the "Run" link in the CodeLense above each query to run the query.
+							<UpdateItem>
+								The ability to run NRQL queries right from your IDE gives you powerful access to all of the performance data New Relic has about your services. Click on the "Query your data" icon in CodeStream's global navigation to access the query builder.
+							</UpdateItem>
+							<UpdateItem>
+								<img src="https://images.codestream.com/misc/WN-query-builder.png">
+							</UpdateItem>
+							<UpdateItem>
+								Add a file with a `.nrql` extension to your repository to save and share queries. Just click the "Run" link in the CodeLense above each query to run the query.
+							</UpdateItem>
+							<UpdateItem>
+								<img src="https://images.codestream.com/misc/WN-nrql-file.png">
+							</UpdateItem>
 						</ListContainer>
 					</Update>
 				</div>
@@ -112,28 +126,12 @@ export const WhatsNewPanel = () => {
 				</TimelineHeader>
 				<div className="tl-body">
 					<Update>
-						<UpdateTitle>Added</UpdateTitle>
+						<UpdateTitle>NRAI Apply Fix</UpdateTitle>
 						<ListContainer>
-							<li>
+							<UpdateItem>
 								A new "Apply Fix" button allows you to easily accept a suggested code fix when NRAI
-								analyzes an error for you
-							</li>
-							<li>Code fixes suggested by NRAI are now presented in a diff view</li>
-						</ListContainer>
-					</Update>
-				</div>
-			</TimelineContent>
-			<TimelineContent>
-				<TimelineHeader>
-					<TimelineMarker />
-					<TimelineTitle>15.1.1</TimelineTitle>
-					<TimelineDate>January 15, 2024</TimelineDate>
-				</TimelineHeader>
-				<div className="tl-body">
-					<Update>
-						<UpdateTitle>Fixed</UpdateTitle>
-						<ListContainer>
-							<li>Fixes an issue with an infinite loop on non-refresh token errors</li>
+								analyzes an error for you. Code fixes are also now presented in a diff view so that you can easily identify the changes.
+							</UpdateItem>
 						</ListContainer>
 					</Update>
 				</div>
@@ -148,102 +146,12 @@ export const WhatsNewPanel = () => {
 					<Update>
 						<UpdateTitle>Added</UpdateTitle>
 						<ListContainer>
-							<li>Adds support for errors from Browser services</li>
-							<li>
-								Adds change in error rate and response time in Golden Metrics section from three
-								hours before your last deployment to three hours after
-							</li>
+							<li>Investigate errors being reported by your browser services, with the ability to step throught he stack traces, collaborate with teammates, and get suggested code fixes from NRAI.</li>
+							<li>The Golden Metrics section now calls out significant increases in error rate or response time since your last release.</li>
+							<li>Anomalies in the Code-Level Metrics section are now displayed in a hierarchy of
+								transactions and metrics.</li>
 							<li>Adds display of Golden Metrics, SLOs and Related Services for OTel services</li>
 							<li>Adds display of Golden Metrics for Lambda functions</li>
-						</ListContainer>
-					</Update>
-					<Update>
-						<UpdateTitle>Changed</UpdateTitle>
-						<ListContainer>
-							<li>
-								Anomalies in the Code-Level Metrics section are now displayed in a hierarchy of
-								transactions and metrics
-							</li>
-							<li>
-								When viewing anomaly details, the chart appropriate to the type of anomaly is now
-								displayed first
-							</li>
-						</ListContainer>
-					</Update>
-					<Update>
-						<UpdateTitle>Fixed</UpdateTitle>
-						<ListContainer>
-							<li>
-								Addressed{" "}
-								<Link href="https://github.com/TeamCodeStream/codestream/issues/1682">#1682</Link> -
-								Export data has bad header
-							</li>
-							<li>
-								Addressed{" "}
-								<Link href="https://github.com/TeamCodeStream/codestream/issues/1683">#1683</Link> -
-								Export data corrupt when comment has a comma
-							</li>
-						</ListContainer>
-					</Update>
-				</div>
-			</TimelineContent>
-			<TimelineContent>
-				<TimelineHeader>
-					<TimelineMarker />
-					<TimelineTitle>15.0.1</TimelineTitle>
-					<TimelineDate>December 15, 2023</TimelineDate>
-				</TimelineHeader>
-				<div className="tl-body">
-					<Update>
-						<UpdateTitle>Changed</UpdateTitle>
-						<ListContainer>
-							<li>Generative AI assistant is now named New Relic AI</li>
-						</ListContainer>
-					</Update>
-				</div>
-			</TimelineContent>
-			<TimelineContent>
-				<TimelineHeader>
-					<TimelineMarker />
-					<TimelineTitle>15.0.0</TimelineTitle>
-					<TimelineDate>December 13, 2023</TimelineDate>
-				</TimelineHeader>
-				<div className="tl-body">
-					<Update>
-						<UpdateTitle>Changed</UpdateTitle>
-						<ListContainer>
-							<li>
-								Identity is now unified with New Relic, and you will sign in to CodeStream using
-								your New Relic credentials
-							</li>
-							<li>
-								Adding and removing organization members is now handled via New Relic on the web
-							</li>
-							<li>
-								Changing your email address or full name is now handled via New Relic on the web
-							</li>
-							<li>
-								The expanded/collapsed state of each top-level section of the CodeStream pane is
-								preserved as you switch between services
-							</li>
-							<li>
-								Open incidents for a given service have been replaced by open issues, and are now
-								displayed above the Golden Metrics
-							</li>
-							<li>
-								Anomalous methods in the Code-Level Metrics section are no longer split up between
-								average duration and error rate anomalies
-							</li>
-							<li>The "Switch Organization" menu has been renamed to "Switch Users"</li>
-						</ListContainer>
-					</Update>
-					<Update>
-						<UpdateTitle>Fixed</UpdateTitle>
-						<ListContainer>
-							<li>
-								Fixes an issue where a newly opened repo wouldn't be recognized by the CodeStream
-								pane without a reload
-							</li>
 						</ListContainer>
 					</Update>
 				</div>
