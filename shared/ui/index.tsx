@@ -140,8 +140,14 @@ import translations from "./translations/en";
 import { parseProtocol } from "./utilities/urls";
 import { HostApi } from "./webview-api";
 import { parseId } from "./utilities/newRelic";
+import { SessionState } from "./store/session/types";
+import { UsersState } from "./store/users/types";
 
 // import translationsEs from "./translations/es";
+
+export interface SourceOptions {
+	source: "source_file" | "activity_feed" | "search" | "related_list";
+}
 
 export function setupCommunication(host: { postMessage: (message: any) => void }) {
 	Object.defineProperty(window, "acquireCodestreamHost", {
@@ -417,10 +423,15 @@ function listenForEvents(store) {
 			codemarks,
 			context,
 			editorContext,
+			session,
+			users,
 		}: {
 			codemarks: CodemarksState;
 			context: ContextState;
 			editorContext: EditorContextState;
+			session: SessionState;
+			users: UsersState;
+			source: SourceOptions;
 		} = store.getState();
 
 		if (Object.keys(codemarks).length === 0) {
@@ -428,7 +439,18 @@ function listenForEvents(store) {
 			codemarks = store.getState().codemarks;
 		}
 
+		const currentUser = session.userId || users[session.userId!].id;
+		const sourceLocation = e.source;
+
 		const codemark = getCodemark(codemarks, e.codemarkId);
+		HostApi.instance.track("codestream/codemarks/codemark displayed", {
+			meta_data: `codemark_location: ${sourceLocation}`,
+			meta_data_2: `codemark_type: ${
+				codemark?.type === "issue" ? "issue" : codemark?.type === "comment" ? "comment" : ""
+			}`,
+			meta_data_3: `following: ${(codemark?.followerIds || []).includes(currentUser.toString())}`,
+			event_type: "modal_display",
+		});
 		if (codemark == null) return;
 
 		store.dispatch(setCurrentCodemark(codemark.id));

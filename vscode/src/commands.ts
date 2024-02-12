@@ -89,6 +89,7 @@ export interface OpenCodemarkCommandArgs {
 	codemarkId: string;
 	onlyWhenVisible?: boolean;
 	sourceUri?: Uri;
+	source?: string;
 }
 
 export interface OpenPullRequestCommandArgs {
@@ -506,15 +507,8 @@ export class Commands implements Disposable {
 	async openCodemark(args: OpenCodemarkCommandArgs): Promise<void> {
 		if (args === undefined) return;
 
-		Container.agent.telemetry.track("codestream/codemarks/codemark displayed", {
-			meta_data: `codemark_location: source_file`,
-			meta_data_2: "codemark_type: comment",
-			meta_data_3: `following: false`,
-			event_type: "modal_display"
-		});
-
 		const { codemarkId: _codemarkId, ...options } = args;
-		return Container.sidebar.openCodemark(args.codemarkId, options);
+		return Container.sidebar.openCodemark(args.codemarkId, { source: "source_file", ...options });
 	}
 
 	@command("openPullRequest", { showErrorMessage: "Unable to open pull request" })
