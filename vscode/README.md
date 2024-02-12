@@ -38,7 +38,7 @@ Discover errors happening in the code you’re responsible for. Quickly step thr
 
 Get an in-IDE view of how the services built from your code are performing, in any environment. Golden metrics, service-level objectives and related services give you the big picture at a glance.
 
-![Performance Monitoring](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/develop/images/marketplace-vsc-slt.png)
+![Performance Monitoring](https://images.codestream.com/misc/marketplace-o11y.png)
 
 # Don't have New Relic? 
 
