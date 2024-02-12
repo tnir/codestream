@@ -172,6 +172,7 @@ import { Functions, log } from "../system";
 import { getInitializationOptions } from "../extension";
 import { Editor } from "../extensions";
 import { resolveStackTracePaths } from "./resolveStackTracePathsHandler";
+import { ViewColumn } from "@codestream/protocols/webview";
 
 export { BaseAgentOptions };
 
@@ -1110,7 +1111,15 @@ export class CodeStreamAgentConnection implements Disposable {
 			)
 			.then(selection => {
 				if (selection?.title === "See What's New") {
-					Container.sidebar.whatsNew();
+					Container.panel.initializeOrShowEditor({
+						panelLocation: ViewColumn.Active,
+						panel: "whatsnew",
+						title: "What's New",
+						entryPoint: "notification",
+						ide: {
+							name: "VSC"
+						}
+					});
 				}
 			});
 	}
