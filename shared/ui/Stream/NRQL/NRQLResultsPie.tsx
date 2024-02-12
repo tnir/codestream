@@ -1,21 +1,23 @@
-import React from "react";
 import { NRQLResult } from "@codestream/protocols/agent";
-import { ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
-
-const colorHash = {
-	0: "#e6b223",
-	1: "#9558af",
-	2: "#8884d8",
-	3: "#7aa7d2",
-	4: "#84d888",
-	5: "#d2d27a",
-	6: "#d88884",
-	7: "#7ad2a7",
-	8: "#d27aa7",
-	9: "#a77ad2",
-};
+import React, { useEffect, useState } from "react";
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Colors, ColorsHash } from "./utils";
+import { CustomTooltip } from "./CustomTooltip";
 
 export const NRQLResultsPie = (props: { results: NRQLResult[] }) => {
+	const [showLegend, setShowLegend] = useState(false);
+
+	useEffect(() => {
+		const handleResize = () => {
+			setShowLegend(window.innerWidth > 768);
+		};
+
+		window.addEventListener("resize", handleResize);
+		handleResize(); // Initial call
+
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
+
 	const result = props.results ? props.results[0] : undefined;
 	const dataKeys = Object.keys(result || {}).filter(
 		_ => _ !== "beginTimeSeconds" && _ !== "endTimeSeconds"
@@ -36,11 +38,24 @@ export const NRQLResultsPie = (props: { results: NRQLResult[] }) => {
 						>
 							{/* Render labels */}
 							{dataKeys.map((_, index) => {
-								const color = colorHash[index % 10];
+								const color = ColorsHash[index % Colors.length];
 								return <Cell key={index} fill={color} />;
 							})}
 						</Pie>
-						<Legend layout="horizontal" verticalAlign="bottom" align="center" fontSize={10} />
+						<Tooltip content={<CustomTooltip />} />
+						{showLegend && (
+							<Legend
+								fontSize={10}
+								align="right"
+								verticalAlign="middle"
+								layout="vertical"
+								wrapperStyle={{
+									padding: "0 2rem",
+									height: "80%",
+									overflow: "auto",
+								}}
+							/>
+						)}
 					</PieChart>
 				</ResponsiveContainer>
 			</div>

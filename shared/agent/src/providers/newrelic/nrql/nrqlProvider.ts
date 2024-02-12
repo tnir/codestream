@@ -421,7 +421,7 @@ export class NrNRQLProvider {
 		}
 
 		if (metadata?.facet) {
-			return { selected: "bar", enabled: ["bar", "json", "pie", "json"] };
+			return { selected: "bar", enabled: ["bar", "json", "pie", "table", "json"] };
 		}
 
 		query = query.toUpperCase();
