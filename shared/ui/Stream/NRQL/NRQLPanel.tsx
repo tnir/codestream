@@ -230,6 +230,10 @@ export const NRQLPanel = (props: {
 				handleError("Please provide a query to run");
 				return;
 			}
+			if (nrqlQuery === DEFAULT_QUERY) {
+				handleError("Please provide a query to run");
+				return;
+			}
 
 			setIsLoading(true);
 			setNRQLError(undefined);
