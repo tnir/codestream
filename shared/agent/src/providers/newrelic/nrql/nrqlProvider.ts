@@ -75,7 +75,6 @@ export class NrNRQLProvider {
 				eventType: response?.rawResponse?.metadata?.eventType,
 				since: response?.rawResponse?.metadata?.rawSince,
 				resultsTypeGuess: this.getResultsType(
-					query,
 					response.results,
 					response?.rawResponse?.metadata
 				) as ResultsTypeGuess,
@@ -400,7 +399,7 @@ export class NrNRQLProvider {
 		return 0;
 	}
 
-	private getResultsType(query: string, results: any[], metadata: ResponseMetadata) {
+	private getResultsType(results: any[], metadata: ResponseMetadata) {
 		const ALL_RESULT_TYPES = ["table", "json", "billboard", "line", "bar", "area", "pie"];
 		if (!results || !results.length) return { selected: "table", enabled: ALL_RESULT_TYPES };
 
@@ -419,13 +418,14 @@ export class NrNRQLProvider {
 				return { selected: "billboard", enabled: ["billboard", "json"] };
 			}
 		}
-
-		if (metadata?.facet) {
-			return { selected: "bar", enabled: ["bar", "json", "pie", "table", "json"] };
+		const isTimeseries = metadata?.timeSeries || metadata?.contents?.timeSeries;
+		const isFacet = metadata?.facet;
+		if (isTimeseries && isFacet) {
+			// TODO stacked bar!
+			return { selected: "table", enabled: ["table", "json"] };
 		}
 
-		query = query.toUpperCase();
-		if (query.indexOf("TIMESERIES") > -1) {
+		if (isTimeseries) {
 			const dataKeys = Object.keys(results[0] || {}).filter(
 				_ => _ !== "beginTimeSeconds" && _ !== "endTimeSeconds"
 			);
@@ -438,7 +438,10 @@ export class NrNRQLProvider {
 				return { selected: "json", enabled: ["json"] };
 			}
 			// easy timeseries data like a TIMESERIES of a count
-			return { selected: "line", enabled: ["table", "json", "line", "bar", "area"] };
+			return { selected: "line", enabled: ["table", "json", "line", "area"] };
+		}
+		if (isFacet) {
+			return { selected: "bar", enabled: ["bar", "json", "pie", "table", "json"] };
 		}
 		return { selected: "table", enabled: ["table", "json"] };
 	}

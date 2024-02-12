@@ -47,10 +47,19 @@ export interface HttpErrorResponse {
 	};
 }
 
+interface Timeseries {
+	contents?: { function: string; simple: boolean }[];
+	messages?: {}[];
+}
+
 export interface ResponseMetadata {
 	facet?: string;
 	eventType: string;
 	rawSince: string;
+	contents: {
+		timeSeries: Timeseries;
+	};
+	timeSeries?: Timeseries;
 }
 
 function isHttpErrorResponse(ex: unknown): ex is HttpErrorResponse {
@@ -599,10 +608,7 @@ export class NewRelicGraphqlClient implements Disposable {
 					nrql: {
 						results: T[];
 						rawResponse: {
-							metadata: {
-								eventType: string;
-								rawSince: string;
-							};
+							metadata: ResponseMetadata;
 						};
 					};
 				};
