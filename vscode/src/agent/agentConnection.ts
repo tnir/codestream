@@ -421,10 +421,9 @@ export class CodeStreamAgentConnection implements Disposable {
 		if (this._outputChannel) {
 			this._outputChannel.dispose();
 		}
-		if (this._logsOutputChannel) {
-			this._logsOutputChannel.dispose();
-		}
+
 		this._disposable && this._disposable.dispose();
+
 		if (this._clientReadyCancellation !== undefined) {
 			this._clientReadyCancellation.dispose();
 			this._clientReadyCancellation = undefined;
@@ -1230,8 +1229,6 @@ export class CodeStreamAgentConnection implements Disposable {
 			window.createOutputChannel("CodeStream (Agent)");
 		this._clientOptions.revealOutputChannelOn = RevealOutputChannelOn.Never;
 
-		this._logsOutputChannel = window.createOutputChannel("New Relic Logs");
-
 		const initializationOptions = getInitializationOptions({
 			...this._clientOptions.initializationOptions
 		});
@@ -1452,10 +1449,6 @@ export class CodeStreamAgentConnection implements Disposable {
 
 		if (this._outputChannel) {
 			this._outputChannel.dispose();
-		}
-
-		if (this._logsOutputChannel) {
-			this._logsOutputChannel.dispose();
 		}
 
 		if (this._client === undefined) return;
