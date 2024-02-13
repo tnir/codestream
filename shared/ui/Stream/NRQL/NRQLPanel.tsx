@@ -101,6 +101,11 @@ const ResizeEditorContainer = styled.div`
 	padding: 8px;
 `;
 
+const CodeText = styled.span`
+	font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+	color: var(--text-color);
+`;
+
 const Option = (props: OptionProps) => {
 	const children = (
 		<>
@@ -317,7 +322,11 @@ export const NRQLPanel = (props: {
 			<PanelHeader
 				title={
 					<PanelHeaderTitleWithLink
-						text="Save and share queries with `.nrql` files"
+						text={
+							<span>
+								Save and share queries with <CodeText>.nrql</CodeText> files
+							</span>
+						}
 						href={`https://docs.newrelic.com/docs/codestream/observability/query-builder/#nrql-files`}
 						title="Query Your Data"
 					/>
