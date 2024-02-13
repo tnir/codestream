@@ -333,6 +333,7 @@ export interface OpenEditorViewNotification {
 		| "profile";
 	ide: {
 		name?: "VSC" | "VS" | "JETBRAINS";
+		browserEngine?: "JCEF" | "JxBrowser" | "DotNetBrowser" | undefined;
 	};
 
 	accountId?: number;
