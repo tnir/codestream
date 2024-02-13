@@ -329,10 +329,13 @@ class AgentService(private val project: Project) : Disposable {
         val agentJsDestFile = File(agentDir, "agent-$agentVersion.js")
         val webJsMap = File(agentDir, "index.js.map")
         val agentJsMap = File(agentDir, "agent.js.map")
+        val whatsNewJson = File(agentDir, "WhatsNew.json")
+
         deleteAllExcept(agentDir, "agent", agentJsDestFile.name)
 
         FileUtils.copyToFile(AgentService::class.java.getResourceAsStream("/agent/agent.js"), agentJsDestFile)
         FileUtils.copyToFile(AgentService::class.java.getResourceAsStream("/agent/agent.js.map"), agentJsMap)
+        FileUtils.copyToFile(AgentService::class.java.getResourceAsStream("/agent/WhatsNew.json"), whatsNewJson)
         FileUtils.copyToFile(AgentService::class.java.getResourceAsStream("/webviews/sidebar/index.js.map"), webJsMap)
 
         val targetDir = userHomeDir.resolve(".codestream").resolve("agent")
@@ -387,9 +390,12 @@ class AgentService(private val project: Project) : Disposable {
         val agentJs = File(agentDir, "agent.js")
         val agentJsMap = File(agentDir, "agent.js.map")
         val webJsMap = File(agentDir, "index.js.map")
+        val whatsNewJson = File(agentDir, "WhatsNew.json")
 
         if (AGENT_PATH == null) {
             FileUtils.copyToFile(AgentService::class.java.getResourceAsStream("/agent/agent.js"), agentJs)
+            FileUtils.copyToFile(AgentService::class.java.getResourceAsStream("/agent/WhatsNew.json"), whatsNewJson)
+
             try {
                 FileUtils.copyToFile(AgentService::class.java.getResourceAsStream("/agent/agent.js.map"), agentJsMap)
                 FileUtils.copyToFile(AgentService::class.java.getResourceAsStream("/webviews/sidebar/index.js.map"), webJsMap)
