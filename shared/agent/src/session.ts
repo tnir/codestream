@@ -714,8 +714,12 @@ export class CodeStreamSession {
 			const me = await SessionContainer.instance().users.getMe();
 			const preferences = me.preferences;
 
+			const hasBeenNotified = preferences?.whatsNewNotificationsSent?.find(wnns => {
+				return currentVersion.startsWith(wnns);
+			});
+
 			// already tracked for this version; bail out
-			if (preferences?.whatsNewNotificationsSent?.includes(currentVersion)) {
+			if (hasBeenNotified) {
 				return;
 			}
 
@@ -725,7 +729,7 @@ export class CodeStreamSession {
 			const whatsNew: { version: string; title: string }[] = JSON.parse(whatsNewBuffer);
 
 			const isFlagged = whatsNew.find(wn => {
-				return wn.version === currentVersion;
+				return currentVersion.startsWith(wn.version);
 			});
 
 			if (isFlagged) {
@@ -735,7 +739,7 @@ export class CodeStreamSession {
 				const newPreference = {
 					whatsNewNotificationsSent: [
 						...(preferences?.whatsNewNotificationsSent ?? []),
-						currentVersion,
+						isFlagged.version,
 					],
 				};
 				this._api?.updatePreferences({ preferences: newPreference });
