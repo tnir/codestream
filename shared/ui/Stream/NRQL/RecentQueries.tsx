@@ -83,7 +83,12 @@ export const RecentQueries = (props: {
 		return undefined;
 	};
 
-	const loadOptions = async (search: string, _loadedOptions, additional: { page: number }) => {
+	const loadOptions = async (
+		search: string,
+		_loadedOptions,
+		additional: { page: number },
+		key?: string
+	) => {
 		await recentQueriesPromise;
 		const searchLowered = search ? search.toLowerCase() : search;
 		// first try to attach a match onto the collection
@@ -172,6 +177,7 @@ export const RecentQueries = (props: {
 			additional: {
 				page: additional.page + 1,
 			},
+			key: props.lastRunTimestamp,
 		};
 	};
 

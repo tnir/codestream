@@ -276,12 +276,7 @@ export const NRQLPanel = (props: {
 						setSince(response.since.toLowerCase());
 					}
 				}
-				if (shouldRefetchRecentQueriesTimestamp == null) {
-					// first time, set to 0 (don't trigger an update)
-					setShouldRefetchRecentQueriesTimestamp(0);
-				} else if (!isNaN(shouldRefetchRecentQueriesTimestamp)) {
-					setShouldRefetchRecentQueriesTimestamp(new Date().getTime());
-				}
+				setShouldRefetchRecentQueriesTimestamp(new Date().getTime());
 			}
 		} catch (ex) {
 			handleError(ex);
