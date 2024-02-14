@@ -27,6 +27,7 @@ private const val BASE_ZOOM_LEVEL = 1.0
 
 class JBCefWebView(val jbCefBrowser: JBCefBrowserBase, override val router: WebViewRouter, val project: Project) : WebView {
 
+    override fun type(): String = "JCEF"
     override val logger = Logger.getInstance(JBCefWebView::class.java)
     private var routerConnected = false
 

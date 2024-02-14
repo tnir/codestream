@@ -44,6 +44,7 @@ import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.get
 import com.github.salomonbrys.kotson.jsonObject
 import com.github.salomonbrys.kotson.nullString
+import com.github.salomonbrys.kotson.set
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
@@ -227,9 +228,13 @@ class WebViewRouter(val project: Project) {
         val file = WebViewEditorFile.create(message.params!!)
         ApplicationManager.getApplication().invokeLater {
             val editor = editorManager.openFile(file, true, true).firstOrNull()
-            (editor as? WebViewEditor)?.webView?.postNotification(message.method, message.params)
-//            editor?.component?.requestFocus()
-            editor?.component?.repaint()
+            val webview = (editor as? WebViewEditor)?.webView ?: return@invokeLater
+            val ide = message.params.asJsonObject["ide"].asJsonObject
+            ide["browserEngine"] = webview.type()
+            webview.postNotification(message.method, message.params)
+            ApplicationManager.getApplication().invokeLater {
+                webview.component?.repaint()
+            }
         }
     }
 

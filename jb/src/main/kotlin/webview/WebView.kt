@@ -20,6 +20,7 @@ interface WebView {
     fun zoomIn()
     fun zoomOut()
     fun resetZoom()
+    fun type(): String
 
     fun postNotification(notification: WebViewNotification, force: Boolean? = false) {
         logger.debug("Posting ${notification.getMethod()}")

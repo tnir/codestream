@@ -9,6 +9,7 @@ import com.teamdev.jxbrowser.view.swing.BrowserView
 
 class JxBrowserWebView(val jxBrowser: Browser, override val router: WebViewRouter) : WebView {
 
+    override fun type(): String = "JxBrowser"
     override val logger = Logger.getInstance(JxBrowserWebView::class.java)
 
     override val component: BrowserView by lazy {
