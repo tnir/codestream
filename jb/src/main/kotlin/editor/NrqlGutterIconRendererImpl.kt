@@ -21,7 +21,7 @@ class NrqlGutterIconRendererImpl(val editor: Editor, val line: Int, val query: S
     override fun getClickAction(): AnAction = NrqlGutterIconAction(editor, query)
 
     override fun getTooltipText(): String? {
-        return "Execute NRQL"
+        return "Run NRQL query"
     }
 
     override fun getIcon(): Icon {
