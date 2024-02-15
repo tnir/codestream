@@ -37,6 +37,11 @@ export const NRQLResultsTable = (props: {
 		const rowArray = Object.values(gridData.resultsWithHeaders[rowIndex]);
 		const value = rowArray[columnIndex];
 
+		//@TODO - for later use, columnName will be "timestamp" or "name", etc.
+		// const columnNames = Object.keys(gridData.resultsWithHeaders[rowIndex]);
+		// const columnName = columnNames[columnIndex];
+		// console.warn("columnName", columnName);
+
 		return (
 			<div
 				style={{
@@ -55,20 +60,29 @@ export const NRQLResultsTable = (props: {
 		);
 	};
 
-	const calculateColumnWidth = value => {
-		return typeof value === "number"
-			? Math.min(MAX_COL_WIDTH, Math.max(MIN_COL_WIDTH, String(value).length + 150))
-			: typeof value === "string"
-			? Math.min(MAX_COL_WIDTH, Math.max(MIN_COL_WIDTH, value.length + 150))
-			: MIN_COL_WIDTH;
+	const calculateColumnWidth = (value: string): number => {
+		return stringLengthInPixels(value);
 	};
+
+	const stringLengthInPixels: (str: string) => number = (function () {
+		const ctx = document.createElement("canvas").getContext("2d");
+		if (ctx) {
+			ctx.font = "13px monospace";
+			return function (str: string) {
+				const stringLengthInPixels = Math.round(ctx.measureText(str).width) + 20;
+				return Math.min(MAX_COL_WIDTH, Math.max(MIN_COL_WIDTH, stringLengthInPixels));
+			};
+		}
+		return function (str: string) {
+			return MIN_COL_WIDTH;
+		};
+	})();
 
 	const calculateRowHeights = rowCalcData => {
 		return rowCalcData.map(([index, longestLength, columnWidthValue]) => {
-			let lengthOfString = longestLength * 11;
+			let lengthOfString = longestLength * 8;
 			const numLines = Math.ceil(lengthOfString / columnWidthValue);
-			//@TODO, make this value dynamic
-			const lineHeight = 22;
+			const lineHeight = 26;
 			const totalHeight = numLines * lineHeight;
 			return totalHeight;
 		});
@@ -88,9 +102,9 @@ export const NRQLResultsTable = (props: {
 		});
 	};
 
-	const calculateColumnWidths = firstRowResults => {
+	const calculateColumnWidths = (firstRowResults: { [key: string]: string | number }) => {
 		return Object.entries(firstRowResults).map(([key, value]) => {
-			return calculateColumnWidth(value);
+			return calculateColumnWidth(value as string);
 		});
 	};
 
