@@ -21,6 +21,15 @@ repositories {
     maven { url = "https://www.jetbrains.com/intellij-repository/snapshots" }
 }
 
+// Include the generated files in the source set
+sourceSets {
+    main {
+        java {
+            srcDirs("src/main/gen")
+        }
+    }
+}
+
 ext {
     jxBrowserVersion = "7.18"
 }
