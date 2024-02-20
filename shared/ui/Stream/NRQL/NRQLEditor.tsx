@@ -129,19 +129,35 @@ export const NRQLEditor = React.forwardRef(
 				},
 			});
 
-			// sample...
-			// monaco.editor.defineTheme("nrql", {
-			// 	base: "vs-dark",
-			// 	inherit: true,
-			// 	rules: [
-			// 		{
-			// 			token: "keyword.nrql",
-			// 			foreground: "ff0000",
-			// 		},
-			// 	],
-			// 	colors: {},
-			// });
-			// monaco.editor.setTheme("nrql");
+			monaco.editor.defineTheme("nrql", {
+				base: theme === "light" ? "vs" : theme,
+				inherit: true,
+				rules: [
+					{
+						token: "keyword.nrql",
+						foreground: "#da66ed",
+					},
+					{
+						token: "keyword.operator.nrql",
+						foreground: "#52a7f7",
+					},
+					{
+						token: "support.function.nrql",
+						foreground: "#52a7f7",
+					},
+					{
+						token: "comment",
+						foreground: "#8a939a",
+					},
+					{
+						token: "string",
+						foreground: "#6cb505",
+					},
+					{ token: "comment.nrql", foreground: "#8a939a" },
+				],
+				colors: {},
+			});
+			monaco.editor.setTheme("nrql");
 
 			monaco.languages.setLanguageConfiguration("nrql", {
 				autoClosingPairs: [
@@ -159,6 +175,13 @@ export const NRQLEditor = React.forwardRef(
 				ignoreCase: true,
 				tokenizer: {
 					root: [
+						// Single-line comment rule
+						[/(\/\/).*$/, "comment"],
+
+						// Multiline comment rules
+						[/\/\*/, "comment", "@comment"],
+						[/\*\//, "comment", "@pop"],
+						[/.*\*\//, "comment"],
 						[
 							new RegExp(`\\b(${response.keywords.map(_ => _.label).join("|")})\\b`, "i"),
 							"keyword.nrql",
@@ -177,6 +200,12 @@ export const NRQLEditor = React.forwardRef(
 							"support.function.nrql",
 						],
 						[/'.*?'/, "string"],
+					],
+					comment: [
+						[/[^*/]+/, "comment"],
+						[/\/\*/, "comment", "@push"],
+						[/\*\//, "comment", "@pop"],
+						[/./, "comment"],
 					],
 				},
 			});
