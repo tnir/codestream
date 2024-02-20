@@ -9,7 +9,11 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class ExecuteNrql : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
-        e.presentation.isVisible = (e.project?.editorService?.activeEditor?.document?.file?.extension?.equals("nrql", true) == true)
+        val editor = e.project?.editorService?.activeEditor
+        val isNrql = editor?.document?.file?.extension?.equals("nrql", true) == true
+        val isNotBlank = editor?.selectionModel?.selectedText?.isNotBlank() == true
+
+        e.presentation.isVisible = isNrql && isNotBlank
     }
 
     override fun actionPerformed(e: AnActionEvent) {
