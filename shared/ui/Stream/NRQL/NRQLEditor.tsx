@@ -75,7 +75,7 @@ export const NRQLEditor = React.forwardRef(
 		}
 
 		const themeContext = useContext(ThemeContext);
-		const theme = isDarkTheme(themeContext) ? "vs-dark" : "light";
+		const theme = isDarkTheme(themeContext) ? "vs-dark" : "vs";
 
 		const handleEditorDidMount = async (
 			editor: monaco.editor.IStandaloneCodeEditor,
@@ -130,7 +130,7 @@ export const NRQLEditor = React.forwardRef(
 			});
 
 			monaco.editor.defineTheme("nrql", {
-				base: theme === "light" ? "vs" : theme,
+				base: theme,
 				inherit: true,
 				rules: [
 					{

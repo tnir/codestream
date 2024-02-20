@@ -45,7 +45,7 @@ export const NRQLResultsJSON = (props: Props) => {
 				defaultLanguage="json"
 				defaultValue={JSON.stringify(props.results, null, 4)}
 				onMount={handleEditorDidMount}
-				theme={isDarkTheme(themeContext) ? "vs-dark" : "light"}
+				theme={isDarkTheme(themeContext) ? "vs-dark" : "vs"}
 			/>
 		</>
 	);
