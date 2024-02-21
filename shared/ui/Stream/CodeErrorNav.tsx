@@ -350,7 +350,9 @@ export function CodeErrorNav(props: Props) {
 				occurrenceIdToUse = existingStackTrace.occurrenceId;
 				refToUse = existingStackTrace.sha;
 			}
-			entityIdToUse = codeError?.objectInfo?.entityId;
+			if (typeof codeError?.objectInfo?.entityId === "string") {
+				entityIdToUse = codeError?.objectInfo?.entityId;
+			}
 		}
 		if (!errorGroupGuidToUse) {
 			console.error("missing error group guid");
@@ -441,7 +443,8 @@ export function CodeErrorNav(props: Props) {
 				} else if (
 					// Attempt to set remote from codeError object as long as we know there is a repo associated
 					codeError?.objectInfo?.remote &&
-					!_isEmpty(derivedState.currentCodeErrorData.relatedRepos)
+					(!_isEmpty(derivedState.currentCodeErrorData.relatedRepos) ||
+						codeError?.objectInfo?.hasRelatedRepos)
 				) {
 					targetRemote = codeError?.objectInfo?.remote;
 				}
@@ -588,6 +591,7 @@ export function CodeErrorNav(props: Props) {
 									accountId: errorGroupResult.accountId.toString(),
 									entityId: errorGroupResult?.errorGroup?.entityGuid || "",
 									entityName: errorGroupResult?.errorGroup?.entityName || "",
+									hasRelatedRepos: !_isEmpty(derivedState.currentCodeErrorData.relatedRepos),
 								},
 							},
 						])
