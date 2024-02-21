@@ -2,7 +2,7 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 # Directory of the script
-DIR="$(realpath $(dirname -- "$0"))"
+DIR="$(cd "$(dirname -- "$0")"; pwd)"
 
 # Maximum log file line count and log file location
 MAX_LOG_LINES=1000
