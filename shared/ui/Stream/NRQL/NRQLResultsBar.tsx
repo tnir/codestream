@@ -1,8 +1,7 @@
 import React from "react";
 import { NRQLResult } from "@codestream/protocols/agent";
-import { CartesianGrid, ResponsiveContainer, YAxis, BarChart, Bar, Cell, Tooltip } from "recharts";
+import { ResponsiveContainer, YAxis, XAxis, BarChart, Bar, Cell } from "recharts";
 import { Colors } from "./utils";
-import { CustomTooltip } from "./CustomTooltip";
 
 interface Props {
 	results: NRQLResult[];
@@ -11,6 +10,7 @@ interface Props {
 	 * but the facet in the metadata that points to the name of the faceted property/ies
 	 */
 	facet: string[];
+	height: number;
 }
 
 export const NRQLResultsBar = (props: Props) => {
@@ -25,24 +25,43 @@ export const NRQLResultsBar = (props: Props) => {
 
 	return (
 		<div className="histogram-chart">
-			<div style={{ marginLeft: "0px", marginBottom: "20px" }}>
-				<ResponsiveContainer width="100%" height={300} debounce={1}>
+			<div style={{ height: props.height, overflowY: "auto" }}>
+				<ResponsiveContainer width="100%" height={props.results.length * 55} debounce={1}>
 					<BarChart
 						width={500}
-						height={300}
+						height={props.results.length * 50}
 						data={props.results}
+						layout="vertical"
 						margin={{
-							top: 5,
+							top: 20,
 							right: 0,
-							left: 0,
+							left: 20,
 							bottom: 5,
 						}}
+						barCategoryGap={20}
+						barGap={5}
 					>
-						<CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-						<YAxis tick={{ fontSize: 11 }} />
-						<Tooltip content={<CustomTooltip facet={props.facet} />} />
-						<Bar dataKey={keyName} fill="#8884d8">
-							{results.map((entry, index) => (
+						<XAxis hide type="number" tick={{ fontSize: 11 }} domain={[0, "dataMax"]} />{" "}
+						<YAxis
+							dataKey={keyName}
+							type="category"
+							orientation="right"
+							axisLine={false}
+							tickLine={false}
+						/>
+						<Bar
+							dataKey={keyName}
+							fill="#8884d8"
+							radius={[5, 5, 5, 5]}
+							barSize={10}
+							label={renderCustomLabel}
+							isAnimationActive={true}
+							background={{
+								fill: "var(--app-background-color-hover)",
+								radius: 5,
+							}}
+						>
+							{props.results.map((entry, index) => (
 								<Cell
 									key={
 										entry[
@@ -57,5 +76,14 @@ export const NRQLResultsBar = (props: Props) => {
 				</ResponsiveContainer>
 			</div>
 		</div>
+	);
+};
+const renderCustomLabel = props => {
+	const { x, y, width, value, name } = props;
+
+	return (
+		<text x={20} y={y - 10} fill={`var(--text-color)`} textAnchor="left" fontSize={13}>
+			{name}
+		</text>
 	);
 };

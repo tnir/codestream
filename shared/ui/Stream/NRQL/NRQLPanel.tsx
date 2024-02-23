@@ -91,8 +91,9 @@ const OptionName = styled.div`
 `;
 
 const ResultsContainer = styled.div`
-	padding: 0px 20px 13px 20px;
+	padding: 0px 20px 14px 20px;
 	width: 100%;
+	height: 100%;
 	overflow: hidden;
 `;
 
@@ -486,11 +487,15 @@ export const NRQLPanel = (props: {
 								{resultsTypeGuess.selected === "billboard" && (
 									<NRQLResultsBillboard results={results} eventType={eventType} />
 								)}
-								{resultsTypeGuess.selected === "area" && <NRQLResultsArea results={results} />}
-								{resultsTypeGuess.selected === "line" && <NRQLResultsLine results={results} />}
+								{resultsTypeGuess.selected === "area" && (
+									<NRQLResultsArea eventType={eventType} results={results} />
+								)}
+								{resultsTypeGuess.selected === "line" && (
+									<NRQLResultsLine eventType={eventType} results={results} facet={facet!} />
+								)}
 								{resultsTypeGuess.selected === "json" && <NRQLResultsJSON results={results} />}
 								{resultsTypeGuess.selected === "bar" && (
-									<NRQLResultsBar results={results} facet={facet!} />
+									<NRQLResultsBar height={trimmedHeight} results={results} facet={facet!} />
 								)}
 								{resultsTypeGuess.selected === "pie" && (
 									<NRQLResultsPie results={results} facet={facet!} />
