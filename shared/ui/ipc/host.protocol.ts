@@ -72,6 +72,7 @@ export interface SignedInBootstrapData extends BootstrapInHostResponse {
 export enum LogoutReason {
 	Unknown = "unknown",
 	ReAuthenticating = "reAuthenticating",
+	InvalidRefreshToken = "InvalidRefreshToken",
 }
 
 export interface LogoutRequest {
