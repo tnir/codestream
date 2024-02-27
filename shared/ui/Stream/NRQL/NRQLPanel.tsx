@@ -135,7 +135,7 @@ export const NRQLPanel = (props: {
 	ide?: { name?: IdeNames; browserEngine?: BrowserEngines };
 }) => {
 	const supports = {
-		export: props.ide?.name === "VSC",
+		export: props.ide?.name === "VSC" || props.ide?.name === "JETBRAINS",
 		// default to true! currently JsBrowser works!
 		enhancedEditor: true, // !props.ide || props?.ide?.browserEngine !== "JxBrowser",
 	};
