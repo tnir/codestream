@@ -1,8 +1,10 @@
 package com.codestream.actions
 
 import com.codestream.editorService
+import com.codestream.extensions.file
 import com.codestream.extensions.selectionOrCurrentLine
 import com.codestream.protocols.webview.LogsNotifications
+import com.codestream.sessionService
 import com.codestream.webViewService
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -10,6 +12,12 @@ import com.intellij.util.DocumentUtil
 import java.util.regex.Pattern
 
 class LogSearch: DumbAwareAction() {
+    override fun update(e: AnActionEvent) {
+        val isLoggedIn = e.project?.sessionService?.userLoggedIn != null
+
+        e.presentation.isVisible = isLoggedIn
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         var query = e.project?.editorService?.activeEditor?.selectionModel?.selectedText ?: ""
         val editor = e.project?.editorService?.activeEditor
