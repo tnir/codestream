@@ -394,6 +394,20 @@ export const ObservabilityAnomalyPanel = () => {
 								</>
 							) : (
 								<div>
+									{derivedState.currentObservabilityAnomaly.scope && (
+										<DataRow>
+											<DataLabel>Transaction:</DataLabel>
+											<DataValue>{derivedState.currentObservabilityAnomaly.scope}</DataValue>
+										</DataRow>
+									)}
+									{derivedState.currentObservabilityAnomalyEntityName && (
+										<DataRow>
+											<DataLabel>Service:</DataLabel>
+											<DataValue data-testid={`service-label`}>
+												{derivedState.currentObservabilityAnomalyEntityName}
+											</DataValue>
+										</DataRow>
+									)}
 									{telemetryResponse?.errors && telemetryResponse.errors.length > 0 && (
 										<div>
 											<br />
@@ -443,20 +457,6 @@ export const ObservabilityAnomalyPanel = () => {
 												})}
 											</div>
 										</div>
-									)}
-									{derivedState.currentObservabilityAnomaly.scope && (
-										<DataRow>
-											<DataLabel>Transaction:</DataLabel>
-											<DataValue>{derivedState.currentObservabilityAnomaly.scope}</DataValue>
-										</DataRow>
-									)}
-									{derivedState.currentObservabilityAnomalyEntityName && (
-										<DataRow>
-											<DataLabel>Service:</DataLabel>
-											<DataValue data-testid={`service-label`}>
-												{derivedState.currentObservabilityAnomalyEntityName}
-											</DataValue>
-										</DataRow>
 									)}
 
 									<div>
