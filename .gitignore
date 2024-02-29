@@ -8,3 +8,6 @@
 .DS_Store
 .tsbuildinfo
 dist/
+jb/.classpath
+jb/bin/main/
+jb/bin/test/

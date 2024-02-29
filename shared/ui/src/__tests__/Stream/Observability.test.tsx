@@ -421,7 +421,7 @@ describe("Observability", () => {
 			expect(mockTrack).toHaveBeenCalledTimes(1);
 			expect(mockTrack).toHaveBeenCalledWith("codestream/o11y displayed", {
 				meta_data: `state: services`,
-				event_type: "state_load",
+				event_type: "modal_display",
 			});
 		});
 	});
@@ -450,7 +450,7 @@ describe("Observability", () => {
 			expect(mockTrack).toHaveBeenCalledTimes(1);
 			expect(mockTrack).toHaveBeenCalledWith("codestream/o11y displayed", {
 				meta_data: `state: no_entities`,
-				event_type: "state_load",
+				event_type: "modal_display",
 			});
 		});
 	});
@@ -491,7 +491,7 @@ describe("Observability", () => {
 			expect(mockTrack).toHaveBeenCalledTimes(1);
 			expect(mockTrack).toHaveBeenCalledWith("codestream/o11y displayed", {
 				meta_data: `state: no_services`,
-				event_type: "state_load",
+				event_type: "modal_display",
 				meta_data_2: `meta: {
 					hasEntities: true,
 					hasRepoForEntityAssociator: true,
@@ -522,7 +522,7 @@ describe("Observability", () => {
 			expect(mockTrack).toHaveBeenCalledTimes(1);
 			expect(mockTrack).toHaveBeenCalledWith("codestream/o11y displayed", {
 				meta_data: "state: Not Connected",
-				event_type: "state_load",
+				event_type: "modal_display",
 			});
 		});
 	});

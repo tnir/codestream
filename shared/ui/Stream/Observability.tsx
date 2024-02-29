@@ -636,7 +636,7 @@ export const Observability = React.memo((props: Props) => {
 			console.debug("o11y: O11y Rendered", telemetryStateValue);
 			const properties: TelemetryData = {
 				meta_data: `state: ${telemetryStateValue}`,
-				event_type: "state_load",
+				event_type: "modal_display",
 			};
 			if (telemetryStateValue === "no_services") {
 				properties.meta_data_2 = `meta: {
@@ -678,7 +678,7 @@ export const Observability = React.memo((props: Props) => {
 				meta_data_2: `slos_listed: ${hasServiceLevelObjectives}`,
 				meta_data_4: `anomalies_listed: ${hasAnomalies}`,
 				meta_data_3: `vulnerabilities_listed: ${isVulnPresent}`,
-				event_type: "state_load",
+				event_type: "modal_display",
 			};
 
 			console.debug(`o11y: NR Service Clicked`, telemetryData);
