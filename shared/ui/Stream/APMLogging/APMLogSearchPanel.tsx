@@ -24,10 +24,13 @@ import { HostApi } from "../../webview-api";
 import Button from "../Button";
 import Icon from "../Icon";
 import { Link } from "../Link";
-import { TableWindow } from "../TableWindow";
 import { APMLogRow } from "./APMLogRow";
 import { PanelHeaderTitleWithLink } from "../PanelHeaderTitleWithLink";
 import { Disposable } from "@codestream/webview/utils";
+import { isEmpty as _isEmpty } from "lodash";
+import { APMLogTableLoading } from "./APMLogTableLoading";
+import { TableWindow } from "../TableWindow";
+
 interface SelectedOption {
 	value: string;
 	label: string;
@@ -154,12 +157,17 @@ export const APMLogSearchPanel = (props: {
 	const [selectedEntityAccount, setSelectedEntityAccount] = useState<OptionProps | undefined>(
 		undefined
 	);
-	const [results, setResults] = useState<LogResult[]>([]);
+
+	const [originalSearchResults, setOriginalSearchResults] = useState<LogResult[]>([]);
+	const [searchResults, setSearchResults] = useState<LogResult[]>([]);
+
 	const [severityAttribute, setSeverityAttribute] = useState<string>();
 	const [messageAttribute, setMessageAttribute] = useState<string>();
+	const [currentShowSurroundingIndex, setCurrentShowSurroundingIndex] = useState<
+		number | undefined
+	>(undefined);
+	const [queriedWithNonEmptyString, setQueriedWithNonEmptyString] = useState<boolean>(false);
 	const [displayColumns, setDisplayColumns] = useState<string[]>([]);
-	const [beforeLogs, setBeforeLogs] = useState<LogResult[]>([]);
-	const [afterLogs, setAfterLogs] = useState<LogResult[]>([]);
 	const [surroundingLogsLoading, setSurroundingLogsLoading] = useState<boolean>();
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [logError, setLogError] = useState<string | undefined>("");
@@ -309,10 +317,8 @@ export const APMLogSearchPanel = (props: {
 	 */
 	const fetchSurroundingLogs = async (entityGuid: string, messageId: string, since: number) => {
 		try {
-			setSurroundingLogsLoading(true);
-			setBeforeLogs([]);
-			setAfterLogs([]);
-
+			setSearchResults([]);
+			setIsLoading(true);
 			const response = await HostApi.instance.send(GetSurroundingLogsRequestType, {
 				entityGuid,
 				messageId,
@@ -331,17 +337,37 @@ export const APMLogSearchPanel = (props: {
 				return;
 			}
 
+			const surroundingLogs: LogResult[] = [];
+
 			if (response.beforeLogs && response.beforeLogs.length > 0) {
-				setResults(response.beforeLogs);
+				surroundingLogs.push(...response.beforeLogs);
 			}
 
+			const originalLog = searchResults.find(r => {
+				return r.messageId === messageId;
+			});
+
+			//this should ALWAYS be true, if not, bigger issue
+			surroundingLogs.push(originalLog!);
+
 			if (response.afterLogs && response.afterLogs.length > 0) {
-				setResults(response.afterLogs);
+				surroundingLogs.push(...response.afterLogs);
 			}
+
+			const logToPinIndex = surroundingLogs.findIndex(r => {
+				return r.messageId === messageId;
+			});
+			surroundingLogs[logToPinIndex] = {
+				...surroundingLogs[logToPinIndex],
+				isShowSurrounding: "true",
+			};
+			setCurrentShowSurroundingIndex(logToPinIndex);
+			setSearchResults(surroundingLogs);
 		} catch (ex) {
 			handleError(ex);
 		} finally {
 			setSurroundingLogsLoading(false);
+			setIsLoading(false);
 		}
 	};
 
@@ -350,10 +376,12 @@ export const APMLogSearchPanel = (props: {
 			setLogError(undefined);
 			setHasSearched(true);
 			setIsLoading(true);
-			setResults([]);
+			setSearchResults([]);
+			setOriginalSearchResults([]);
 			setSeverityAttribute(undefined);
 			setMessageAttribute(undefined);
 			setTotalItems(0);
+			setCurrentShowSurroundingIndex(undefined);
 
 			const filterText = suppliedQuery || query;
 
@@ -372,6 +400,8 @@ export const APMLogSearchPanel = (props: {
 					direction: "DESC",
 				},
 			});
+
+			setQueriedWithNonEmptyString(!_isEmpty(filterText));
 
 			if (!response) {
 				handleError(
@@ -392,7 +422,8 @@ export const APMLogSearchPanel = (props: {
 			}
 
 			if (response.logs && response.logs.length > 0) {
-				setResults(response.logs);
+				setSearchResults(response.logs);
+				setOriginalSearchResults(response.logs);
 				setTotalItems(response.logs.length);
 				setMessageAttribute(response.messageAttribute!);
 				setSeverityAttribute(response.severityAttribute!);
@@ -476,15 +507,34 @@ export const APMLogSearchPanel = (props: {
 		);
 	};
 
-	const updateResults = (index, updatedJsx) => {
-		const newResults = [...results];
+	const updateExpandedContent = (index, updatedJsx) => {
+		const newResults = [...searchResults];
 		newResults[index] = { ...newResults[index], expandedContent: updatedJsx };
-		setResults(newResults);
+		setSearchResults(newResults);
+	};
+
+	const updateShowSurrounding = async (index: number, task: string) => {
+		if (task === "reset") {
+			const modifiedSearchResults = originalSearchResults.map(
+				({ isShowSurrounding, ...keepAttrs }) => keepAttrs
+			);
+
+			setSearchResults(modifiedSearchResults);
+			setOriginalSearchResults(modifiedSearchResults);
+			setCurrentShowSurroundingIndex(undefined);
+		} else {
+			const pinnedLog = searchResults[index];
+			await fetchSurroundingLogs(
+				selectedEntityAccount?.value,
+				pinnedLog.messageId,
+				parseInt(pinnedLog.timestamp)
+			);
+		}
 	};
 
 	const formatRowResults = () => {
-		if (results) {
-			let _results: LogResult[] = results;
+		if (searchResults) {
+			let _results: LogResult[] = searchResults;
 			// @TODO: eventually hook up "Show More"
 			// if (_results[_results.length - 1]?.showMore !== "true") {
 			// 	_results.push({ showMore: "true" });
@@ -495,8 +545,10 @@ export const APMLogSearchPanel = (props: {
 				const severity = severityAttribute ? r[severityAttribute] : "";
 				const showMore = r?.showMore ? true : false;
 				const expandedContent = r?.expandedContent ?? undefined;
+				const isShowSurrounding = r?.isShowSurrounding ?? false;
 				const entityGuid = selectedEntityAccount?.value;
 				const accountId = parseId(entityGuid);
+				const enableShowSurrounding = queriedWithNonEmptyString && !currentShowSurroundingIndex;
 
 				return (
 					<APMLogRow
@@ -508,8 +560,11 @@ export const APMLogSearchPanel = (props: {
 						entityGuid={entityGuid}
 						logRowData={r}
 						showMore={showMore}
-						updateData={updateResults}
+						isShowSurrounding={isShowSurrounding}
+						updateExpandedContent={updateExpandedContent}
+						updateShowSurrounding={updateShowSurrounding}
 						expandedContent={expandedContent}
+						enableShowSurrounding={enableShowSurrounding}
 					/>
 				);
 			});
@@ -633,13 +688,11 @@ export const APMLogSearchPanel = (props: {
 				)} */}
 
 				<div>
-					{/* {isLoading && (
-							TODO: Skeleton loader? Couldn't get it to work when I tried
-						)} */}
+					{isLoading && <APMLogTableLoading height={height} />}
 
 					{!logError &&
 						!isLoading &&
-						results &&
+						searchResults &&
 						totalItems > 0 &&
 						fieldDefinitions &&
 						!isInitializing && (
@@ -647,9 +700,10 @@ export const APMLogSearchPanel = (props: {
 								{ListHeader()}
 								<TableWindow
 									itemData={formatRowResults()}
-									itemCount={results.length}
+									itemCount={searchResults.length}
 									height={trimmedListHeight}
 									width={"100%"}
+									currentShowSurroundingIndex={currentShowSurroundingIndex}
 								/>
 							</>
 						)}
