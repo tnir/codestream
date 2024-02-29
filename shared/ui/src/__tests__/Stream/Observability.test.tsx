@@ -572,7 +572,7 @@ describe("Observability", () => {
 				meta_data_2: `slos_listed: true`,
 				meta_data_4: `anomalies_listed: true`,
 				meta_data_3: `vulnerabilities_listed: false`,
-				event_type: "modal_display",
+				event_type: "state_load",
 			});
 		});
 	});
