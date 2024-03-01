@@ -363,6 +363,12 @@ export const APMLogSearchPanel = (props: {
 			};
 			setCurrentShowSurroundingIndex(logToPinIndex);
 			setSearchResults(surroundingLogs);
+
+			HostApi.instance.track("codestream/logs/show_surrounding_button clicked", {
+				entity_guid: `${entityGuid}`,
+				account_id: parseId(entityGuid)?.accountId,
+				event_type: "click",
+			});
 		} catch (ex) {
 			handleError(ex);
 		} finally {
