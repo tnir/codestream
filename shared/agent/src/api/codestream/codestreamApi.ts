@@ -2486,14 +2486,17 @@ export class CodeStreamApiProvider implements ApiProvider {
 				})
 				.catch(ex => {
 					Logger.error(ex, cc);
-					delete this._refreshNRTokenPromise;
-					if (SessionContainer.isInitialized()) {
-						SessionContainer.instance().session.onSessionTokenStatusChanged(
-							SessionTokenStatus.Expired
-						);
+
+					if (ex.statusCode === 403) {
+						delete this._refreshNRTokenPromise;
+						if (SessionContainer.isInitialized() && !this._refreshTokenFailed) {
+							SessionContainer.instance().session.onSessionTokenStatusChanged(
+								SessionTokenStatus.Expired
+							);
+						}
+						this._refreshTokenFailed = true;
+						reject(ex);
 					}
-					this._refreshTokenFailed = true;
-					reject(ex);
 				});
 		});
 		return this._refreshNRTokenPromise;
