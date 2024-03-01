@@ -301,7 +301,7 @@ export const APMLogRow = (props: {
 											onClick={handleClickShowSurrounding}
 											name="resize-vertical-rounded"
 											style={{ cursor: "pointer" }}
-											title="Show Surrounding"
+											title="Show Surrounding Logs"
 											delay={1}
 											className="clickable"
 										/>
