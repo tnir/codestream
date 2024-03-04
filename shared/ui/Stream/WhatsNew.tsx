@@ -77,6 +77,23 @@ export const WhatsNewPanel = () => {
 			<TimelineContent>
 				<TimelineHeader>
 					<TimelineMarker />
+					<TimelineTitle>15.4.0</TimelineTitle>
+					<TimelineDate>March 5, 2024</TimelineDate>
+				</TimelineHeader>
+				<div className="tl-body">
+					<Update>
+						<UpdateTitle>Show Surrounding Logs</UpdateTitle>
+						<UpdateItem>
+							After you've searched for a set of logs, hover over an entry in the results click 
+							"Show Surrounding Logs" to see that specific log line in the context of the log file. You'll 
+							see the logs the preceed and follow that log line.
+						</UpdateItem>
+					</Update>
+				</div>
+			</TimelineContent>
+			<TimelineContent>
+				<TimelineHeader>
+					<TimelineMarker />
 					<TimelineTitle>15.3.0</TimelineTitle>
 					<TimelineDate>February 14, 2024</TimelineDate>
 				</TimelineHeader>
