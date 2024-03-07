@@ -34,6 +34,7 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 			currentEntityGuid: context.currentEntityGuid,
 			ideName: ide?.name,
 			goldenMetricsDropdownIsExpanded,
+			supportsExploreYourData: ide?.name === "VSC" || ide?.name === "JETBRAINS",
 		};
 	});
 
@@ -152,7 +153,9 @@ export const ObservabilityGoldenMetricDropdown = React.memo((props: Props) => {
 												<></>
 											)}
 										</span>
-										{getTerminalIcon(gm.queries?.timeseries || "")}
+										{derivedState.supportsExploreYourData
+											? getTerminalIcon(gm.queries?.timeseries || "")
+											: null}
 										{/* only show the globe on hover if percent change is there*/}
 										{percentChange ? <>{getGlobeIcon()}</> : <></>}
 									</>
