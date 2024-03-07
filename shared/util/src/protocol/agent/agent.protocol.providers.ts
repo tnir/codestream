@@ -2344,21 +2344,25 @@ export interface RecentIssue {
 	issueId?: string;
 }
 
+export interface GoldenMetric {
+	definition: {
+		from: string;
+		select: string;
+		where?: string;
+	};
+	name: string;
+	title: string;
+	unit: string;
+}
+
+export interface GoldenMetrics {
+	metrics: GoldenMetric[];
+}
+
 export interface EntityGoldenMetricsQueries {
 	actor: {
 		entity: {
-			goldenMetrics: {
-				metrics: {
-					definition: {
-						from: string;
-						select: string;
-						where?: string;
-					};
-					name: string;
-					title: string;
-					unit: string;
-				}[];
-			};
+			goldenMetrics: GoldenMetrics;
 		};
 	};
 }
@@ -2403,6 +2407,28 @@ export const GoldenMetricUnitMappings: UnitMappings = {
 	TIMESTAMP: "time",
 };
 
+export interface GoldenMetricsQueries {
+	/**
+	 * The TIMESERIES query for a golden metric (e.g. `SELECT average(duration) FROM Transaction TIMESERIES`)
+	 */
+	timeseries: string;
+	/**
+	 * The default query for a golden metric (e.g. `SELECT average(duration) FROM Transaction`)
+	 */
+	default?: string;
+}
+
+export interface DeploymentDiff {
+	errorRateData?: {
+		percentChange: number | undefined;
+		permalinkUrl: string;
+	};
+	responseTimeData?: {
+		percentChange: number | undefined;
+		permalinkUrl: string;
+	};
+}
+
 export interface EntityGoldenMetrics {
 	lastUpdated: string;
 	/**
@@ -2410,23 +2436,15 @@ export interface EntityGoldenMetrics {
 	 */
 	since: string;
 	metrics: {
-		name: string;
+		queries?: GoldenMetricsQueries;
+		name: "errorRate" | "responseTimeMs" | "throughput" | string;
 		title: string;
 		unit: string;
 		displayUnit: string;
 		value: number;
 		displayValue: string;
 	}[];
-	pillsData?: {
-		errorRateData?: {
-			percentChange: number;
-			permalinkUrl: string;
-		};
-		responseTimeData?: {
-			percentChange: number;
-			permalinkUrl: string;
-		};
-	};
+	pillsData?: DeploymentDiff;
 }
 
 export interface MethodGoldenMetrics {
