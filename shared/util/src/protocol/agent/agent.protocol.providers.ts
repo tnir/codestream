@@ -2099,7 +2099,31 @@ export interface StackTraceResponse {
 	};
 }
 
-export type EntityType =
+/**
+ * Entity.type
+ *
+ * NOTE: this is not a complete list
+ */
+type Type =
+	| "APPLICATION"
+	| "AWSLAMBDAFUNCTION"
+	| "AWS_ELASTICSEARCH"
+	| "AWS_LAMBDA"
+	| "BUILT_FROM"
+	| "AWS_SQS_QUEUE"
+	| "CLUSTER"
+	| "CONTAINER"
+	| "DATABASE"
+	| "EXTERNAL"
+	| "HOST"
+	| "REPOSITORY"
+	| "SERVICE"
+	| "USER";
+
+/**
+ * Entity.entityType
+ */
+export type EntityTypeKey =
 	| "APM_APPLICATION_ENTITY"
 	| "APM_DATABASE_INSTANCE_ENTITY"
 	| "APM_EXTERNAL_SERVICE_ENTITY"
@@ -2119,7 +2143,9 @@ export type EntityType =
 	| "UNAVAILABLE_ENTITY"
 	| "WORKLOAD_ENTITY";
 
-export const EntityTypeMap = {
+export type EntityType = EntityTypeKey;
+
+export const EntityTypeMap: Record<EntityTypeKey, string> = {
 	APM_APPLICATION_ENTITY: "APM Application",
 	APM_DATABASE_INSTANCE_ENTITY: "APM Database",
 	APM_EXTERNAL_SERVICE_ENTITY: "APM External",
@@ -2151,7 +2177,7 @@ export interface Entity {
 	goldenMetrics?: { metrics?: MethodGoldenMetrics[] };
 	guid: string;
 	name: string;
-	type?: "APPLICATION" | "REPOSITORY" | "SERVICE" | "AWSLAMBDAFUNCTION";
+	type?: Type;
 	entityType?: EntityType;
 	tags?: {
 		key: string;
@@ -2183,7 +2209,7 @@ export interface RelatedEntity {
 	target: {
 		entity: Entity;
 	};
-	type: string;
+	type: Type;
 }
 
 export interface RelatedEntityByType {
