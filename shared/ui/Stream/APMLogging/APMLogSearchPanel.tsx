@@ -85,6 +85,13 @@ const LogFilterBarContainer = styled.div`
 
 type AdditionalType = { nextCursor?: string };
 
+interface EntityAccountOption {
+	label: string;
+	value: string;
+	accountName: string;
+	entityTypeDescription: string;
+}
+
 const OptionName = styled.div`
 	color: var(--text-color);
 	white-space: nowrap;
@@ -133,7 +140,7 @@ const Option = (props: OptionProps) => {
 	const children = (
 		<>
 			<OptionName>
-				{props.data?.label} <OptionType>{props.data?.entityType}</OptionType>
+				{props.data?.label} <OptionType>{props.data?.entityTypeDescription}</OptionType>
 			</OptionName>
 			<OptionAccount>{props.data?.accountName}</OptionAccount>
 		</>
@@ -214,7 +221,8 @@ export const APMLogSearchPanel = (props: {
 				value: entityAccount.entityGuid,
 				label: entityAccount.entityName,
 				accountName: entityAccount.accountName,
-				entityType: entityAccount.entityTypeDescription,
+				entityTypeDescription: entityAccount.entityTypeDescription,
+				accountId: entityAccount.accountId,
 			});
 
 			fetchFieldDefinitions(entityAccount.entityGuid);
@@ -228,7 +236,7 @@ export const APMLogSearchPanel = (props: {
 			.then((_: GetObservabilityReposResponse) => {
 				entityAccounts = _.repos?.flatMap(r => r.entityAccounts) ?? [];
 
-				const entityAccount = entityAccounts.find(ea => ea.entityGuid === props.entityGuid);
+				let entityAccount = entityAccounts.find(ea => ea.entityGuid === props.entityGuid);
 
 				if (entityAccount) {
 					trackOpenTelemetry(props.entryPoint, entityAccount.entityGuid, entityAccount.accountId);
@@ -266,15 +274,22 @@ export const APMLogSearchPanel = (props: {
 		};
 	});
 
-	const handleSelectDropdownOption = entityAccount => {
+	const handleSelectDropdownOption = (entityAccount: {
+		entityTypeDescription?: string;
+		label: string;
+		value: string;
+		accountId: number;
+		accountName: string;
+	}) => {
 		if (!entityAccount) {
 			setSelectedEntityAccount(null);
+			return;
 		}
 
 		const customLabel = (
 			<>
 				<span>Service: {entityAccount.label}</span>
-				<span className="subtle"> ({entityAccount.entityType})</span>
+				<span className="subtle"> ({entityAccount.entityTypeDescription})</span>
 			</>
 		);
 
@@ -282,7 +297,7 @@ export const APMLogSearchPanel = (props: {
 			value: entityAccount.value,
 			label: customLabel,
 			accountName: entityAccount.accountName,
-			entityType: entityAccount.entityTypeDescription,
+			entityTypeDescription: entityAccount.entityTypeDescription,
 		});
 	};
 
@@ -492,9 +507,9 @@ export const APMLogSearchPanel = (props: {
 				label: e.name,
 				value: e.guid,
 				accountName: e.account,
-				entityType: e.entityTypeDescription,
+				entityTypeDescription: e.entityTypeDescription,
 			};
-		});
+		}) as EntityAccountOption[];
 
 		return {
 			options,

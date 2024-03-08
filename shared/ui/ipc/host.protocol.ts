@@ -334,12 +334,12 @@ export interface OpenEditorViewNotification {
 		// other
 		| "notification"
 		| "golden_metrics"
-		| "profile";
+		| "profile"
+		| "entity_guid_finder";
 	ide: {
 		name?: IdeNames;
 		browserEngine?: BrowserEngines;
 	};
-
 	accountId?: number;
 	panelLocation?: ViewColumn;
 	entityGuid?: string;
