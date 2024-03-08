@@ -59,10 +59,7 @@ import { ClearModal, ComposeArea, Step, Subtext, Tip } from "./ReviewNav";
 import ScrollBox from "./ScrollBox";
 import { WarningBox } from "./WarningBox";
 import { isEmpty as _isEmpty } from "lodash";
-import {
-	codeErrorsApi,
-	codeErrorsIDEApi,
-} from "@codestream/webview/store/codeErrors/api/apiResolver";
+import { codeErrorsApi } from "@codestream/webview/store/codeErrors/api/apiResolver";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
@@ -223,7 +220,6 @@ export function CodeErrorNav(props: Props) {
 	const exit = async () => {
 		// clear out the current code error (set to blank) in the webview
 		if (derivedState.errorsDemoMode.enabled) {
-			await codeErrorsIDEApi.editorUndo(2); // Undo apply fix and formatting
 			if (derivedState.currentCodeErrorId) {
 				// dispatch(deletePost(derivedState.currentCodeErrorData.postId!));
 				dispatch(removeCodeError(derivedState.currentCodeErrorId));
