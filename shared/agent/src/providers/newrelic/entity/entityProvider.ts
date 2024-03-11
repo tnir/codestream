@@ -1,11 +1,10 @@
-import { lsp, lspHandler } from "../../../system/decorators/lsp";
 import {
-	Entity,
-	EntityType,
-	EntityTypeMap,
 	ERROR_GENERIC_USE_ERROR_MESSAGE,
 	ERROR_NRQL_GENERIC,
 	ERROR_NRQL_TIMEOUT,
+	Entity,
+	EntityType,
+	EntityTypeMap,
 	GetEntityCountRequest,
 	GetEntityCountRequestType,
 	GetEntityCountResponse,
@@ -23,21 +22,22 @@ import {
 	GetObservabilityEntityByGuidResponse,
 	RelatedEntity,
 } from "@codestream/protocols/agent";
-import { log } from "../../../system/decorators/log";
+import Cache from "@codestream/utils/system/timedCache";
+import { isEmpty as _isEmpty, isUndefined as _isUndefined, isEqual } from "lodash";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
+import { Logger } from "../../../logger";
+import { Disposable, Strings } from "../../../system";
+import { log } from "../../../system/decorators/log";
+import { lsp, lspHandler } from "../../../system/decorators/lsp";
+import { ContextLogger } from "../../contextLogger";
+import { NewRelicGraphqlClient } from "../newRelicGraphqlClient";
 import {
 	CodedError,
 	EntitySearchResult,
 	GraphqlNrqlError,
 	GraphqlNrqlTimeoutError,
 } from "../newrelic.types";
-import Cache from "@codestream/utils/system/timedCache";
-import { NewRelicGraphqlClient } from "../newRelicGraphqlClient";
-import { Disposable, Strings } from "../../../system";
-import { isEmpty as _isEmpty, isUndefined as _isUndefined } from "lodash";
-import { Logger } from "../../../logger";
-import { ContextLogger } from "../../contextLogger";
-import { isEqual } from "lodash";
+import { NrApiConfig } from "../nrApiConfig";
 
 const ENTITY_CACHE_KEY = "entityCache";
 
@@ -61,10 +61,13 @@ export class EntityProvider implements Disposable {
 		[key: string]: EntityCache;
 	} = {};
 
-	constructor(private graphqlClient: NewRelicGraphqlClient) {}
+	constructor(
+		private nrApiConfig: NrApiConfig,
+		private graphqlClient: NewRelicGraphqlClient
+	) {}
 
 	get coreUrl() {
-		return this.graphqlClient.coreUrl;
+		return this.nrApiConfig.productUrl;
 	}
 
 	@lspHandler(GetEntityCountRequestType)
