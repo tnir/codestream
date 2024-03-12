@@ -2,7 +2,7 @@
 
 # TCBUILD_ASSET_FULL_NAME populated in TC build step `prep` - might need to be updated after migrating of dev_tools
 version=$TCBUILD_ASSET_FULL_NAME
-entityGuid=$2
+entityGuid=$1
 ERR_EXIT_CODE=0 # Don't fail the build for now - change once we confirm this script works
 
 # Get the commit from the current branch
