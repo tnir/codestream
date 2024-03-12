@@ -2462,11 +2462,14 @@ export class CodeStreamApiProvider implements ApiProvider {
 	refreshNewRelicToken(refreshToken: string): Promise<CSNewRelicProviderInfo> {
 		const cc = Logger.getCorrelationContext();
 
+		Logger.log("Incoming refresh New Relic token request");
 		if (this._refreshNRTokenPromise) {
+			Logger.log("Promise already made");
 			return this._refreshNRTokenPromise;
 		}
 
 		this._refreshNRTokenPromise = new Promise((resolve, reject) => {
+			Logger.log("Calling provider refresh for New Relic token...");
 			const url = "/no-auth/provider-refresh/newrelic";
 			this.put<{ refreshToken: string }, CSNewRelicProviderInfo>(url, {
 				refreshToken: refreshToken, //+ "x", // uncomment to test roadblock
@@ -2489,6 +2492,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 					}
 					delete this._refreshNRTokenPromise;
 					if (this._refreshTokenFailed) {
+						Logger.log("Recovering from refresh token failure status, session now active");
 						if (SessionContainer.isInitialized()) {
 							SessionContainer.instance().session.onSessionTokenStatusChanged(
 								SessionTokenStatus.Active
@@ -2499,18 +2503,25 @@ export class CodeStreamApiProvider implements ApiProvider {
 					resolve(response);
 				})
 				.catch(ex => {
+					Logger.log(`New Relic access token refresh failed, status code ${ex.statusCode}:`, ex);
 					Logger.error(ex, cc);
 
 					if (ex.statusCode === 403) {
 						delete this._refreshNRTokenPromise;
 						if (SessionContainer.isInitialized() && !this._refreshTokenFailed) {
+							Logger.log("Setting session expired");
 							SessionContainer.instance().session.onSessionTokenStatusChanged(
 								SessionTokenStatus.Expired
 							);
+						} else {
+							Logger.log(
+								"Session is either not initialized, or token refresh has already failed, not setting session expired"
+							);
 						}
 						this._refreshTokenFailed = true;
-						reject(ex);
 					}
+					delete this._refreshNRTokenPromise;
+					reject(ex);
 				});
 		});
 		return this._refreshNRTokenPromise;
