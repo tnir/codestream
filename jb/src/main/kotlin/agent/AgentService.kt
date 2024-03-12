@@ -142,7 +142,7 @@ class AgentService(private val project: Project) : Disposable {
     }
 
     private val logger = Logger.getInstance(AgentService::class.java)
-    private var initialization = CompletableFuture<Unit>()
+    var initialization = CompletableFuture<Unit>()
     private var isDisposing = false
     private var isRestarting = false
     private var restartCount = 0
