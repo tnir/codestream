@@ -1,5 +1,16 @@
 # Change Log
 
+## [15.5.0] - 2023-3-14
+
+### Added
+
+- Adds information about the slowest operations when viewing the details of a poorly performing transaction
+- Adds entity information when hovering over a New Relic entity GUID in a file (e.g., a terraform file)
+
+### Changed
+
+- Removes support for Visual Studio 2019
+
 ## [15.4.0] - 2023-3-5
 
 ### Added
