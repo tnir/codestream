@@ -5,7 +5,6 @@
 ### Added
 
 - Adds information about the slowest operations when viewing the details of a poorly performing transaction
-- Adds entity information when hovering over a New Relic entity GUID in a file (e.g., a terraform file)
 
 ### Changed
 
