@@ -16,7 +16,7 @@ fi
 
 # Check for missing args
 if [ -z "$version" ] || [ -z "$entityGuid" ]; then
-  echo "Usage: $0 <version> <entityGuid>"
+  echo "Usage: $0 <entityGuid>"
   exit $ERR_EXIT_CODE
 fi
 
