@@ -30,18 +30,24 @@ echo "Sending deployment event to New Relic for version $version, entityGuid $en
 DATA="{\"query\": \"mutation { changeTrackingCreateDeployment( deployment: { version: \\\"$version\\\", entityGuid: \\\"$entityGuid\\\", commit: \\\"$commit\\\" } ) { deploymentId entityGuid } }\" }"
 # echo $DATA
 
-# Send the deployment event to New Relic
-curl -i -X POST https://staging-api.newrelic.com/graphql \
+# Send the deployment event to New Relic and capture output and status code
+OUTPUT=$(curl -s -i -X POST https://staging-api.newrelic.com/graphql \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
   -H "Api-Key: $NR_API_KEY" \
   -H 'NewRelic-Requesting-Services: "CodeStream"' \
-  -d "$DATA"
+  -d "$DATA" \
+  -w "%{http_code}")
 
-# Check for curl error, echo if error occurred and exit
-if [ $? -ne 0 ]; then
+HTTP_STATUS="${OUTPUT: -3}"  # Last 3 characters are the HTTP status code. Assuming the server always replies with three digits code
+RESPONSE_BODY=${OUTPUT%???}  # Remove last 3 characters from OUTPUT
+
+# Check the HTTP status and react appropriately
+if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 400 ]]; then
   echo "Error sending deployment event to New Relic"
+  echo "HTTP Status: $HTTP_STATUS"
+  echo "Response: $RESPONSE_BODY"
   exit $ERR_EXIT_CODE
+else
+  echo "Deployment event sent to New Relic"
 fi
-
-echo "Deployment event sent to New Relic"
