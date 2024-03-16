@@ -20,6 +20,8 @@ try {
   process.exit(ERR_EXIT_CODE);
 }
 
+console.log(`Sending deployment event to New Relic for version ${version}, entityGuid ${entityGuid}, commit ${commit}`);
+
 const DATA = `{"query": "mutation { changeTrackingCreateDeployment( deployment: { version: \\"${version}\\", entityGuid: \\"${entityGuid}\\", commit: \\"${commit}\\" } ) { deploymentId entityGuid } }"}`;
 
 const options = {
