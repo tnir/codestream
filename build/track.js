@@ -1,7 +1,7 @@
 const https = require('https');
 const { execSync } = require('child_process');
 
-const version = process.argv[2];
+let version = process.argv[2];
 const entityGuid = process.argv[3];
 const NR_API_KEY = process.env.NR_API_KEY;
 const ERR_EXIT_CODE = 0; // For now non-fatal exit code
