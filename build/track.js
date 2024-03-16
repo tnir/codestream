@@ -1,8 +1,8 @@
 const https = require('https');
 const { execSync } = require('child_process');
 
-const version = process.env.TCBUILD_ASSET_FULL_NAME;
-const entityGuid = process.argv[2];
+const version = process.argv[2];
+const entityGuid = process.argv[3];
 const NR_API_KEY = process.env.NR_API_KEY;
 const ERR_EXIT_CODE = 0; // For now non-fatal exit code
 const MAX_RETRIES = 3; // Set the maximum number of retries
@@ -11,6 +11,8 @@ if (!version || !entityGuid || !NR_API_KEY) {
   console.error('Missing arguments or environment variables');
   process.exit(ERR_EXIT_CODE);
 }
+
+version = version.toLowerCase().trim();
 
 let commit;
 try {
