@@ -63,7 +63,6 @@ export default function (vsRootPath: string) {
 	try {
 		archiveFolder(
 			`${vsRootPath}\\src\\CodeStream.VisualStudio.UnitTests\\bin\\x64\\Debug\\coveragereport`,
-			`${artifactsPath}\\CoverageReport.zip`
 		);
 	} catch (err) {
 		consoul.warn("Unable to archive CoverageReport data -- allowing process to continue");
