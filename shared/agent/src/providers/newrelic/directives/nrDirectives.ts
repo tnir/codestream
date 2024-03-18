@@ -6,7 +6,6 @@ import { ObservabilityErrorsProvider } from "../errors/observabilityErrorsProvid
 import { ReposProvider } from "../repos/reposProvider";
 import { ContextLogger } from "../../contextLogger";
 import { parseId } from "../utils";
-import { Logger } from "logger";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -37,7 +36,7 @@ export class NrDirectives {
 		/** we don't always have an errorGroupId */
 		errorGroupGuid?: string;
 	}): Promise<Directives | undefined> {
-		Logger.log(`assignRepository ${JSON.stringify(request)}`);
+		ContextLogger.log(`assignRepository ${JSON.stringify(request)}`);
 		try {
 			const parsedId = parseId(request.parseableAccountId)!;
 			const accountId = parsedId?.accountId;
