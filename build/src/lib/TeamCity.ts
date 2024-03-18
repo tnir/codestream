@@ -3,7 +3,7 @@ import * as consoul from "./Consoul.ts";
 export function getSupplmentalSoftwareDirectory(): string {
 	const softwareDirectory = process.env.TCBUILD_SUPPLEMENTAL_SOFTWARE_PATH;
 
-	if(softwareDirectory){
+	if (softwareDirectory) {
 		return softwareDirectory;
 	}
 

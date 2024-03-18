@@ -1,5 +1,7 @@
 import { execFileSync, execSync } from "child_process";
 import fs from "fs";
+import { archiveFolder } from "../lib/Archive";
+import * as consoul from "../lib/Consoul";
 
 export default function (vsRootPath: string) {
 	const msbuild =
@@ -56,6 +58,16 @@ export default function (vsRootPath: string) {
 
 	if (!fs.existsSync(artifactsPath)) {
 		fs.mkdirSync(artifactsPath, { recursive: true });
+	}
+
+	try {
+		archiveFolder(
+			`${vsRootPath}\\src\\CodeStream.VisualStudio.UnitTests\\bin\\x64\\Debug\\coveragereport`,
+			`${artifactsPath}\\CoverageReport.zip`
+		);
+	} catch (err) {
+		consoul.warn("Unable to archive CoverageReport data -- allowing process to continue");
+		consoul.warn(`${err}`);
 	}
 
 	fs.copyFileSync(
