@@ -1,5 +1,6 @@
-const https = require("https");
-const { execSync } = require("child_process");
+import https from "https";
+import * as consoul from "./lib/Consoul.ts";
+import * as git from "./lib/Git.ts";
 
 let version = process.argv[2];
 const entityGuid = process.argv[3];
@@ -8,7 +9,7 @@ const ERR_EXIT_CODE = 0; // For now non-fatal exit code
 const MAX_RETRIES = 3; // Set the maximum number of retries
 
 if (!version || !entityGuid || !NR_API_KEY) {
-	console.error("Missing arguments or environment variables");
+	consoul.error("Missing arguments or environment variables");
 	process.exit(ERR_EXIT_CODE);
 }
 
@@ -16,13 +17,13 @@ version = version.toLowerCase().trim();
 
 let commit;
 try {
-	commit = execSync("git rev-parse HEAD").toString().trim();
+	commit = git.getRevision();
 } catch (error) {
-	console.error("Error getting commit from git");
+	consoul.error("Error getting commit from git");
 	process.exit(ERR_EXIT_CODE);
 }
 
-console.log(
+consoul.info(
 	`Sending deployment event to New Relic for version ${version}, entityGuid ${entityGuid}, commit ${commit}`
 );
 
@@ -40,7 +41,7 @@ const options = {
 	}
 };
 
-function sendRequest(retries) {
+function sendRequest(retries: number) {
 	const req = https.request(options, res => {
 		let data = "";
 
@@ -49,24 +50,25 @@ function sendRequest(retries) {
 		});
 
 		res.on("end", () => {
-			if (res.statusCode < 200 || res.statusCode >= 400) {
-				console.error("Error sending deployment event to New Relic");
-				console.error(`HTTP Status: ${res.statusCode}`);
-				console.error(`Response: ${data}`);
+			const statusCode = res.statusCode || 500;
+			if (statusCode < 200 || statusCode >= 400) {
+				consoul.error("Error sending deployment event to New Relic");
+				consoul.error(`HTTP Status: ${res.statusCode}`);
+				consoul.error(`Response: ${data}`);
 				process.exit(ERR_EXIT_CODE);
 			} else {
-				console.log("Deployment event sent to New Relic");
+				consoul.info("Deployment event sent to New Relic");
 			}
 		});
 	});
 
 	req.on("error", error => {
 		if (retries > 0) {
-			console.log("Retrying request...");
+			consoul.info("Retrying request...");
 			sendRequest(retries - 1);
 		} else {
-			console.error("Error sending deployment event to New Relic");
-			console.error(`Response: ${error.message}`);
+			consoul.error("Error sending deployment event to New Relic");
+			consoul.error(`Response: ${error.message}`);
 			process.exit(ERR_EXIT_CODE);
 		}
 	});

@@ -9,6 +9,7 @@
 	},
 	"scripts": {
 		"setNextVersion": "tsx ./src/setNextVersion.ts",
+		"track": "tsx ./src/track.ts",
 		"prettier": "prettier --write \"./**/*.ts\""
 	},
 	"author": "",
