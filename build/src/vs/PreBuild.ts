@@ -36,5 +36,10 @@ export default function (vsRootPath: string) {
 	const currentVersion = versioning.getVersionVS();
 
 	teamCity.setVersion(`${currentVersion}.${buildNumber}`);
-	versioning.setVersion(vsRootPath, "vs", `${currentVersion}.${buildNumber}`); // ALL VS files will now have major.minor.patch.build
+
+	if (teamCity.isCI()) {
+		versioning.setVersion(vsRootPath, "vs", `${currentVersion}.${buildNumber}`); // ALL VS files will now have major.minor.patch.build
+	} else if (teamCity.isPI()) {
+		versioning.setVersion(vsRootPath, "vs", `${currentVersion}`); // ALL VS files will now have major.minor.patch
+	}
 }

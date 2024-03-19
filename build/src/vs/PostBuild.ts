@@ -14,12 +14,12 @@ export default function (vsRootPath: string) {
 	const assetDir = `${vsRootPath}\\artifacts`;
 	const version = Versioning.getVersionVS();
 	const revision = Git.getRevision();
-	const whereAreWe = isCI() ? "DEV" : isPI() ? "PROD" : "UNKNOWN";
-	const assetBaseName = `codestream-vs-${whereAreWe}-${version}`;
+	const environment = isCI() ? "DEV" : isPI() ? "PROD" : "UNKNOWN";
+	const assetBaseName = `codestream-vs-${environment}-${version}`;
 
 	const assetInfo: AssetInfo = {
 		Name: assetBaseName,
-		AssetEnvironment: whereAreWe,
+		AssetEnvironment: environment,
 		Version: version,
 		CommitId: revision
 	};
