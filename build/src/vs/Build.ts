@@ -89,9 +89,9 @@ export default function (vsRootPath: string) {
 				{ stdio: "inherit", cwd: `${vsRootPath}\\src\\` }
 			);
 
-			execSync(`${xunit}" "CodeStream.VisualStudio.UnitTests.dll"`, {
-				cwd: `${vsRootPath}\\src\\CodeStream.VisualStudio.UnitTests\\bin\\x64\\Release`,
-				stdio: "inherit"
+			execSync(`${xunit} CodeStream.VisualStudio.UnitTests.dll`, {
+				stdio: "inherit",
+				cwd: `${vsRootPath}\\src\\CodeStream.VisualStudio.UnitTests\\bin\\x64\\Release`
 			});
 
 			if (!fs.existsSync(artifactsPath)) {
