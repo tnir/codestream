@@ -79,33 +79,20 @@ export default function (vsRootPath: string) {
 			execFileSync(
 				msbuild,
 				[
-					`CodeStream.VisualStudio.UnitTests.csproj`,
+					`CodeStream.VisualStudio.sln`,
 					"/t:restore,rebuild",
-					"/p:Configuration=Debug",
-					"/verbosity:quiet",
-					"/p:Platform=x64",
-					"/p:DeployExtension=False"
-				],
-				{ stdio: "inherit", cwd: `${vsRootPath}src\\CodeStream.VisualStudio.UnitTests` }
-			);
-
-			execSync(`${xunit}" "CodeStream.VisualStudio.UnitTests.dll"`, {
-				cwd: `${vsRootPath}\\src\\CodeStream.VisualStudio.UnitTests\\bin\\x64\\Debug`,
-				stdio: "inherit"
-			});
-
-			execFileSync(
-				msbuild,
-				[
-					`CodeStream.VisualStudio.Vsix.x64.csproj`,
-					"/t:rebuild",
 					"/p:Configuration=Release",
 					"/verbosity:quiet",
 					"/p:Platform=x64",
 					"/p:DeployExtension=False"
 				],
-				{ stdio: "inherit", cwd: `${vsRootPath}\\src\\CodeStream.VisualStudio.Vsix.x64` }
+				{ stdio: "inherit", cwd: `${vsRootPath}\\src\\` }
 			);
+
+			execSync(`${xunit}" "CodeStream.VisualStudio.UnitTests.dll"`, {
+				cwd: `${vsRootPath}\\src\\CodeStream.VisualStudio.UnitTests\\bin\\x64\\Release`,
+				stdio: "inherit"
+			});
 
 			if (!fs.existsSync(artifactsPath)) {
 				fs.mkdirSync(artifactsPath, { recursive: true });
