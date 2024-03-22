@@ -32,6 +32,7 @@ export default function (vsRootPath: string) {
 		git.rebase();
 
 		if (isWhatIfMode()) {
+			consoul.info("***** RUNNING IN WHAT-IF MODE *****");
 			consoul.info(`git.tag("vs", "${version}", "${commitId}")`);
 			consoul.info(`git.pushTag("vs-${version}")`);
 		} else {

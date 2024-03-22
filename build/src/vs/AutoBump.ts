@@ -20,6 +20,8 @@ export default function (vsRootPath: string) {
 		versioning.setVersion(vsRootPath, "vs", newVersion);
 
 		if (isWhatIfMode()) {
+			consoul.info("***** RUNNING IN WHAT-IF MODE *****");
+
 			consoul.info(
 				`git commit -am "Auto bump version on develop to ${newVersion} for next release"`
 			);
