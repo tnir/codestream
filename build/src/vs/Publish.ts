@@ -3,9 +3,18 @@ import fs from "fs";
 import * as consoul from "../lib/Consoul";
 import * as ssh from "../lib/SSH";
 import { isWhatIfMode } from "../lib/TeamCity";
+import * as Versioning from "../lib/Versioning";
 
 export default function (vsRootPath: string) {
-	const version = process.env.build_number;
+	const fullVersion = process.env.build_number;
+
+	if (!fullVersion) {
+		consoul.error(`Unable to determine version from process.env.build_number"`);
+		process.exit(1);
+	}
+
+	const [major, minor, patch] = Versioning.validateVersion(fullVersion);
+	const version = `${major}.${minor}.${patch}`;
 
 	const localVSCETokenFile = `${process.env.TEMP}\\codestream.vsce`;
 	const remoteVSCETokenFile = "/home/web/.codestream/microsoft/vsce-credentials";

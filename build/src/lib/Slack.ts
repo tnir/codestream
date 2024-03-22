@@ -1,5 +1,6 @@
 import * as consoul from "../lib/Consoul";
 import { isWhatIfMode } from "./TeamCity";
+import * as Versioning from "../lib/Versioning";
 
 const iconMapping: Record<string, string> = {
 	VS: "visualstudio-2022",
@@ -14,12 +15,15 @@ const titleMapping: Record<string, string> = {
 };
 
 export async function notify(product: string) {
-	const version = process.env.build_number;
+	const fullVersion = process.env.build_number;
 
-	if (!version) {
+	if (!fullVersion) {
 		consoul.error(`Unable to determine version from process.env.build_number"`);
 		process.exit(1);
 	}
+
+	const [major, minor, patch] = Versioning.validateVersion(fullVersion);
+	const version = `${major}.${minor}.${patch}`;
 
 	const slackUrl = process.env.SLACK_URL;
 	if (!slackUrl) {

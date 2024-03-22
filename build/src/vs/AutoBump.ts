@@ -2,14 +2,18 @@ import * as git from "../lib/Git";
 import * as consoul from "../lib/Consoul";
 import * as versioning from "../lib/Versioning";
 import { isWhatIfMode } from "../lib/TeamCity";
+import * as Versioning from "../lib/Versioning";
 
 export default function (vsRootPath: string) {
-	const version = process.env.build_number;
+	const fullVersion = process.env.build_number;
 
-	if (!version) {
+	if (!fullVersion) {
 		consoul.error(`Unable to determine version from process.env.build_number"`);
 		process.exit(1);
 	}
+
+	const [major, minor, patch] = Versioning.validateVersion(fullVersion);
+	const version = `${major}.${minor}.${patch}`;
 
 	try {
 		const newVersion = versioning.incrementVersion(version, "patch");
