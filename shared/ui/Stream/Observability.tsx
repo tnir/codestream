@@ -618,7 +618,7 @@ export const Observability = React.memo((props: Props) => {
 		fetchGoldenMetrics(expandedEntity, true);
 		fetchServiceLevelObjectives(expandedEntity);
 		// fetchAnomalies(expandedEntity || "", currentRepoId);
-	}, 300000);
+	}, 600000);
 
 	/*
 	 *	After initial load, every time repo context changes, do telemetry tracking
