@@ -69,7 +69,7 @@ export function validateVersion(version: string): number[] {
 export function incrementVersion(
 	oldVersion: string,
 	bumpStyle: string,
-	buildNumber: number
+	buildNumber?: number
 ): string {
 	let major: number, minor: number, patch: number;
 

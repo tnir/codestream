@@ -22,9 +22,19 @@ export function push(): void {
 	execSync(`git push`, { stdio: "inherit" });
 }
 
-export function tag(product: string, version: string): void {
+export function tag(product: string, version: string, sha?: string): string {
 	const tagName = `${product}-${version}`;
 
-	execSync(`git tag ${tagName}`, { stdio: "inherit" });
+	let tagCommand = `git tag ${tagName}`;
+
+	if (sha) {
+		tagCommand += ` ${sha}`;
+	}
+	execSync(tagCommand, { stdio: "inherit" });
+
+	return tagName;
+}
+
+export function pushTag(tagName: string): void {
 	execSync(`git push origin ${tagName}`, { stdio: "inherit" });
 }

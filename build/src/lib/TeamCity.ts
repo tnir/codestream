@@ -1,5 +1,9 @@
 import * as consoul from "./Consoul.ts";
 
+export function isWhatIfMode(): boolean {
+	return process.env.what_if === "1";
+}
+
 export function getSupplmentalSoftwareDirectory(): string {
 	const softwareDirectory = process.env.TCBUILD_SUPPLEMENTAL_SOFTWARE_PATH;
 
