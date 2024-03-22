@@ -28,6 +28,7 @@ import { ObservabilityLoadingVulnerabilities } from "@codestream/webview/Stream/
 import { setUserPreference } from "./actions";
 import { useAppSelector, useAppDispatch } from "../utilities/hooks";
 import { CodeStreamState } from "@codestream/webview/store";
+import { setPreferences } from "../store/preferences/actions";
 
 interface Props {
 	currentRepoId: string;
@@ -276,20 +277,24 @@ function LibraryRow(props: { accountId: number; entityGuid: string; library: Lib
 }
 
 export const SecurityIssuesWrapper = React.memo((props: Props) => {
-	const [expanded, setExpanded] = useState<boolean>(false);
-	const [selectedItems, setSelectedItems] = useState<RiskSeverity[]>(["CRITICAL", "HIGH"]);
-	const [rows, setRows] = useState<number | undefined | "all">(undefined);
-	const dispatch = useAppDispatch();
-
 	const derivedState = useAppSelector((state: CodeStreamState) => {
 		const { preferences } = state;
 
 		const securityIssuesDropdownIsExpanded = preferences?.securityIssuesDropdownIsExpanded ?? false;
 
+		const vulnerabilitySeverityFilter = preferences?.vulnerabilitySeverityFilter;
+
 		return {
 			securityIssuesDropdownIsExpanded,
+			vulnerabilitySeverityFilter,
 		};
 	});
+	const [expanded, setExpanded] = useState<boolean>(false);
+	const [selectedItems, setSelectedItems] = useState<RiskSeverity[]>(
+		derivedState.vulnerabilitySeverityFilter || ["CRITICAL", "HIGH"]
+	);
+	const [rows, setRows] = useState<number | undefined | "all">(undefined);
+	const dispatch = useAppDispatch();
 
 	const { loading, data, error } = useRequestType<
 		typeof GetLibraryDetailsType,
@@ -307,11 +312,18 @@ export const SecurityIssuesWrapper = React.memo((props: Props) => {
 	);
 
 	function handleSelect(severity: RiskSeverity) {
+		let itemsToSelect;
 		if (selectedItems.includes(severity)) {
-			setSelectedItems(selectedItems.filter(_ => _ !== severity));
+			itemsToSelect = selectedItems.filter(_ => _ !== severity);
 		} else {
-			setSelectedItems([...selectedItems, severity]);
+			itemsToSelect = [...selectedItems, severity];
 		}
+		setSelectedItems(itemsToSelect);
+		dispatch(
+			setPreferences({
+				vulnerabilitySeverityFilter: itemsToSelect,
+			})
+		);
 	}
 
 	const additional = data ? data.totalRecords - data.recordCount : undefined;
