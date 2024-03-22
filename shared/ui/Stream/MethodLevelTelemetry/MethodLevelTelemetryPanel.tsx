@@ -375,7 +375,7 @@ export const MethodLevelTelemetryPanel = () => {
 														<Link
 															onClick={e => {
 																e.preventDefault();
-																HostApi.instance.track("codestream/link_to_newrelic clicked", {
+																HostApi.instance.track("codestream/newrelic_link clicked", {
 																	entity_guid:
 																		derivedState.currentMethodLevelTelemetry.newRelicEntityGuid,
 																	account_id:

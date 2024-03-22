@@ -138,7 +138,7 @@ export const ObservabilityRelatedEntity = React.memo((props: Props) => {
 						onClick={e => {
 							e.preventDefault();
 							e.stopPropagation();
-							HostApi.instance.track("codestream/link_to_newrelic clicked", {
+							HostApi.instance.track("codestream/newrelic_link clicked", {
 								entity_guid: props.relatedEntity.guid,
 								account_id: props.accountId,
 								meta_data: "destination: apm_service_summary",

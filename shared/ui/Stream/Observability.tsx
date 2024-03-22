@@ -258,7 +258,7 @@ export const ErrorRow = (props: {
 						onClick={e => {
 							e.preventDefault();
 							e.stopPropagation();
-							HostApi.instance.track("codestream/link_to_newrelic clicked", {
+							HostApi.instance.track("codestream/newrelic_link clicked", {
 								meta_data: "destination: error_group",
 								meta_data_2: `codestream_section: error`,
 								event_type: "click",
@@ -1484,7 +1484,7 @@ export const Observability = React.memo((props: Props) => {
 																				e.preventDefault();
 																				e.stopPropagation();
 																				HostApi.instance.track(
-																					"codestream/link_to_newrelic clicked",
+																					"codestream/newrelic_link clicked",
 																					{
 																						entity_guid:
 																							derivedState.currentMethodLevelTelemetry

@@ -637,7 +637,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	const handleEntityLinkClick = (e, url) => {
 		e.preventDefault();
 		e.stopPropagation();
-		HostApi.instance.track("codestream/link_to_newrelic clicked", {
+		HostApi.instance.track("codestream/newrelic_link clicked", {
 			entity_guid: props.errorGroup?.entityGuid,
 			account_id: props.errorGroup?.accountId,
 			meta_data: "destination: apm_service_summary",
@@ -943,7 +943,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 											<Link
 												onClick={e => {
 													e.preventDefault();
-													HostApi.instance.track("codestream/link_to_newrelic clicked", {
+													HostApi.instance.track("codestream/newrelic_link clicked", {
 														entity_guid: props.errorGroup?.entityGuid,
 														account_id: props.errorGroup?.accountId,
 														meta_data: "destination: error_group",
