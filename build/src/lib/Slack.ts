@@ -21,6 +21,12 @@ export async function notify(product: string) {
 		process.exit(1);
 	}
 
+	const slackUrl = process.env.SLACK_URL;
+	if (!slackUrl) {
+		consoul.error(`Unable to determine version from process.env.SLACK_URL"`);
+		process.exit(1);
+	}
+
 	let message = `:${iconMapping[product.toUpperCase()]}: ${titleMapping[product.toUpperCase()]} v${version} = :rocket:`;
 
 	if (isWhatIfMode()) {
@@ -30,7 +36,7 @@ export async function notify(product: string) {
 		text: message
 	};
 
-	await fetch("https://hooks.slack.com/services/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", {
+	await fetch(slackUrl, {
 		headers: {
 			"Content-Type": "application/json",
 			Accept: "application/json"
