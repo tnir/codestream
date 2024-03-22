@@ -35,7 +35,16 @@ export function setVersion(version: string): void {
 }
 
 export function isTeamCity(): boolean {
-	return isCI() || isPI();
+	return isCI() || isPI() || isRelease();
+}
+
+export function isRelease(): boolean {
+	try {
+		return process.env.IS_RELEASE === "1";
+	} catch (error) {
+		consoul.error(JSON.stringify(error));
+		process.exit(1);
+	}
 }
 
 export function isCI(): boolean {
