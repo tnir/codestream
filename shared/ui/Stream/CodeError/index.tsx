@@ -1516,7 +1516,12 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	const renderLogsIcon = () => {
 		return (
 			<Meta>
-				<LinkForExternalUrl href="#">
+				<LinkForExternalUrl
+					href="#"
+					onClick={e => {
+						e.preventDefault();
+					}}
+				>
 					<MetaDescription>
 						<span
 							onClick={e => {
