@@ -17,7 +17,7 @@ export default function (vsRootPath: string) {
 	const [major, minor, patch] = Versioning.validateVersion(fullVersion);
 	const version = `${major}.${minor}.${patch}`;
 
-	const asset = `${vsRootPath}\\artifacts\\codestream-vs-PROD-${version}-x64.info`;
+	const asset = `${vsRootPath}\\artifacts\\codestream-vs-PROD-${version}.info`;
 
 	try {
 		if (!fs.existsSync(asset)) {
