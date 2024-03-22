@@ -368,7 +368,7 @@ export class ClmProvider implements Disposable {
 			"latest(appName) AS 'appName',",
 			"latest(error.class) AS 'errorClass',",
 			"latest(message) AS 'message',",
-			"latest(entityGuid) AS 'entityGuid'",
+			"latest(entityGuid) AS 'entityGuid',",
 			"latest(traceId) AS 'traceId'",
 			"FROM ErrorTrace",
 			"WHERE ",
