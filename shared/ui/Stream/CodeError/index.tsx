@@ -1515,7 +1515,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 	const renderLogsIcon = () => {
 		return (
-			<Meta>
+			<Meta style={{ paddingBottom: "15px" }}>
 				<LinkForExternalUrl
 					href="#"
 					onClick={e => {
@@ -1600,7 +1600,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 						</TourTip>
 					</Meta>
 					{props.post && (
-						<div style={{ marginBottom: "10px" }}>
+						<div>
 							<Reactions className="reactions no-pad-left" post={props.post} />
 						</div>
 					)}
