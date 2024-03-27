@@ -95,11 +95,11 @@ export const APMPartitions = (props: {
 
 	const CustomMultiValueLabel = ({ ...props }) => {
 		if (
-			selectedPartitions &&
-			selectedPartitions.length > 0 &&
-			selectedPartitions[0].value === props.data.value
+			temporarySelectedPartitions &&
+			temporarySelectedPartitions.length > 0 &&
+			temporarySelectedPartitions[0].value === props.data.value
 		) {
-			return <div>Partitions ({selectedPartitions.length}) </div>;
+			return <div>Partitions ({temporarySelectedPartitions.length}) </div>;
 		} else {
 			return <div style={{ display: "none" }}>&nbsp;</div>;
 		}
@@ -187,6 +187,7 @@ export const APMPartitions = (props: {
 				onChange={values => handleChange(values)}
 				styles={customStyles}
 				menuShouldScrollIntoView={false}
+				isSearchable={false}
 				onBlur={handleBlur}
 				components={{
 					MenuList: CustomMenuList,
