@@ -482,7 +482,7 @@ export const APMLogSearchPanel = (props: {
 	const fetchPartitions = async (entityAccount: EntityAccount) => {
 		try {
 			const response = await HostApi.instance.send(GetLoggingPartitionsRequestType, {
-				accountId: entityAccount.accountId,
+				accountId: 1,
 			});
 
 			if (!response) {
