@@ -3,6 +3,7 @@ import Select from "react-select";
 import { Button } from "../../src/components/Button";
 import Tooltip from "../Tooltip";
 import { SelectedOption } from "./APMLogSearchPanel";
+import { useDidMount } from "../../utilities/hooks";
 
 const menuPortalTarget = document.body;
 
@@ -11,11 +12,18 @@ export const APMPartitions = (props: {
 	selectPartitionOptions: SelectedOption[];
 	partitionsCallback: Function;
 }) => {
-	const { selectedPartitions, selectPartitionOptions, partitionsCallback } = props;
+	const { selectedPartitions, selectPartitionOptions: initialOptions, partitionsCallback } = props;
 
 	const selectRef = useRef(null);
 
 	const [open, setOpen] = useState<boolean>(false);
+	const [temporarySelectedPartitions, setTemporarySelectedPartitions] =
+		useState<SelectedOption[]>(selectedPartitions);
+	const [options, setOptions] = useState<SelectedOption[]>(initialOptions);
+
+	useDidMount(() => {
+		setOptions(initialOptions);
+	});
 
 	const customStyles = {
 		multiValueRemove: () => ({
@@ -48,10 +56,12 @@ export const APMPartitions = (props: {
 	};
 
 	const CustomOption = ({ innerProps, data }) => {
-		const isChecked = selectedPartitions.some(obj => obj.value === data.value);
+		const isChecked = temporarySelectedPartitions.some(_ => _.value === data.value);
+		const isDisabled =
+			temporarySelectedPartitions.find(_ => _.value === data.value)?.disabled || false;
 
-		const isFirst = selectPartitionOptions[0].value === data.value;
-		const isLast = selectPartitionOptions[selectPartitionOptions.length - 1].value === data.value;
+		const isFirst = options[0].value === data.value;
+		const isLast = options[options.length - 1].value === data.value;
 
 		const optionMargin = isFirst
 			? "12px 12px 4px 12px"
@@ -59,7 +69,7 @@ export const APMPartitions = (props: {
 			? "4px 12px 12px 12px"
 			: "4px 12px";
 
-		if (data.disabled) {
+		if (isDisabled) {
 			return (
 				<Tooltip title={"Must have one partition selected"} delay={1}>
 					<div style={{ margin: optionMargin }} {...innerProps}>
@@ -85,11 +95,11 @@ export const APMPartitions = (props: {
 
 	const CustomMultiValueLabel = ({ ...props }) => {
 		if (
-			selectedPartitions &&
-			selectedPartitions.length > 0 &&
-			selectedPartitions[0].value === props.data.value
+			temporarySelectedPartitions &&
+			temporarySelectedPartitions.length > 0 &&
+			temporarySelectedPartitions[0].value === props.data.value
 		) {
-			return <div>Partitions ({selectedPartitions.length}) </div>;
+			return <div>Partitions ({temporarySelectedPartitions.length}) </div>;
 		} else {
 			return <div style={{ display: "none" }}>&nbsp;</div>;
 		}
@@ -97,37 +107,49 @@ export const APMPartitions = (props: {
 
 	// Needs callback to prevent re-renders.  Better optimization and fixes
 	// a scroll to top on select bug
-	const CustomMenuList = useCallback((props: any) => {
-		return (
-			<div
-				style={{
-					position: "relative",
-					maxHeight: "500px",
-					overflowY: "auto",
-					display: "flex",
-					flexDirection: "column",
-				}}
-			>
-				<div style={{ flex: "1", borderRight: "1px solid var(--base-border-color)" }}>
-					{props.children}
-				</div>
+	const CustomMenuList = useCallback(
+		(props: any) => {
+			return (
 				<div
 					style={{
+						position: "relative",
+						maxHeight: "500px",
+						overflowY: "auto",
 						display: "flex",
-						justifyContent: "flex-end",
-						position: "sticky",
-						bottom: "0",
-						padding: "10px",
-						borderTop: "1px solid var(--base-border-color)",
-						borderRight: "1px solid var(--base-border-color)",
-						background: "var(--base-background-color)",
+						flexDirection: "column",
 					}}
 				>
-					<Button onClick={() => setOpen(false)}>Done</Button>
+					<div style={{ flex: "1", borderRight: "1px solid var(--base-border-color)" }}>
+						{props.children}
+					</div>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "flex-end",
+							position: "sticky",
+							bottom: "0",
+							padding: "10px",
+							borderTop: "1px solid var(--base-border-color)",
+							borderRight: "1px solid var(--base-border-color)",
+							background: "var(--base-background-color)",
+						}}
+					>
+						<Button onClick={handleDoneClick}>Done</Button>
+					</div>
 				</div>
-			</div>
-		);
-	}, []);
+			);
+		},
+		[temporarySelectedPartitions, options]
+	);
+
+	const handleDoneClick = () => {
+		partitionsCallback(temporarySelectedPartitions);
+		setOpen(false);
+	};
+
+	const handleBlur = () => {
+		partitionsCallback(temporarySelectedPartitions);
+	};
 
 	const handleChange = values => {
 		if (values.length > 0) {
@@ -140,7 +162,7 @@ export const APMPartitions = (props: {
 					}
 				});
 			}
-			partitionsCallback(values || []);
+			setTemporarySelectedPartitions(values);
 		}
 	};
 
@@ -155,16 +177,18 @@ export const APMPartitions = (props: {
 				id="input-partition"
 				name="partition"
 				classNamePrefix="react-select"
-				options={selectPartitionOptions}
+				options={options}
 				captureMenuScroll={false}
 				isMulti
 				isClearable={false}
 				closeMenuOnSelect={false}
 				hideSelectedOptions={false}
-				value={selectedPartitions}
+				value={temporarySelectedPartitions}
 				onChange={values => handleChange(values)}
 				styles={customStyles}
 				menuShouldScrollIntoView={false}
+				isSearchable={false}
+				onBlur={handleBlur}
 				components={{
 					MenuList: CustomMenuList,
 					Option: CustomOption,
