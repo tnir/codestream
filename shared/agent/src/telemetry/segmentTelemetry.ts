@@ -8,7 +8,7 @@ import { SessionStatus } from "../types";
 // FIXME: sorry, typescript purists: i simply gave up trying to get the type definitions for this module to work
 import { TelemetryData, TelemetryEventName } from "@codestream/protocols/agent";
 import Analytics from "analytics-node";
-import { customFetch } from "../system/fetchCore";
+import { FetchCore } from "../system/fetchCore";
 import { debug } from "../system";
 
 export class SegmentTelemetryService {
@@ -25,6 +25,7 @@ export class SegmentTelemetryService {
 	}[] = [];
 
 	private _onReady: () => void = () => {};
+	private fetchClient = new FetchCore();
 
 	/**
 	 * @param {boolean} hasOptedOut - Has the user opted out of tracking?
@@ -193,25 +194,27 @@ export class SegmentTelemetryService {
 				this._session.environmentInfo.isProductionCloud &&
 				this._session.newRelicTaxonomyEnforcerUrl
 			) {
-				customFetch(`${this._session.newRelicTaxonomyEnforcerUrl}/events`, {
-					method: "POST",
-					body: JSON.stringify({
-						event: event,
-						properties: payload,
-						messageId: UUID(),
-						timestamp: new Date(),
-						userId: this._distinctId,
-						anonymousId: this._anonymousId,
-						type: "track",
-					}),
-					headers: {
-						"Content-Type": "application/json",
-					},
-				}).catch(ex => {
-					Logger.error(ex, cc);
-				});
+				this.fetchClient
+					.customFetch(`${this._session.newRelicTaxonomyEnforcerUrl}/events`, {
+						method: "POST",
+						body: JSON.stringify({
+							event: event,
+							properties: payload,
+							messageId: UUID(),
+							timestamp: new Date(),
+							userId: this._distinctId,
+							anonymousId: this._anonymousId,
+							type: "track",
+						}),
+						headers: {
+							"Content-Type": "application/json",
+						},
+					})
+					.catch((ex: any) => {
+						Logger.error(ex, cc);
+					});
 			}
-		} catch (ex) {
+		} catch (ex: any) {
 			Logger.error(ex, cc);
 		}
 	}
