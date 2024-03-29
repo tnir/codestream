@@ -29,6 +29,9 @@ import { setUserPreference } from "./actions";
 import { useAppSelector, useAppDispatch } from "../utilities/hooks";
 import { CodeStreamState } from "@codestream/webview/store";
 import { setPreferences } from "../store/preferences/actions";
+import { Meta, MetaDescription, MetaSection, MinimumWidthCard } from "./Codemark/BaseCodemark";
+import { DataLabel, DataRow, DataValue } from "./CodeError";
+import { CardBody } from "../src/components/Card";
 
 interface Props {
 	currentRepoId: string;
@@ -81,6 +84,28 @@ export const CardTitle = styled.div`
 			padding: 0 8px;
 			margin-left: 0;
 		}
+	}
+`;
+
+const MarkdownStyle = styled.div`
+	font-size: 12px;
+	h1 {
+		font-size: 15px;
+	}
+	h2 {
+		font-size: 15px;
+	}
+	h3 {
+		font-size: 14px;
+	}
+	h4 {
+		font-size: 13px;
+	}
+	h5 {
+		font-size: 12px;
+	}
+	h6 {
+		font-size: 12px;
 	}
 `;
 
@@ -146,49 +171,72 @@ function VulnerabilityView(props: {
 		event_type: "click",
 	});
 	return (
-		<div className="codemark-form-container">
-			<div className="codemark-form standard-form vscroll">
-				<div className="form-body" style={{ padding: "20px 5px 20px 28px" }}>
-					<div className="contents">
-						<CardTitle>
-							<Icon name="lock" className="ticket-icon" />
-							<div className="title">{vuln.title}</div>
-							<div
-								className="link-to-ticket"
-								onClick={() => {
-									if (vuln.url) {
-										HostApi.instance.send(OpenUrlRequestType, {
-											url: vuln.url,
-										});
-									}
-								}}
-							>
-								<Icon title="Open on web" className="clickable" name="globe" />
-							</div>
-						</CardTitle>
-						<div style={{ margin: "10px 0" }}>
-							<div>
-								<b>Severity: </b>
-								{vuln.severity}
-							</div>
-							<div>
-								<b>CVE Id: </b> {vuln.cveId}
-							</div>
+		<MinimumWidthCard>
+			<div
+				style={{
+					display: "flex",
+					padding: "30px",
+					width: "100%",
+					flexDirection: "column",
+					height: "100%",
+				}}
+			>
+				<CardTitle
+					style={{ fontSize: "16px", paddingBottom: "10px" }}
+					className="title"
+					onClick={() => {
+						if (vuln.url) {
+							HostApi.instance.send(OpenUrlRequestType, {
+								url: vuln.url,
+							});
+						}
+					}}
+				>
+					<Icon style={{ transform: "scale(0.9)", paddingRight: "10px" }} name="lock" />
+					<span>
+						{vuln.title}{" "}
+						<Icon
+							style={{ transform: "scale(0.9)" }}
+							title="Open on web"
+							className="clickable"
+							name="globe"
+						/>
+					</span>
+				</CardTitle>
 
-							<div>
-								<b>CVSS score: </b> {vuln.score}
-							</div>
-							<div>
-								<b>CVSS vector: </b> <span style={{ fontSize: "80%" }}>{vuln.vector}</span>
-							</div>
-						</div>
-						<div>
-							<MarkdownText className="less-space" text={vuln.description} inline={false} />
-						</div>
-					</div>
-				</div>
+				<CardBody style={{ paddingTop: "10px" }}>
+					<DataRow>
+						<DataLabel>Severity: </DataLabel>
+						<DataValue>{vuln.severity}</DataValue>
+					</DataRow>
+
+					<DataRow>
+						<DataLabel>CVE Id: </DataLabel>
+						<DataValue>{vuln.cveId}</DataValue>
+					</DataRow>
+
+					<DataRow>
+						<DataLabel>CVSS score: </DataLabel>
+						<DataValue>{vuln.score}</DataValue>
+					</DataRow>
+					<DataRow>
+						<DataLabel>CVSS vector: </DataLabel>
+						<DataValue>{vuln.vector}</DataValue>
+					</DataRow>
+				</CardBody>
+				<CardBody>
+					<MetaSection>
+						<Meta>
+							<MetaDescription>
+								<MarkdownStyle>
+									<MarkdownText className="less-space" text={vuln.description} inline={false} />
+								</MarkdownStyle>
+							</MetaDescription>
+						</Meta>
+					</MetaSection>
+				</CardBody>
 			</div>
-		</div>
+		</MinimumWidthCard>
 	);
 }
 
