@@ -88,7 +88,7 @@ export function Root() {
 	if (derivedState.connectivityError) {
 		return (
 			<Dismissable
-				title="Can't connect"
+				title="Can't connect to New Relic"
 				buttons={[
 					{
 						text: "Dismiss",
@@ -106,7 +106,7 @@ export function Root() {
 				]}
 			>
 				<p>
-					We are unable to connect to CodeStream's backend. Please check your connectivity and try
+					We are unable to connect to New Relic's backend. Please check your connectivity and try
 					again.
 				</p>
 				<p>
