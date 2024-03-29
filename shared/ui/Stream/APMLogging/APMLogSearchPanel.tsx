@@ -148,15 +148,15 @@ const MessageHeader = styled.div`
 `;
 
 const Option = (props: OptionProps) => {
-	let subtleLabel = `${props.data?.entityTypeDescription} | `;
-	subtleLabel += props.data?.entityAccount.type ? `${props.data?.entityAccount.type}` : "";
-	subtleLabel = ` (${subtleLabel})`;
+	const subtleLabel = props?.data?.entityAccount?.displayName
+		? `(${props.data.entityAccount.displayName})`
+		: "";
 
 	const children = (
 		<>
 			<OptionName>
 				{props.data?.label}
-				<OptionType>{subtleLabel}</OptionType>
+				<OptionType> {subtleLabel}</OptionType>
 			</OptionName>
 			<OptionAccount>
 				{props.data?.accountName} ({props.data?.entityAccount.accountId})
@@ -352,14 +352,14 @@ export const APMLogSearchPanel = (props: {
 			return;
 		}
 
-		let subtleLabel = `${optionProps.entityTypeDescription} | `;
-		subtleLabel += optionProps.entityAccount.type ? `${optionProps.entityAccount.type}` : "";
-		subtleLabel = ` (${subtleLabel})`;
+		const subtleLabel = optionProps?.entityAccount?.displayName
+			? `(${optionProps.entityAccount.displayName})`
+			: "";
 
 		const customLabel = (
 			<>
-				<span>Service: {optionProps.entityAccount.entityName}</span>
-				<span className="subtle">{subtleLabel}</span>
+				<span>{optionProps.entityAccount.entityName}</span>
+				<span className="subtle"> {subtleLabel}</span>
 			</>
 		);
 
@@ -780,7 +780,7 @@ export const APMLogSearchPanel = (props: {
 								value={selectedEntityAccount}
 								isClearable
 								debounceTimeout={750}
-								placeholder={`Type to search for services...`}
+								placeholder={`Type to search for entities...`}
 								onChange={newValue => {
 									handleSelectDropdownOption(newValue);
 								}}
@@ -824,7 +824,7 @@ export const APMLogSearchPanel = (props: {
 									setSearchTerm(e.target.value);
 								}}
 								onKeyDown={checkKeyPress}
-								placeholder="Query logs in the selected service"
+								placeholder="Query logs in the selected entity"
 								tabIndex={hasPartitions ? 4 : 3}
 								autoFocus
 							/>

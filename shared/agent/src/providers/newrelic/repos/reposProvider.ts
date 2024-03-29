@@ -29,7 +29,7 @@ import { SessionContainer, SessionServiceContainer } from "../../../container";
 import { URI } from "vscode-uri";
 import semver from "semver";
 import { NrApiConfig } from "../nrApiConfig";
-import { mapNRErrorResponse } from "../utils";
+import { mapNRErrorResponse, findEntityTypeDisplayName } from "../utils";
 import { ContextLogger } from "../../contextLogger";
 import { Disposable } from "../../../system/disposable";
 
@@ -245,12 +245,11 @@ export class ReposProvider implements Disposable {
 					}
 				}
 				let mappedUniqueEntities = await Promise.all(
-					uniqueEntities.map(async entity => {
+					uniqueEntities.map(async (entity: Entity) => {
 						const languageAndVersionValidation = await this.languageAndVersionValidation(
 							entity,
 							request?.isVsCode
 						);
-
 						return {
 							accountId: entity.account?.id,
 							accountName: entity.account?.name || "Account",
@@ -263,6 +262,7 @@ export class ReposProvider implements Disposable {
 								: undefined,
 							tags: entity.tags,
 							domain: entity.domain,
+							displayName: findEntityTypeDisplayName(entity.domain || "", entity.type || ""),
 							alertSeverity: entity?.alertSeverity,
 							url: `${this.nrApiConfig.productUrl}/redirect/entity/${entity.guid}`,
 							distributedTracingEnabled: this.hasStandardOrInfiniteTracing(entity),

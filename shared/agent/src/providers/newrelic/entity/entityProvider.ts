@@ -23,6 +23,7 @@ import {
 	RelatedEntity,
 } from "@codestream/protocols/agent";
 import Cache from "@codestream/utils/system/timedCache";
+import { findEntityTypeDisplayName } from "../utils";
 import { isEmpty as _isEmpty, isUndefined as _isUndefined, isEqual } from "lodash";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
 import { Logger } from "../../../logger";
@@ -193,6 +194,8 @@ export class EntityProvider implements Disposable {
 						guid
 						name
 						entityType
+						type
+						domain
 						account {
 							name
 						  }
@@ -209,13 +212,21 @@ export class EntityProvider implements Disposable {
 				}
 			);
 			const entities = response.actor.entitySearch.results.entities.map(
-				(_: { guid: string; name: string; account: { name: string }; entityType: EntityType }) => {
+				(_: {
+					guid: string;
+					domain: string;
+					type: string;
+					name: string;
+					account: { name: string };
+					entityType: EntityType;
+				}) => {
 					return {
 						guid: _.guid,
 						name: _.name,
 						account: _.account.name,
 						entityType: _.entityType,
 						entityTypeDescription: EntityTypeMap[_.entityType],
+						displayName: findEntityTypeDisplayName(_.domain, _.type),
 					};
 				}
 			);

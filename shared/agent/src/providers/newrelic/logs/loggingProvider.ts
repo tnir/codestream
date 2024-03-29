@@ -24,7 +24,7 @@ import {
 import { log } from "../../../system/decorators/log";
 import { NewRelicGraphqlClient } from "../newRelicGraphqlClient";
 import { ContextLogger } from "../../contextLogger";
-import { mapNRErrorResponse } from "../utils";
+import { mapNRErrorResponse, findEntityTypeDisplayName } from "../utils";
 import { Strings } from "../../../system";
 import { LogEntityResult, LogEntitySearchResult } from "./logging.types";
 import { EntityAttributeMapper } from "./entityAttributeMapper";
@@ -125,6 +125,7 @@ export class LoggingProvider {
 						name
 						entityType
 						type
+						domain
 						tags {
 							key
 							values
@@ -152,11 +153,13 @@ export class LoggingProvider {
 						entityGuid: ea.guid,
 						entityName: ea.name,
 						entityType: ea.entityType,
+						entityDomain: ea.domain,
 						tags: ea.tags,
 						accountId: ea.account.id,
 						accountName: ea.account.name,
 						type: ea.type,
 						entityTypeDescription: EntityTypeMap[ea.entityType],
+						displayName: findEntityTypeDisplayName(ea.domain, ea.type),
 					};
 				}
 			);
