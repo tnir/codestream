@@ -56,7 +56,7 @@ import { RepositoryAssociator } from "./CodeError/RepositoryAssociator";
 import { BigTitle, Header, Meta } from "./Codemark/BaseCodemark";
 import Dismissable from "./Dismissable";
 import Icon from "./Icon";
-import { ClearModal, Step, Subtext, Tip } from "./ReviewNav";
+import { ClearModal, ComposeArea, Step, Subtext, Tip } from "./ReviewNav";
 import ScrollBox from "./ScrollBox";
 import { WarningBox } from "./WarningBox";
 import { isEmpty as _isEmpty } from "lodash";
@@ -726,15 +726,35 @@ export function CodeErrorNav(props: Props) {
 			</Tip>
 		) : undefined;
 
-	const resolutionTip =
-		hoverButton === "resolution" ? (
+	const commentTip =
+		hoverButton === "comment" ? (
 			<Tip>
 				<Step>2</Step>
 				<div>
-					More performance data!
+					Comment by selecting code in the editor
+					<Subtext>CodeStream will automatically mention the code author</Subtext>
+					<Button
+						onClick={() => {
+							const el = document.getElementById("code-error-nav-header");
+							if (el) el.scrollIntoView(true);
+							setHoverButton("resolution");
+						}}
+					>
+						Next &gt;
+					</Button>
+				</div>
+			</Tip>
+		) : undefined;
+
+	const resolutionTip =
+		hoverButton === "resolution" ? (
+			<Tip>
+				<Step>3</Step>
+				<div>
+					Explore CodeStream!
 					<Subtext>
-						When you're done investigating this error, close it to see golden metrics, performance
-						issues, logs, and more.
+						Once you're done with the error, close it and see how you can discover other errors,
+						discuss code, and review pull requests from your IDE.
 					</Subtext>
 					<Button onClick={tourDone}>Done</Button>
 				</div>
@@ -970,6 +990,12 @@ export function CodeErrorNav(props: Props) {
 					</ScrollBox>
 				</div>
 			)}
+			<TourTip title={commentTip} placement={sidebarLocation === "right" ? "right" : "left"}>
+				<ComposeArea
+					side={sidebarLocation === "right" ? "right" : "left"}
+					className={hoverButton == "comment" ? "pulse" : ""}
+				/>
+			</TourTip>
 		</Root>
 	);
 }
